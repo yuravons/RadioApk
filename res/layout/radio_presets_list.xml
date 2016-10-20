@@ -48,8 +48,7 @@ limitations under the License.
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        app:offsetRows="true"
-        app:rightGutterEnabled="true" />
+        app:offsetRows="true"/>
 
     <android.support.v7.widget.CardView
         android:id="@+id/current_radio_station_card"
