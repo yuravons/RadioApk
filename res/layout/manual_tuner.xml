@@ -19,8 +19,11 @@ limitations under the License.
     android:layout_height="match_parent"
     android:paddingTop="@dimen/lens_header_height" >
 
+    <!-- This LinearLayout is clickable so that clicks do not fall through to the underlying
+         fragment. -->
     <LinearLayout
         android:background="@color/car_card"
+        android:clickable="true"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingTop="@dimen/manual_tuner_top_padding">
