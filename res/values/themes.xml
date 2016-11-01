@@ -21,5 +21,18 @@ limitations under the License.
 
         <!-- Allow for shared element transitions. -->
         <item name="android:windowContentTransitions">true</item>
+
+        <item name="drawerArrowStyle">@style/RadioDrawerArrowStyle</item>
+    </style>
+
+    <style name="RadioDrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">
+        <item name="color">#FFFFFF</item>
+        <item name="spinBars">true</item>
+        <item name="barLength">40dp</item>
+        <item name="thickness">3dp</item>
+        <item name="gapBetweenBars">6dp</item>
+        <item name="arrowShaftLength">34dp</item>
+        <item name="arrowHeadLength">18dp</item>
+        <item name="drawableSize">@dimen/car_drawer_header_menu_button_size</item>
     </style>
 </resources>

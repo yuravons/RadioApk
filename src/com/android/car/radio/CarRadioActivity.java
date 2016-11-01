@@ -16,26 +16,47 @@
 
 package com.android.car.radio;
 
-import android.app.Activity;
-import android.content.Context;
+import android.annotation.NonNull;
+import android.annotation.Nullable;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.graphics.Color;
+import android.hardware.radio.RadioManager;
 import android.os.Bundle;
-import android.support.car.Car;
-import android.support.car.app.menu.CarDrawerActivity;
+import android.support.v4.app.Fragment;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+
 import com.android.car.radio.service.RadioStation;
+
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * The main activity for the radio. This activity initializes the radio controls and listener for
  * radio changes.
  */
-public class CarRadioActivity extends CarDrawerActivity implements
+public class CarRadioActivity extends AppCompatActivity implements
         RadioPresetsFragment.PresetListExitListener,
         MainRadioFragment.RadioPresetListClickListener,
         CarRadioMenu.ManualTunerStarter,
         ManualTunerFragment.ManualTunerCompletionListener {
     private static final String TAG = "Em.RadioActivity";
     private static final String MANUAL_TUNER_BACKSTACK = "ManualTunerBackstack";
+
+    private static final int[] SUPPORTED_RADIO_BANDS = new int[] {
+        RadioManager.BAND_AM, RadioManager.BAND_FM };
 
     /**
      * Intent action for notifying that the radio state has changed.
@@ -49,35 +70,130 @@ public class CarRadioActivity extends CarDrawerActivity implements
     private static final String EXTRA_RADIO_APP_FOREGROUND
             = "android.intent.action.RADIO_APP_STATE";
 
+    private static final float COLOR_SWITCH_SLIDE_OFFSET = 0.25f;
+
+    private final DisplayMetrics displayMetrics = new DisplayMetrics();
     private RadioController mRadioController;
+    private ListView mDrawerList;
+    private DrawerLayout mDrawerLayout;
+    private Toolbar mToolbar;
+    private ActionBarDrawerToggle mDrawerToggle;
     private MainRadioFragment mMainFragment;
     private boolean mTunerOpened;
 
     private FragmentWithFade mCurrentFragment;
 
-    public CarRadioActivity(Proxy proxy, Context context, Car car) {
-        super(proxy, context, car);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Makes the drawer icon and application text white.
-        setLightMode();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        setContentView(R.layout.radio_activity);
+        mRadioController = new RadioController(this);
+        mDrawerList = (ListView)findViewById(R.id.left_drawer);
+        mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+        mToolbar = (Toolbar) findViewById(R.id.main_toolbar);
+        setSupportActionBar(mToolbar);
 
-        setTitle(getContext().getString(R.string.app_name));
-
-        mRadioController = new RadioController((Activity) getContext());
+        setupDrawerToggling();
+        populateDrawerContents();
 
         mMainFragment = MainRadioFragment.newInstance(mRadioController);
         mMainFragment.setPresetListClickListener(this);
-
         setContentFragment(mMainFragment);
         mCurrentFragment = mMainFragment;
+    }
 
-        setCarMenuCallbacks(new CarRadioMenu(getContext(), mRadioController,
-                this /* manualTunerStarter */));
+    // Consider moving this to support-lib.
+    private void setupDrawerToggling() {
+        mDrawerToggle = new ActionBarDrawerToggle(
+                this,                  /* host Activity */
+                mDrawerLayout,         /* DrawerLayout object */
+                // The string id's below are for accessibility. However
+                // since they won't be used in cars, we just pass app_name.
+                R.string.app_name,
+                R.string.app_name
+        );
+        mDrawerLayout.addDrawerListener(mDrawerToggle);
+        mDrawerLayout.addDrawerListener(new DrawerLayout.DrawerListener() {
+            @Override
+            public void onDrawerSlide(View drawerView, float slideOffset) {
+                if (slideOffset >= COLOR_SWITCH_SLIDE_OFFSET) {
+                    mToolbar.setTitleTextColor(Color.BLACK);
+                    mDrawerToggle.getDrawerArrowDrawable().setColor(Color.BLACK);
+                } else {
+                    mToolbar.setTitleTextColor(Color.WHITE);
+                    mDrawerToggle.getDrawerArrowDrawable().setColor(Color.WHITE);
+                }
+            }
+            @Override
+            public void onDrawerOpened(View drawerView) {}
+            @Override
+            public void onDrawerClosed(View drawerView) {}
+            @Override
+            public void onDrawerStateChanged(int newState) {}
+        });
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+    }
+
+    private void populateDrawerContents() {
+        // The order of items in drawer is hardcoded. The OnItemClickListener depends on it.
+        List<String> drawerOptions = new LinkedList<>();
+        for (int band : SUPPORTED_RADIO_BANDS) {
+            String bandText = RadioChannelFormatter.formatRadioBand(this, band);
+            drawerOptions.add(bandText);
+        }
+        drawerOptions.add(getString(R.string.manual_tuner_drawer_entry));
+
+        ListAdapter drawerAdapter =
+                new ArrayAdapter<String>(this, R.layout.car_list_item_1, R.id.text, drawerOptions) {
+                    @Override
+                    public View getView(int position, @Nullable View convertView,
+                            @NonNull ViewGroup parent) {
+                        View view = super.getView(position, convertView, parent);
+                        // We need this hack since car_list_item1 produces focusable views and that
+                        // prevents the onItemClickListener from working.
+                        view.setFocusable(false);
+                        return view;
+                    }
+                };
+        mDrawerList.setAdapter(drawerAdapter);
+        mDrawerList.setOnItemClickListener((parent, view, position, id) -> {
+            mDrawerLayout.closeDrawer(Gravity.LEFT);
+            if (position < SUPPORTED_RADIO_BANDS.length) {
+                mRadioController.openRadioBand(SUPPORTED_RADIO_BANDS[position]);
+            } else if (position == SUPPORTED_RADIO_BANDS.length) {
+                startManualTuner();
+            } else {
+                Log.w(TAG, "Unexpected position: " + position);
+            }
+        });
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Pass any configuration change to the drawer toggls
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Pass the event to ActionBarDrawerToggle, if it returns
+        // true, then it has handled the app icon touch event
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -102,8 +218,6 @@ public class CarRadioActivity extends CarDrawerActivity implements
 
     @Override
     public void startManualTuner() {
-        closeDrawer();
-
         if (mTunerOpened) {
             return;
         }
@@ -117,7 +231,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
         getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(R.anim.slide_up, R.anim.slide_down,
                         R.anim.slide_up, R.anim.slide_down)
-                .add(getFragmentContainerId(), fragment)
+                .add(R.id.content_frame, fragment)
                 .addToBackStack(MANUAL_TUNER_BACKSTACK)
                 .commitAllowingStateLoss();
 
@@ -150,7 +264,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
 
         Intent broadcast = new Intent(ACTION_RADIO_APP_STATE_CHANGE);
         broadcast.putExtra(EXTRA_RADIO_APP_FOREGROUND, true);
-        getContext().sendBroadcast(broadcast);
+        sendBroadcast(broadcast);
     }
 
     @Override
@@ -163,7 +277,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
 
         Intent broadcast = new Intent(ACTION_RADIO_APP_STATE_CHANGE);
         broadcast.putExtra(EXTRA_RADIO_APP_FOREGROUND, false);
-        getContext().sendBroadcast(broadcast);
+        sendBroadcast(broadcast);
     }
 
     @Override
@@ -175,5 +289,11 @@ public class CarRadioActivity extends CarDrawerActivity implements
         }
 
         mRadioController.shutdown();
+    }
+
+    private void setContentFragment(Fragment fragment) {
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.content_frame, fragment)
+                .commit();
     }
 }

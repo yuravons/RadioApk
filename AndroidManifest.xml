@@ -30,7 +30,7 @@
         android:icon="@drawable/logo_fm_radio"
         android:theme="@style/CarRadioAppTheme">
 
-        <activity android:name=".CarRadioProxyActivity"
+        <activity android:name=".CarRadioActivity"
             android:theme="@style/CarRadioAppTheme"
             android:launchMode="singleTask"
             android:label="@string/app_name"
