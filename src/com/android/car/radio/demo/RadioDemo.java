@@ -25,7 +25,7 @@ import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.support.car.Car;
 import android.support.car.CarNotConnectedException;
-import android.support.car.ServiceConnectionCallback;
+import android.support.car.CarConnectionCallback;
 import android.support.car.media.CarAudioManager;
 import android.util.Log;
 import com.android.car.radio.service.IRadioCallback;
@@ -68,7 +68,7 @@ public class RadioDemo implements AudioManager.OnAudioFocusChangeListener {
 
     private RadioDemo(Context context) {
         if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
-            mCarApi = Car.createCar(context, mServiceConnectionCallback);
+            mCarApi = Car.createCar(context, mCarConnectionCallback);
             mCarApi.connect();
         }
     }
@@ -289,12 +289,12 @@ public class RadioDemo implements AudioManager.OnAudioFocusChangeListener {
     }
 
     /**
-     * {@link ServiceConnectionCallback} that retrieves the {@link CarRadioManager}.
+     * {@link CarConnectionCallback} that retrieves the {@link CarRadioManager}.
      */
-    private final ServiceConnectionCallback mServiceConnectionCallback =
-            new ServiceConnectionCallback() {
+    private final CarConnectionCallback mCarConnectionCallback =
+            new CarConnectionCallback() {
                 @Override
-                public void onServiceConnected() {
+                public void onConnected(Car car) {
                     if (Log.isLoggable(TAG, Log.DEBUG)) {
                         Log.d(TAG, "Car service connected.");
                     }
@@ -314,16 +314,9 @@ public class RadioDemo implements AudioManager.OnAudioFocusChangeListener {
                 }
 
                 @Override
-                public void onServiceDisconnected() {
+                public void onDisconnected(Car car) {
                     if (Log.isLoggable(TAG, Log.DEBUG)) {
                         Log.d(TAG, "Car service disconnected.");
-                    }
-                }
-
-                @Override
-                public void onServiceConnectionFailed() {
-                    if (Log.isLoggable(TAG, Log.DEBUG)) {
-                        Log.d(TAG, "Car service connection failed.");
                     }
                 }
             };
