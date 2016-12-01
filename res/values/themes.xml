@@ -26,7 +26,7 @@ limitations under the License.
     </style>
 
     <style name="RadioDrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">
-        <item name="color">#FFFFFF</item>
+        <item name="color">@color/car_title_light</item>
         <item name="spinBars">true</item>
         <item name="barLength">40dp</item>
         <item name="thickness">3dp</item>

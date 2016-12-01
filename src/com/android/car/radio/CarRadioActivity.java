@@ -118,13 +118,7 @@ public class CarRadioActivity extends AppCompatActivity implements
         mDrawerLayout.addDrawerListener(new DrawerLayout.DrawerListener() {
             @Override
             public void onDrawerSlide(View drawerView, float slideOffset) {
-                if (slideOffset >= COLOR_SWITCH_SLIDE_OFFSET) {
-                    mToolbar.setTitleTextColor(Color.BLACK);
-                    mDrawerToggle.getDrawerArrowDrawable().setColor(Color.BLACK);
-                } else {
-                    mToolbar.setTitleTextColor(Color.WHITE);
-                    mDrawerToggle.getDrawerArrowDrawable().setColor(Color.WHITE);
-                }
+                setTitleAndArrowColor(slideOffset >= COLOR_SWITCH_SLIDE_OFFSET);
             }
             @Override
             public void onDrawerOpened(View drawerView) {}
@@ -135,6 +129,16 @@ public class CarRadioActivity extends AppCompatActivity implements
         });
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
+    }
+
+    private void setTitleAndArrowColor(boolean drawerOpen) {
+        // When drawer open, use car_title, which resolves to appropriate color depending on
+        // day-night mode. When drawer is closed, we always use light color.
+        int titleColorResId =  drawerOpen ?
+                R.color.car_title : R.color.car_title_light;
+        int titleColor = getColor(titleColorResId);
+        mToolbar.setTitleTextColor(titleColor);
+        mDrawerToggle.getDrawerArrowDrawable().setColor(titleColor);
     }
 
     private void populateDrawerContents() {
@@ -176,6 +180,8 @@ public class CarRadioActivity extends AppCompatActivity implements
         super.onPostCreate(savedInstanceState);
         // Sync the toggle state after onRestoreInstanceState has occurred.
         mDrawerToggle.syncState();
+        // NOTE: isDrawerOpen must be passed the second child of the DrawerLayout.
+        setTitleAndArrowColor(mDrawerLayout.isDrawerOpen(mDrawerList));
     }
 
     @Override
