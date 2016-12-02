@@ -20,7 +20,6 @@ import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.hardware.radio.RadioManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -28,7 +27,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
@@ -50,7 +48,6 @@ import java.util.List;
 public class CarRadioActivity extends AppCompatActivity implements
         RadioPresetsFragment.PresetListExitListener,
         MainRadioFragment.RadioPresetListClickListener,
-        CarRadioMenu.ManualTunerStarter,
         ManualTunerFragment.ManualTunerCompletionListener {
     private static final String TAG = "Em.RadioActivity";
     private static final String MANUAL_TUNER_BACKSTACK = "ManualTunerBackstack";
@@ -72,7 +69,6 @@ public class CarRadioActivity extends AppCompatActivity implements
 
     private static final float COLOR_SWITCH_SLIDE_OFFSET = 0.25f;
 
-    private final DisplayMetrics displayMetrics = new DisplayMetrics();
     private RadioController mRadioController;
     private ListView mDrawerList;
     private DrawerLayout mDrawerLayout;
@@ -87,7 +83,6 @@ public class CarRadioActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         setContentView(R.layout.radio_activity);
         mRadioController = new RadioController(this);
         mDrawerList = (ListView)findViewById(R.id.left_drawer);
@@ -222,7 +217,6 @@ public class CarRadioActivity extends AppCompatActivity implements
         mCurrentFragment = mMainFragment;
     }
 
-    @Override
     public void startManualTuner() {
         if (mTunerOpened) {
             return;
