@@ -15,24 +15,8 @@ limitations under the License.
 -->
 <resources>
     <!-- The theme of the main radio display. -->
-    <style name="CarRadioAppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="CarRadioAppTheme" parent="CarDrawerActivityTheme">
         <item name="android:statusBarColor">@color/car_radio_bg_color</item>
         <item name="colorAccent">@color/car_radio_accent_color</item>
-
-        <!-- Allow for shared element transitions. -->
-        <item name="android:windowContentTransitions">true</item>
-
-        <item name="drawerArrowStyle">@style/RadioDrawerArrowStyle</item>
-    </style>
-
-    <style name="RadioDrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">
-        <item name="color">@color/car_title_light</item>
-        <item name="spinBars">true</item>
-        <item name="barLength">40dp</item>
-        <item name="thickness">3dp</item>
-        <item name="gapBetweenBars">6dp</item>
-        <item name="arrowShaftLength">34dp</item>
-        <item name="arrowHeadLength">18dp</item>
-        <item name="drawableSize">@dimen/car_drawer_header_menu_button_size</item>
     </style>
 </resources>

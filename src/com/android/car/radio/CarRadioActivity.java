@@ -19,23 +19,17 @@ package com.android.car.radio;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.hardware.radio.RadioManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
+import com.android.car.app.CarDrawerActivity;
 import com.android.car.radio.service.RadioStation;
 
 import java.util.LinkedList;
@@ -45,7 +39,7 @@ import java.util.List;
  * The main activity for the radio. This activity initializes the radio controls and listener for
  * radio changes.
  */
-public class CarRadioActivity extends AppCompatActivity implements
+public class CarRadioActivity extends CarDrawerActivity implements
         RadioPresetsFragment.PresetListExitListener,
         MainRadioFragment.RadioPresetListClickListener,
         ManualTunerFragment.ManualTunerCompletionListener {
@@ -67,13 +61,8 @@ public class CarRadioActivity extends AppCompatActivity implements
     private static final String EXTRA_RADIO_APP_FOREGROUND
             = "android.intent.action.RADIO_APP_STATE";
 
-    private static final float COLOR_SWITCH_SLIDE_OFFSET = 0.25f;
-
     private RadioController mRadioController;
     private ListView mDrawerList;
-    private DrawerLayout mDrawerLayout;
-    private Toolbar mToolbar;
-    private ActionBarDrawerToggle mDrawerToggle;
     private MainRadioFragment mMainFragment;
     private boolean mTunerOpened;
 
@@ -83,14 +72,8 @@ public class CarRadioActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.radio_activity);
         mRadioController = new RadioController(this);
-        mDrawerList = (ListView)findViewById(R.id.left_drawer);
-        mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
-        mToolbar = (Toolbar) findViewById(R.id.main_toolbar);
-        setSupportActionBar(mToolbar);
-
-        setupDrawerToggling();
+        mDrawerList = (ListView)getDrawerView();
         populateDrawerContents();
 
         mMainFragment = MainRadioFragment.newInstance(mRadioController);
@@ -99,41 +82,9 @@ public class CarRadioActivity extends AppCompatActivity implements
         mCurrentFragment = mMainFragment;
     }
 
-    // Consider moving this to support-lib.
-    private void setupDrawerToggling() {
-        mDrawerToggle = new ActionBarDrawerToggle(
-                this,                  /* host Activity */
-                mDrawerLayout,         /* DrawerLayout object */
-                // The string id's below are for accessibility. However
-                // since they won't be used in cars, we just pass app_name.
-                R.string.app_name,
-                R.string.app_name
-        );
-        mDrawerLayout.addDrawerListener(mDrawerToggle);
-        mDrawerLayout.addDrawerListener(new DrawerLayout.DrawerListener() {
-            @Override
-            public void onDrawerSlide(View drawerView, float slideOffset) {
-                setTitleAndArrowColor(slideOffset >= COLOR_SWITCH_SLIDE_OFFSET);
-            }
-            @Override
-            public void onDrawerOpened(View drawerView) {}
-            @Override
-            public void onDrawerClosed(View drawerView) {}
-            @Override
-            public void onDrawerStateChanged(int newState) {}
-        });
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setHomeButtonEnabled(true);
-    }
-
-    private void setTitleAndArrowColor(boolean drawerOpen) {
-        // When drawer open, use car_title, which resolves to appropriate color depending on
-        // day-night mode. When drawer is closed, we always use light color.
-        int titleColorResId =  drawerOpen ?
-                R.color.car_title : R.color.car_title_light;
-        int titleColor = getColor(titleColorResId);
-        mToolbar.setTitleTextColor(titleColor);
-        mDrawerToggle.getDrawerArrowDrawable().setColor(titleColor);
+    @Override
+    protected int getDrawerContentLayoutId() {
+        return R.layout.radio_drawer_list;
     }
 
     private void populateDrawerContents() {
@@ -159,7 +110,7 @@ public class CarRadioActivity extends AppCompatActivity implements
                 };
         mDrawerList.setAdapter(drawerAdapter);
         mDrawerList.setOnItemClickListener((parent, view, position, id) -> {
-            mDrawerLayout.closeDrawer(Gravity.LEFT);
+            closeDrawer();
             if (position < SUPPORTED_RADIO_BANDS.length) {
                 mRadioController.openRadioBand(SUPPORTED_RADIO_BANDS[position]);
             } else if (position == SUPPORTED_RADIO_BANDS.length) {
@@ -168,33 +119,6 @@ public class CarRadioActivity extends AppCompatActivity implements
                 Log.w(TAG, "Unexpected position: " + position);
             }
         });
-    }
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        // Sync the toggle state after onRestoreInstanceState has occurred.
-        mDrawerToggle.syncState();
-        // NOTE: isDrawerOpen must be passed the second child of the DrawerLayout.
-        setTitleAndArrowColor(mDrawerLayout.isDrawerOpen(mDrawerList));
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        // Pass any configuration change to the drawer toggls
-        mDrawerToggle.onConfigurationChanged(newConfig);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Pass the event to ActionBarDrawerToggle, if it returns
-        // true, then it has handled the app icon touch event
-        if (mDrawerToggle.onOptionsItemSelected(item)) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -231,7 +155,7 @@ public class CarRadioActivity extends AppCompatActivity implements
         getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(R.anim.slide_up, R.anim.slide_down,
                         R.anim.slide_up, R.anim.slide_down)
-                .add(R.id.content_frame, fragment)
+                .add(getContentContainerId(), fragment)
                 .addToBackStack(MANUAL_TUNER_BACKSTACK)
                 .commitAllowingStateLoss();
 
@@ -293,7 +217,7 @@ public class CarRadioActivity extends AppCompatActivity implements
 
     private void setContentFragment(Fragment fragment) {
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.content_frame, fragment)
+                .replace(getContentContainerId(), fragment)
                 .commit();
     }
 }

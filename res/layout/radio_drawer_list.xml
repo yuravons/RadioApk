@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ListView that will be inflated in the Drawer by CarRadioActivity -->
+<ListView xmlns:android="http://schemas.android.com/apk/res/android"
+          android:orientation="vertical"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:layout_marginEnd="96dp"
+          android:layout_gravity="start"
+          android:choiceMode="singleChoice"
+          android:divider="@color/car_list_divider"
+          android:dividerHeight="@dimen/car_divider_height"
+          android:background="@color/car_card"
+          android:paddingTop="@dimen/lens_header_height"/>
