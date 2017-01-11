@@ -16,20 +16,18 @@
 
 package com.android.car.radio;
 
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.content.Intent;
 import android.hardware.radio.RadioManager;
 import android.os.Bundle;
+import android.support.car.ui.PagedListView;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
-import android.widget.ListView;
 
 import com.android.car.app.CarDrawerActivity;
+import com.android.car.app.DrawerItemClickListener;
+import com.android.car.app.DrawerItemViewHolder;
 import com.android.car.radio.service.RadioStation;
 
 import java.util.LinkedList;
@@ -62,7 +60,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
             = "android.intent.action.RADIO_APP_STATE";
 
     private RadioController mRadioController;
-    private ListView mDrawerList;
+    private PagedListView mDrawerList;
     private MainRadioFragment mMainFragment;
     private boolean mTunerOpened;
 
@@ -73,18 +71,13 @@ public class CarRadioActivity extends CarDrawerActivity implements
         super.onCreate(savedInstanceState);
 
         mRadioController = new RadioController(this);
-        mDrawerList = (ListView)getDrawerView();
+        mDrawerList = getDrawerListView();
         populateDrawerContents();
 
         mMainFragment = MainRadioFragment.newInstance(mRadioController);
         mMainFragment.setPresetListClickListener(this);
         setContentFragment(mMainFragment);
         mCurrentFragment = mMainFragment;
-    }
-
-    @Override
-    protected int getDrawerContentLayoutId() {
-        return R.layout.radio_drawer_list;
     }
 
     private void populateDrawerContents() {
@@ -96,20 +89,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
         }
         drawerOptions.add(getString(R.string.manual_tuner_drawer_entry));
 
-        ListAdapter drawerAdapter =
-                new ArrayAdapter<String>(this, R.layout.car_list_item_1, R.id.text, drawerOptions) {
-                    @Override
-                    public View getView(int position, @Nullable View convertView,
-                            @NonNull ViewGroup parent) {
-                        View view = super.getView(position, convertView, parent);
-                        // We need this hack since car_list_item1 produces focusable views and that
-                        // prevents the onItemClickListener from working.
-                        view.setFocusable(false);
-                        return view;
-                    }
-                };
-        mDrawerList.setAdapter(drawerAdapter);
-        mDrawerList.setOnItemClickListener((parent, view, position, id) -> {
+        mDrawerList.setAdapter(new RadioDrawerAdapter(drawerOptions, (position) -> {
             closeDrawer();
             if (position < SUPPORTED_RADIO_BANDS.length) {
                 mRadioController.openRadioBand(SUPPORTED_RADIO_BANDS[position]);
@@ -118,7 +98,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
             } else {
                 Log.w(TAG, "Unexpected position: " + position);
             }
-        });
+        }));
     }
 
     @Override
@@ -130,7 +110,6 @@ public class CarRadioActivity extends CarDrawerActivity implements
         fragment.setPresetListExitListener(this);
 
         setContentFragment(fragment);
-
         mCurrentFragment = fragment;
     }
 
@@ -220,4 +199,38 @@ public class CarRadioActivity extends CarDrawerActivity implements
                 .replace(getContentContainerId(), fragment)
                 .commit();
     }
+
+    private static class RadioDrawerAdapter extends RecyclerView.Adapter<DrawerItemViewHolder>
+            implements PagedListView.ItemCap {
+        private final List<String> mDrawerOptions;
+        private final DrawerItemClickListener mDrawerItemClickListener;
+        private int mMaxItems = -1;
+
+        RadioDrawerAdapter(List<String> drawerOptions, DrawerItemClickListener listener) {
+            mDrawerOptions = drawerOptions;
+            mDrawerItemClickListener = listener;
+        }
+
+        @Override
+        public DrawerItemViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            return DrawerItemViewHolder.create(parent, mDrawerItemClickListener);
+        }
+
+        @Override
+        public void onBindViewHolder(DrawerItemViewHolder holder, int position) {
+            holder.getText().setText(mDrawerOptions.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return mMaxItems >= 0
+                    ? Math.min(mMaxItems, mDrawerOptions.size()) : mDrawerOptions.size();
+        }
+
+        @Override
+        public void setMaxItems(int maxItems) {
+            mMaxItems = maxItems;
+        }
+    }
+
 }
