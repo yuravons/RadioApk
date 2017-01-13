@@ -218,7 +218,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
 
         @Override
         public void onBindViewHolder(DrawerItemViewHolder holder, int position) {
-            holder.getText().setText(mDrawerOptions.get(position));
+            holder.getTitle().setText(mDrawerOptions.get(position));
         }
 
         @Override
