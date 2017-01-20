@@ -19,18 +19,16 @@ package com.android.car.radio;
 import android.content.Intent;
 import android.hardware.radio.RadioManager;
 import android.os.Bundle;
-import android.support.car.ui.PagedListView;
 import android.support.v4.app.Fragment;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.ViewGroup;
 
 import com.android.car.app.CarDrawerActivity;
-import com.android.car.app.DrawerItemClickListener;
+import com.android.car.app.CarDrawerAdapter;
+import com.android.car.app.CarDrawerListAdapter;
 import com.android.car.app.DrawerItemViewHolder;
 import com.android.car.radio.service.RadioStation;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -60,7 +58,6 @@ public class CarRadioActivity extends CarDrawerActivity implements
             = "android.intent.action.RADIO_APP_STATE";
 
     private RadioController mRadioController;
-    private PagedListView mDrawerList;
     private MainRadioFragment mMainFragment;
     private boolean mTunerOpened;
 
@@ -71,34 +68,15 @@ public class CarRadioActivity extends CarDrawerActivity implements
         super.onCreate(savedInstanceState);
 
         mRadioController = new RadioController(this);
-        mDrawerList = getDrawerListView();
-        populateDrawerContents();
-
         mMainFragment = MainRadioFragment.newInstance(mRadioController);
         mMainFragment.setPresetListClickListener(this);
         setContentFragment(mMainFragment);
         mCurrentFragment = mMainFragment;
     }
 
-    private void populateDrawerContents() {
-        // The order of items in drawer is hardcoded. The OnItemClickListener depends on it.
-        List<String> drawerOptions = new LinkedList<>();
-        for (int band : SUPPORTED_RADIO_BANDS) {
-            String bandText = RadioChannelFormatter.formatRadioBand(this, band);
-            drawerOptions.add(bandText);
-        }
-        drawerOptions.add(getString(R.string.manual_tuner_drawer_entry));
-
-        mDrawerList.setAdapter(new RadioDrawerAdapter(drawerOptions, (position) -> {
-            closeDrawer();
-            if (position < SUPPORTED_RADIO_BANDS.length) {
-                mRadioController.openRadioBand(SUPPORTED_RADIO_BANDS[position]);
-            } else if (position == SUPPORTED_RADIO_BANDS.length) {
-                startManualTuner();
-            } else {
-                Log.w(TAG, "Unexpected position: " + position);
-            }
-        }));
+    @Override
+    protected CarDrawerAdapter getRootAdapter() {
+        return new RadioDrawerAdapter();
     }
 
     @Override
@@ -200,37 +178,46 @@ public class CarRadioActivity extends CarDrawerActivity implements
                 .commit();
     }
 
-    private static class RadioDrawerAdapter extends RecyclerView.Adapter<DrawerItemViewHolder>
-            implements PagedListView.ItemCap {
-        private final List<String> mDrawerOptions;
-        private final DrawerItemClickListener mDrawerItemClickListener;
-        private int mMaxItems = -1;
+    private class RadioDrawerAdapter extends CarDrawerListAdapter {
+        private final List<String> mDrawerOptions =
+                new ArrayList<>(SUPPORTED_RADIO_BANDS.length + 1);
 
-        RadioDrawerAdapter(List<String> drawerOptions, DrawerItemClickListener listener) {
-            mDrawerOptions = drawerOptions;
-            mDrawerItemClickListener = listener;
+        RadioDrawerAdapter() {
+            super(false);
+            // The ordering of options is hardcoded. The click handler below depends on it.
+            for (int band : SUPPORTED_RADIO_BANDS) {
+                String bandText =
+                        RadioChannelFormatter.formatRadioBand(CarRadioActivity.this, band);
+                mDrawerOptions.add(bandText);
+            }
+            mDrawerOptions.add(getString(R.string.manual_tuner_drawer_entry));
         }
 
         @Override
-        public DrawerItemViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            return DrawerItemViewHolder.create(parent, mDrawerItemClickListener);
+        protected int getActualItemCount() {
+            return mDrawerOptions.size();
         }
 
         @Override
-        public void onBindViewHolder(DrawerItemViewHolder holder, int position) {
+        protected int getTitleResId() {
+            return R.string.app_name;
+        }
+
+        @Override
+        public void populateViewHolder(DrawerItemViewHolder holder, int position) {
             holder.getTitle().setText(mDrawerOptions.get(position));
         }
 
         @Override
-        public int getItemCount() {
-            return mMaxItems >= 0
-                    ? Math.min(mMaxItems, mDrawerOptions.size()) : mDrawerOptions.size();
-        }
-
-        @Override
-        public void setMaxItems(int maxItems) {
-            mMaxItems = maxItems;
+        public void onItemClick(int position) {
+            closeDrawer();
+            if (position < SUPPORTED_RADIO_BANDS.length) {
+                mRadioController.openRadioBand(SUPPORTED_RADIO_BANDS[position]);
+            } else if (position == SUPPORTED_RADIO_BANDS.length) {
+                startManualTuner();
+            } else {
+                Log.w(TAG, "Unexpected position: " + position);
+            }
         }
     }
-
 }
