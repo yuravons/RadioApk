@@ -24,7 +24,6 @@ import android.util.Log;
 
 import com.android.car.app.CarDrawerActivity;
 import com.android.car.app.CarDrawerAdapter;
-import com.android.car.app.CarDrawerListAdapter;
 import com.android.car.app.DrawerItemViewHolder;
 import com.android.car.radio.service.RadioStation;
 
@@ -178,12 +177,14 @@ public class CarRadioActivity extends CarDrawerActivity implements
                 .commit();
     }
 
-    private class RadioDrawerAdapter extends CarDrawerListAdapter {
+    private class RadioDrawerAdapter extends CarDrawerAdapter {
         private final List<String> mDrawerOptions =
                 new ArrayList<>(SUPPORTED_RADIO_BANDS.length + 1);
 
         RadioDrawerAdapter() {
-            super(false);
+            super(CarRadioActivity.this,
+                    false /* showDisabledListOnEmpty */,
+                    true /* useSmallLayout */ );
             // The ordering of options is hardcoded. The click handler below depends on it.
             for (int band : SUPPORTED_RADIO_BANDS) {
                 String bandText =
