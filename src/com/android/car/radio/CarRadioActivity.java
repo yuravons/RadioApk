@@ -185,6 +185,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
             super(CarRadioActivity.this,
                     false /* showDisabledListOnEmpty */,
                     true /* useSmallLayout */ );
+            setTitle(getString(R.string.app_name));
             // The ordering of options is hardcoded. The click handler below depends on it.
             for (int band : SUPPORTED_RADIO_BANDS) {
                 String bandText =
@@ -197,11 +198,6 @@ public class CarRadioActivity extends CarDrawerActivity implements
         @Override
         protected int getActualItemCount() {
             return mDrawerOptions.size();
-        }
-
-        @Override
-        protected int getTitleResId() {
-            return R.string.app_name;
         }
 
         @Override
