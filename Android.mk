@@ -32,8 +32,6 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_PRIVILEGED_MODULE := true
 
-include packages/apps/Car/libs/car-stream-ui-lib/car-stream-ui-lib.mk
-
 LOCAL_STATIC_JAVA_LIBRARIES += android-support-v4
 LOCAL_STATIC_JAVA_LIBRARIES += android-support-design
 LOCAL_STATIC_JAVA_LIBRARIES += car-stream-lib
@@ -53,6 +51,8 @@ LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_DEX_PREOPT := false
 
+include packages/apps/Car/libs/car-stream-ui-lib/car-stream-ui-lib.mk
+include packages/apps/Car/libs/car-apps-common/car-apps-common.mk
 include packages/services/Car/car-support-lib/car-support.mk
 
 include $(BUILD_PACKAGE)

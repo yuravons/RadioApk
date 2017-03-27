@@ -23,13 +23,13 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.os.Bundle;
-import android.support.car.ui.PagedListView;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import com.android.car.view.PagedListView;
 import com.android.car.radio.service.RadioStation;
 
 import java.util.List;
