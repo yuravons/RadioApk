@@ -276,7 +276,7 @@ public class RadioPresetsFragment extends Fragment implements
     }
 
     /**
-     * A {@link android.support.car.ui.PagedListView.Decoration} that draws a line between
+     * A {@link com.android.car.view.PagedListView.Decoration} that draws a line between
      * the items.
      */
     public static class ItemSpacingDecoration extends PagedListView.Decoration {
