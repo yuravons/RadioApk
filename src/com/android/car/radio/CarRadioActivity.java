@@ -182,9 +182,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
                 new ArrayList<>(SUPPORTED_RADIO_BANDS.length + 1);
 
         RadioDrawerAdapter() {
-            super(CarRadioActivity.this,
-                    false /* showDisabledListOnEmpty */,
-                    true /* useSmallLayout */ );
+            super(CarRadioActivity.this, false /* showDisabledListOnEmpty */);
             setTitle(getString(R.string.app_name));
             // The ordering of options is hardcoded. The click handler below depends on it.
             for (int band : SUPPORTED_RADIO_BANDS) {
