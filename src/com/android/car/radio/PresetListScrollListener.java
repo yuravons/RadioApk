@@ -47,7 +47,8 @@ public class PresetListScrollListener extends RecyclerView.OnScrollListener {
         mRemoveElevationAnimator = ValueAnimator.ofFloat(mContainerElevation, 0.f);
         mRemoveElevationAnimator
                 .setDuration(ANIMATION_DURATION_MS)
-                .addUpdateListener(mElevationUpdateListener);
+                .addUpdateListener(animation -> mCurrentRadioCardContainer.setElevation(
+                        (float) animation.getAnimatedValue()));
     }
 
     @Override
@@ -66,15 +67,4 @@ public class PresetListScrollListener extends RecyclerView.OnScrollListener {
             mCurrentRadioCard.setTranslationZ(mContainerElevation);
         }
     }
-
-    /**
-     * {@link android.animation.ValueAnimator.AnimatorUpdateListener} that updates the elevation
-     * of the {@link #mCurrentRadioCardContainer}.
-     */
-    private final ValueAnimator.AnimatorUpdateListener mElevationUpdateListener =
-            new ValueAnimator.AnimatorUpdateListener() {
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    mCurrentRadioCardContainer.setElevation((float) animation.getAnimatedValue());
-                }
-            };
 }

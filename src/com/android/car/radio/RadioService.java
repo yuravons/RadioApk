@@ -137,7 +137,7 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
     /**
      * Initializes this service to use a demo {@link IRadioManager}.
      *
-     * @see {@link RadioDemo}
+     * @see RadioDemo
      */
     private void initializeDemo() {
         if (Log.isLoggable(TAG, Log.DEBUG)) {

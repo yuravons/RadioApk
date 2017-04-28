@@ -29,8 +29,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import com.android.car.view.PagedListView;
+
 import com.android.car.radio.service.RadioStation;
+import com.android.car.view.PagedListView;
 
 import java.util.List;
 
@@ -78,13 +79,6 @@ public class RadioPresetsFragment extends Fragment implements
         mRadioController = radioController;
     }
 
-    /**
-     * Sets the lsitener that will be notified when the preset list should be closed.
-     */
-    public void setPresetListExitListener(PresetListExitListener listener) {
-        mPresetListExitListener = listener;
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
@@ -104,7 +98,7 @@ public class RadioPresetsFragment extends Fragment implements
             mAnimManager.playExitAnimation(RadioPresetsFragment.this /* listener */);
         });
 
-        mPresetsList = (PagedListView) mRootView.findViewById(R.id.presets_list);
+        mPresetsList = mRootView.findViewById(R.id.presets_list);
         mPresetsList.setLightMode();
         mPresetsList.setDefaultItemDecoration(new ItemSpacingDecoration(context));
         mPresetsList.setAdapter(mPresetsAdapter);
@@ -320,9 +314,11 @@ public class RadioPresetsFragment extends Fragment implements
      * @param radioController The {@link RadioController} that is responsible for updating the UI
      *                        of the returned fragment.
      */
-    public static RadioPresetsFragment newInstance(RadioController radioController) {
+    public static RadioPresetsFragment newInstance(RadioController radioController,
+            PresetListExitListener existListener) {
         RadioPresetsFragment fragment = new RadioPresetsFragment();
         fragment.setRadioController(radioController);
+        fragment.mPresetListExitListener = existListener;
 
         return fragment;
     }

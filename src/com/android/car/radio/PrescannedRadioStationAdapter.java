@@ -22,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import com.android.car.radio.service.RadioStation;
 
 import java.util.List;
@@ -157,8 +158,8 @@ public class PrescannedRadioStationAdapter extends CarouselView.Adapter {
             return;
         }
 
-        TextView radioChannel = (TextView) view.findViewById(R.id.radio_list_station_channel);
-        TextView radioBandView = (TextView) view.findViewById(R.id.radio_list_station_band);
+        TextView radioChannel = view.findViewById(R.id.radio_list_station_channel);
+        TextView radioBandView = view.findViewById(R.id.radio_list_station_band);
 
         RadioStation station = mStations.get(position);
 
