@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+ifneq ($(TARGET_BUILD_PDK), true)
+
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
@@ -56,3 +58,5 @@ include packages/apps/Car/libs/car-apps-common/car-apps-common.mk
 include packages/services/Car/car-support-lib/car-support.mk
 
 include $(BUILD_PACKAGE)
+
+endif
