@@ -24,6 +24,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-Iaidl-files-unde
 LOCAL_AIDL_INCLUDES := $(call all-Iaidl-files-under, src)
 
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
+LOCAL_RESOURCE_DIR += frameworks/support/core-ui/res
 LOCAL_RESOURCE_DIR += frameworks/support/design/res
 
 LOCAL_PACKAGE_NAME := CarRadioApp
@@ -39,6 +40,7 @@ LOCAL_STATIC_JAVA_LIBRARIES += android-support-design
 LOCAL_STATIC_JAVA_LIBRARIES += car-stream-lib
 LOCAL_STATIC_JAVA_LIBRARIES += car-radio-service
 
+LOCAL_AAPT_FLAGS += --extra-packages android.support.coreui
 LOCAL_AAPT_FLAGS += --extra-packages android.support.design
 LOCAL_AAPT_FLAGS += --extra-packages com.android.car.radio.service
 
