@@ -92,10 +92,6 @@ limitations under the License.
     <!-- The padding of the play button in the radio in the presets activity. -->
     <dimen name="car_presets_play_button_padding">16dp</dimen>
 
-    <!-- The corner radius for the cards in the preset list. This corner is only present on the
-         first and last card in the list and on the top and bottom respectively. -->
-    <dimen name="car_preset_card_radius">16dp</dimen>
-
     <!-- The size of the equalizer next to a preset item that indicates it is the currently
          playing radio station. -->
     <dimen name="preset_equalizer_size">60dp</dimen>
