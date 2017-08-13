@@ -25,6 +25,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import com.android.car.radio.service.RadioStation;
+import com.android.car.view.CardListBackgroundResolver;
 
 /**
  * A {@link RecyclerView.ViewHolder} that can bind a {@link RadioStation} to the layout
@@ -99,7 +100,7 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
             return;
         }
 
-        setPresetCardBackground(itemCount);
+        CardListBackgroundResolver.setBackground(mPresetsCard, getAdapterPosition(), itemCount);
 
         String channelNumber = RadioChannelFormatter.formatRadioChannel(preset.getRadioBand(),
                 preset.getChannelNumber());
@@ -119,31 +120,6 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
                     R.string.radio_default_preset_metadata_text, getAdapterPosition() + 1));
         } else {
             mPresetItemMetadata.setText(metadata.trim());
-        }
-    }
-
-    /**
-     * Sets the appropriate background on the card containing the preset information. The cards
-     * need to have rounded corners depending on its position in the list and the number of items
-     * in the list.
-     */
-    private void setPresetCardBackground(int itemCount) {
-        int position = getAdapterPosition();
-
-        // Correctly set the background for each card. Only the top and last card should
-        // have rounded corners.
-        if (itemCount == 1) {
-            // One card - all corners are rounded
-            mPresetsCard.setBackgroundResource(R.drawable.preset_item_card_rounded_bg);
-        } else if (position == 0) {
-            // First card gets rounded top
-            mPresetsCard.setBackgroundResource(R.drawable.preset_item_card_rounded_top_bg);
-        } else if (position == itemCount - 1) {
-            // Last one has a rounded bottom
-            mPresetsCard.setBackgroundResource(R.drawable.preset_item_card_rounded_bottom_bg);
-        } else {
-            // Middle have no rounded corners
-            mPresetsCard.setBackgroundResource(R.color.car_card);
         }
     }
 }
