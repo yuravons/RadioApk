@@ -48,7 +48,7 @@ limitations under the License.
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        app:offsetRows="true"
+        app:offsetRows="false"
         app:showDivider="true"
         app:dividerStartMargin="@dimen/stream_card_keyline_3"
         app:alignDividerEndTo="@id/preset_card"

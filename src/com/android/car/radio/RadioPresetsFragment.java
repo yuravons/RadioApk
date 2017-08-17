@@ -44,7 +44,6 @@ public class RadioPresetsFragment extends Fragment implements
     private static final String TAG = "PresetsFragment";
     private static final int ANIM_DURATION_MS = 200;
 
-    private View mRootView;
     private View mCurrentRadioCard;
 
     private RadioStorage mRadioStorage;
@@ -79,34 +78,34 @@ public class RadioPresetsFragment extends Fragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        mRootView = inflater.inflate(R.layout.radio_presets_list, container, false);
+        return inflater.inflate(R.layout.radio_presets_list, container, false);
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
         Context context = getContext();
 
         mPresetsAdapter.setOnPresetItemClickListener(this);
 
-        mCurrentRadioCard = mRootView.findViewById(R.id.current_radio_station_card);
+        mCurrentRadioCard = view.findViewById(R.id.current_radio_station_card);
 
-        mAnimManager = new RadioAnimationManager(getContext(), mRootView);
+        mAnimManager = new RadioAnimationManager(getContext(), view);
         mAnimManager.playEnterAnimation();
 
         // Clicking on the current radio station card will close the activity and return to the
         // main radio screen.
-        mCurrentRadioCard.setOnClickListener(v -> {
-            mAnimManager.playExitAnimation(RadioPresetsFragment.this /* listener */);
-        });
+        mCurrentRadioCard.setOnClickListener(
+                v -> mAnimManager.playExitAnimation(RadioPresetsFragment.this /* listener */));
 
-        mPresetsList = mRootView.findViewById(R.id.presets_list);
+        mPresetsList = view.findViewById(R.id.presets_list);
         mPresetsList.setLightMode();
         mPresetsList.setAdapter(mPresetsAdapter);
-        mPresetsList.getLayoutManager().setOffsetRows(false);
         mPresetsList.getRecyclerView().addOnScrollListener(new PresetListScrollListener(
-                context, mRootView, mCurrentRadioCard, mPresetsList));
+                context, view, mCurrentRadioCard, mPresetsList));
 
         mRadioStorage = RadioStorage.getInstance(context);
         mRadioStorage.addPresetsChangeListener(this);
         setPresetsOnList(mRadioStorage.getPresets());
-
-        return mRootView;
     }
 
     @Override
@@ -204,7 +203,7 @@ public class RadioPresetsFragment extends Fragment implements
     @Override
     public void onStart() {
         super.onStart();
-        mRadioController.initialize(mRootView);
+        mRadioController.initialize(getView());
         mRadioController.setShouldColorStatusBar(true);
         mRadioController.setRadioStationChangeListener(this);
 
