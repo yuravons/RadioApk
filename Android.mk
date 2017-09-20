@@ -23,9 +23,10 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-Iaidl-files-under, src)
 LOCAL_AIDL_INCLUDES := $(call all-Iaidl-files-under, src)
 
-LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
-LOCAL_RESOURCE_DIR += frameworks/support/core-ui/res
-LOCAL_RESOURCE_DIR += frameworks/support/design/res
+LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res \
+    frameworks/support/car/res \
+    frameworks/support/core-ui/res \
+    frameworks/support/design/res
 
 LOCAL_PACKAGE_NAME := CarRadioApp
 
@@ -35,14 +36,16 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_PRIVILEGED_MODULE := true
 
-LOCAL_STATIC_JAVA_LIBRARIES += android-support-v4
-LOCAL_STATIC_JAVA_LIBRARIES += android-support-design
-LOCAL_STATIC_JAVA_LIBRARIES += car-stream-lib
-LOCAL_STATIC_JAVA_LIBRARIES += car-radio-service
+LOCAL_STATIC_JAVA_LIBRARIES += android-support-v4 \
+    android-support-design \
+    android-support-car \
+    car-stream-lib \
+    car-radio-service
 
-LOCAL_AAPT_FLAGS += --extra-packages android.support.coreui
-LOCAL_AAPT_FLAGS += --extra-packages android.support.design
-LOCAL_AAPT_FLAGS += --extra-packages com.android.car.radio.service
+LOCAL_AAPT_FLAGS += --extra-packages android.support.coreui \
+    --extra-packages android.support.car \
+    --extra-packages android.support.design \
+    --extra-packages com.android.car.radio.service
 
 # Include support-v7-appcompat, if not already included
 ifeq (,$(findstring android-support-v7-appcompat,$(LOCAL_STATIC_JAVA_LIBRARIES)))
