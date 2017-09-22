@@ -72,7 +72,7 @@ limitations under the License.
             android:alpha="0" >
 
             <!-- This wrapping RelativeLayout ensures both the band and channel are centered
-                 within the StreamCardView. A RelativeLayout is used instead of something
+                 within the CardView. A RelativeLayout is used instead of something
                  more light-weight so that the band can align to the baseline of the
                  channel. -->
             <RelativeLayout
