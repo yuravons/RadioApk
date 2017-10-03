@@ -54,7 +54,7 @@ limitations under the License.
         app:alignDividerEndTo="@id/preset_card"
         app:alignDividerStartTo="@id/preset_card" />
 
-    <android.support.v7.widget.CardView
+    <android.support.car.widget.ColumnCardView
         android:id="@+id/current_radio_station_card"
         android:layout_gravity="bottom|center_horizontal"
         android:layout_width="match_parent"
@@ -72,7 +72,7 @@ limitations under the License.
             android:alpha="0" >
 
             <!-- This wrapping RelativeLayout ensures both the band and channel are centered
-                 within the CardView. A RelativeLayout is used instead of something
+                 within the ColumnCardView. A RelativeLayout is used instead of something
                  more light-weight so that the band can align to the baseline of the
                  channel. -->
             <RelativeLayout
@@ -127,5 +127,5 @@ limitations under the License.
         </RelativeLayout>
 
         <include layout="@layout/radio_controls" />
-    </android.support.v7.widget.CardView>
+    </android.support.car.widget.ColumnCardView>
 </FrameLayout>
