@@ -18,9 +18,9 @@ package com.android.car.radio;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.support.car.widget.PagedListView;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import com.android.car.view.PagedListView;
 
 /**
  * Listener on the preset list that will add elevation on the container holding the current

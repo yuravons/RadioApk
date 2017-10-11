@@ -25,8 +25,8 @@ import android.content.res.Resources;
 import android.graphics.Point;
 import android.support.annotation.NonNull;
 import android.support.car.utils.ColumnCalculator;
-import android.support.car.widget.ColumnCardView;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
+import android.support.v7.widget.CardView;
 import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
@@ -66,7 +66,7 @@ public class RadioAnimationManager {
     private final int mPresetContainerHeight;
 
     private final View mContainer;
-    private final ColumnCardView mRadioCard;
+    private final CardView mRadioCard;
     private final View mRadioCardContainer;
     private final View mFab;
     private final View mPresetFab;
@@ -90,6 +90,7 @@ public class RadioAnimationManager {
         mScreenWidth = size.x;
 
         Resources res = mContext.getResources();
+        mCardColumnSpan = res.getInteger(R.integer.column_card_default_column_span);
         mCornerRadius = res.getDimensionPixelSize(R.dimen.car_preset_item_radius);
         mActionPanelHeight = res.getDimensionPixelSize(R.dimen.action_panel_height);
         mPresetFinalHeight = res.getDimensionPixelSize(R.dimen.car_preset_item_height);
@@ -98,7 +99,6 @@ public class RadioAnimationManager {
         mPresetContainerHeight = res.getDimensionPixelSize(R.dimen.car_preset_container_height);
 
         mRadioCard = container.findViewById(R.id.current_radio_station_card);
-        mCardColumnSpan = mRadioCard.getColumnSpan();
 
         mRadioCardContainer = container.findViewById(R.id.preset_current_card_container);
         mFab = container.findViewById(R.id.radio_play_button);

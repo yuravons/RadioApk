@@ -21,6 +21,8 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.car.widget.DayNightStyle;
+import android.support.car.widget.PagedListView;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,7 +30,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.android.car.radio.service.RadioStation;
-import com.android.car.view.PagedListView;
 
 import java.util.List;
 
@@ -98,7 +99,7 @@ public class RadioPresetsFragment extends Fragment implements
                 v -> mAnimManager.playExitAnimation(RadioPresetsFragment.this /* listener */));
 
         mPresetsList = view.findViewById(R.id.presets_list);
-        mPresetsList.setLightMode();
+        mPresetsList.setDayNightStyle(DayNightStyle.FORCE_NIGHT);
         mPresetsList.setAdapter(mPresetsAdapter);
         mPresetsList.getRecyclerView().addOnScrollListener(new PresetListScrollListener(
                 context, view, mCurrentRadioCard, mPresetsList));
