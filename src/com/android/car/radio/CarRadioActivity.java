@@ -20,13 +20,13 @@ import android.content.Intent;
 import android.hardware.radio.RadioManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.car.drawer.CarDrawerActivity;
+import android.support.car.drawer.CarDrawerAdapter;
+import android.support.car.drawer.DrawerItemViewHolder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
 
-import com.android.car.app.CarDrawerActivity;
-import com.android.car.app.CarDrawerAdapter;
-import com.android.car.app.DrawerItemViewHolder;
 import com.android.car.radio.service.RadioStation;
 
 import java.util.ArrayList;
@@ -249,7 +249,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
 
         @Override
         public void onItemClick(int position) {
-            closeDrawer();
+            getDrawerController().closeDrawer();
             if (position < SUPPORTED_RADIO_BANDS.length) {
                 mRadioController.openRadioBand(SUPPORTED_RADIO_BANDS[position]);
             } else if (position == SUPPORTED_RADIO_BANDS.length) {
