@@ -136,5 +136,5 @@ limitations under the License.
 
     <!-- The size of the container that houses the back button in the manual tuner. The back button
          is centered within this container. -->
-    <dimen name="manual_tuner_back_button_container_size">@dimen/stream_content_keyline_2</dimen>
+    <dimen name="manual_tuner_back_button_container_size">@dimen/car_keyline_2</dimen>
 </resources>

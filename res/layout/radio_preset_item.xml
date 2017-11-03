@@ -19,16 +19,16 @@ limitations under the License.
     android:layout_height="@dimen/car_preset_item_height"
     android:orientation="horizontal" >
 
-    <!-- This FrameLayout ensures that the preset_item_metadata starts at stream_card_keyline_3
-         while the radio_station_channels starts at stream_card_keyline_1. -->
+    <!-- This FrameLayout ensures that the preset_item_metadata starts at car_keyline_3
+         while the radio_station_channels starts at car_keyline_1. -->
     <FrameLayout
-        android:layout_width="@dimen/stream_card_keyline_3"
+        android:layout_width="@dimen/car_keyline_3"
         android:layout_height="match_parent">
 
         <TextView
             android:id="@+id/preset_station_channel"
             android:background="@drawable/preset_channel_bg"
-            android:layout_marginStart="@dimen/stream_card_keyline_1"
+            android:layout_marginStart="@dimen/car_keyline_1"
             android:layout_width="@dimen/car_preset_number_bg_width"
             android:layout_height="@dimen/car_preset_number_bg_height"
             android:layout_gravity="center_vertical"
@@ -51,7 +51,7 @@ limitations under the License.
         android:layout_width="@dimen/preset_equalizer_size"
         android:layout_height="@dimen/preset_equalizer_size"
         android:layout_gravity="center_vertical"
-        android:layout_marginEnd="@dimen/stream_card_keyline_1"
+        android:layout_marginEnd="@dimen/car_keyline_1"
         android:src="@drawable/ic_equalizer"
         android:visibility="gone" />
 
