@@ -112,7 +112,7 @@ limitations under the License.
     <dimen name="manual_tuner_channel_text_size">96sp</dimen>
 
     <!-- The height of the container corresponding to manual_tuner_container_width. This height
-         should equal to the height of the dialpad. This is equal to 4 * stream_button_size +
+         should equal to the height of the dialpad. This is equal to 4 * car_touch_target +
          3 * manual_tuner_dialpad_vertical_spacing. -->
     <dimen name="manual_tuner_container_height">288dp</dimen>
 

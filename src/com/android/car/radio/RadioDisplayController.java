@@ -102,7 +102,7 @@ public class RadioDisplayController {
         mChannelList.setAdapter(adapter);
 
         Resources res = mContext.getResources();
-        int topOffset = res.getDimensionPixelSize(R.dimen.lens_header_height)
+        int topOffset = res.getDimensionPixelSize(R.dimen.car_app_bar_height)
                 + res.getDimensionPixelSize(R.dimen.car_radio_container_top_padding)
                 + res.getDimensionPixelSize(R.dimen.car_radio_station_top_margin);
 
