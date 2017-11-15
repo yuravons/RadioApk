@@ -36,22 +36,22 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_PRIVILEGED_MODULE := true
 
-LOCAL_STATIC_JAVA_LIBRARIES += android-support-v4 \
+LOCAL_USE_AAPT2 := true
+
+LOCAL_STATIC_ANDROID_LIBRARIES += \
+    android-support-v4 \
     android-support-design \
     android-support-car \
-    car-stream-lib \
     car-radio-service
 
-LOCAL_AAPT_FLAGS += --extra-packages android.support.coreui \
-    --extra-packages android.support.car \
-    --extra-packages android.support.design \
-    --extra-packages com.android.car.radio.service
+LOCAL_STATIC_JAVA_LIBRARIES += \
+    car-stream-lib
+
+LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 
 # Include support-v7-appcompat, if not already included
-ifeq (,$(findstring android-support-v7-appcompat,$(LOCAL_STATIC_JAVA_LIBRARIES)))
-LOCAL_RESOURCE_DIR += frameworks/support/v7/appcompat/res
-LOCAL_AAPT_FLAGS += --extra-packages android.support.v7.appcompat
-LOCAL_STATIC_JAVA_LIBRARIES += android-support-v7-appcompat
+ifeq (,$(findstring android-support-v7-appcompat,$(LOCAL_STATIC_ANDROID_LIBRARIES)))
+LOCAL_STATIC_ANDROID_LIBRARIES += android-support-v7-appcompat
 endif
 
 LOCAL_PROGUARD_ENABLED := disabled
