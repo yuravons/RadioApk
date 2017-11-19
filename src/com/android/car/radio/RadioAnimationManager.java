@@ -92,7 +92,7 @@ public class RadioAnimationManager {
         Resources res = mContext.getResources();
         mCardColumnSpan = res.getInteger(R.integer.column_card_default_column_span);
         mCornerRadius = res.getDimensionPixelSize(R.dimen.car_preset_item_radius);
-        mActionPanelHeight = res.getDimensionPixelSize(R.dimen.action_panel_height);
+        mActionPanelHeight = res.getDimensionPixelSize(R.dimen.car_action_bar_height);
         mPresetFinalHeight = res.getDimensionPixelSize(R.dimen.car_preset_item_height);
         mFabSize = res.getDimensionPixelSize(R.dimen.stream_fab_size);
         mPresetFabSize = res.getDimensionPixelSize(R.dimen.car_presets_play_button_size);

@@ -31,7 +31,7 @@ limitations under the License.
         android:gravity="center"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingBottom="@dimen/action_panel_height"
+        android:paddingBottom="@dimen/car_action_bar_height"
         android:visibility="gone"
         android:orientation="vertical" >
 
@@ -69,7 +69,7 @@ limitations under the License.
                 android:layout_alignParentStart="true"
                 android:layout_width="@dimen/car_radio_metadata_container_width"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/lens_header_height"
+                android:layout_marginTop="@dimen/car_app_bar_height"
                 android:paddingTop="@dimen/car_radio_container_top_padding"
                 android:orientation="vertical">
 
@@ -106,7 +106,7 @@ limitations under the License.
             <ViewStub
                 android:id="@+id/single_channel_view_stub"
                 android:layout="@layout/radio_single_channel"
-                android:layout_marginTop="@dimen/lens_header_height"
+                android:layout_marginTop="@dimen/car_app_bar_height"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </RelativeLayout>
@@ -116,7 +116,7 @@ limitations under the License.
             android:layout_gravity="center_horizontal"
             android:transitionName="@string/radio_controls_transition_name"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/action_panel_height"
+            android:layout_height="@dimen/car_action_bar_height"
             app:cardBackgroundColor="@color/car_card" >
 
             <include layout="@layout/radio_controls" />

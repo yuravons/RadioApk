@@ -80,8 +80,8 @@ limitations under the License.
     <!-- The style for the text in the manual tuner dialpad. -->
     <style name="ManualTunerText">
         <item name="android:background">@drawable/radio_control_background</item>
-        <item name="android:layout_height">@dimen/stream_button_size</item>
-        <item name="android:layout_width">@dimen/stream_button_size</item>
+        <item name="android:layout_height">@dimen/car_touch_target</item>
+        <item name="android:layout_width">@dimen/car_touch_target</item>
         <item name="android:gravity">center</item>
         <item name="android:textColor">@color/manual_tuner_button_text</item>
         <item name="android:textSize">@dimen/manual_tuner_dialpad_text_size</item>
@@ -100,7 +100,7 @@ limitations under the License.
     <!-- The text style for the text displaying the current channel that the user has typed. -->
     <style name="ManualTunerChannelText">
         <item name="android:textAllCaps">true</item>
-        <item name="android:textColor">@color/car_headline0</item>
+        <item name="android:textColor">@color/car_headline1</item>
         <item name="android:textSize">@dimen/manual_tuner_channel_text_size</item>
     </style>
 </resources>
