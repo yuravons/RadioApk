@@ -20,9 +20,6 @@ import android.content.Intent;
 import android.hardware.radio.RadioManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.car.drawer.CarDrawerActivity;
-import android.support.car.drawer.CarDrawerAdapter;
-import android.support.car.drawer.DrawerItemViewHolder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
@@ -31,6 +28,10 @@ import com.android.car.radio.service.RadioStation;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.car.drawer.CarDrawerActivity;
+import androidx.car.drawer.CarDrawerAdapter;
+import androidx.car.drawer.DrawerItemViewHolder;
 
 /**
  * The main activity for the radio. This activity initializes the radio controls and listener for
