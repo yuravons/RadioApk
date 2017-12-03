@@ -39,9 +39,6 @@ LOCAL_STATIC_ANDROID_LIBRARIES += \
     android-support-car \
     car-radio-service
 
-LOCAL_STATIC_JAVA_LIBRARIES += \
-    car-stream-lib
-
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 
 # Include support-v7-appcompat, if not already included
