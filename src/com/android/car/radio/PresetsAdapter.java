@@ -16,7 +16,6 @@
 
 package com.android.car.radio;
 
-import android.support.car.widget.PagedListView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -26,6 +25,8 @@ import android.view.ViewGroup;
 import com.android.car.radio.service.RadioStation;
 
 import java.util.List;
+
+import androidx.car.widget.PagedListView;
 
 /**
  * Adapter that will display a list of radio stations that represent the user's presets.

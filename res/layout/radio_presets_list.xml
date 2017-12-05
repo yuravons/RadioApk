@@ -41,7 +41,7 @@ limitations under the License.
             android:layout_height="match_parent" />
     </FrameLayout>
 
-    <android.support.car.widget.PagedListView
+    <androidx.car.widget.PagedListView
         android:id="@+id/presets_list"
         android:background="@android:color/transparent"
         android:layout_marginTop="@dimen/car_preset_container_height"
