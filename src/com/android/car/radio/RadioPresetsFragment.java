@@ -20,11 +20,8 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.Canvas;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -100,7 +97,6 @@ public class RadioPresetsFragment extends Fragment implements
 
         mPresetsList = mRootView.findViewById(R.id.presets_list);
         mPresetsList.setLightMode();
-        mPresetsList.setDefaultItemDecoration(new ItemSpacingDecoration(context));
         mPresetsList.setAdapter(mPresetsAdapter);
         mPresetsList.getLayoutManager().setOffsetRows(false);
         mPresetsList.getRecyclerView().addOnScrollListener(new PresetListScrollListener(
@@ -267,45 +263,6 @@ public class RadioPresetsFragment extends Fragment implements
         }
 
         mPresetsAdapter.setPresets(presets);
-    }
-
-    /**
-     * A {@link com.android.car.view.PagedListView.Decoration} that draws a line between
-     * the items.
-     */
-    public static class ItemSpacingDecoration extends PagedListView.DividerDecoration {
-        private final int mLineStart;
-
-        public ItemSpacingDecoration(Context context) {
-            super(context);
-            Resources res = context.getResources();
-            mLineStart = res.getDimensionPixelSize(R.dimen.stream_card_keyline_3);
-        }
-
-        @Override
-        public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
-            View presetCard = parent.findViewById(R.id.preset_card);
-
-            if (presetCard == null) {
-                return;
-            }
-
-            int left = mLineStart + presetCard.getLeft();
-            int right = presetCard.getRight();
-            int childCount = parent.getChildCount();
-
-            for (int i = 0; i < childCount; i++) {
-                View child = parent.getChildAt(i);
-                int bottom = child.getBottom();
-                int top = bottom - mDividerHeight;
-
-                // Draw a divider line between each item. No need to draw the line for the last
-                // item.
-                if (i != childCount - 1) {
-                    c.drawRect(left, top, right, bottom, mPaint);
-                }
-            }
-        }
     }
 
     /**

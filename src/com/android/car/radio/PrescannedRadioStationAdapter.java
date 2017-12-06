@@ -154,7 +154,7 @@ public class PrescannedRadioStationAdapter extends CarouselView.Adapter {
             Log.d(TAG, "bindView(); position: " + position + "; isFirstView: " + isFirstView);
         }
 
-        if (mStations == null || position >= mStations.size()) {
+        if (mStations == null || position < 0 || position >= mStations.size()) {
             return;
         }
 
