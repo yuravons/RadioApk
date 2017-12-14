@@ -18,6 +18,7 @@ package com.android.car.radio;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
@@ -58,7 +59,12 @@ public class PresetListScrollListener extends RecyclerView.OnScrollListener {
             return;
         }
 
-        if (mPresetList.getLayoutManager().isAtTop()) {
+        // The default LayoutManager for PagedListView is a LinearLayoutManager. Radio does
+        // not change this.
+        LinearLayoutManager layoutManager =
+                (LinearLayoutManager) recyclerView.getLayoutManager();
+
+        if (layoutManager.findFirstCompletelyVisibleItemPosition() == 0) {
             // Animate the removal of the elevation so that it's not jarring.
             mRemoveElevationAnimator.start();
         } else {
