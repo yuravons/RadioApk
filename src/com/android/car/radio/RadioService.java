@@ -539,6 +539,30 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
             mRadioTuner.scan(RadioTuner.DIRECTION_DOWN, true);
         }
 
+        private boolean setMuted(boolean mute) {
+            if (mRadioTuner == null) {
+                Log.e(TAG, "RadioManager is null");
+                return false;
+            }
+
+            int result = mRadioTuner.setMute(mute);
+
+            if (result != RadioManager.STATUS_OK) {
+                Log.e(TAG, "setMute() failed: " + result);
+                return false;
+            }
+
+            for (IRadioCallback callback : mRadioTunerCallbacks) {
+                try {
+                    callback.onRadioMuteChanged(mute);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "mute() notify failed: " + e.getMessage());
+                }
+            }
+
+            return true;
+        }
+
         /**
          * Mutes the radio.
          *
@@ -546,51 +570,7 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
          */
         @Override
         public boolean mute() {
-            if (mRadioManager == null) {
-                return false;
-            }
-
-            if (mCarAudioManager == null) {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "mute() called, but not connected to CarAudioManager");
-                }
-                return false;
-            }
-
-            // If the radio does not currently have focus, then no need to do anything because the
-            // radio won't be playing any sound.
-            if (!mHasAudioFocus) {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "mute() called, but radio does not currently have audio focus; "
-                            + "ignoring.");
-                }
-                return false;
-            }
-
-            boolean muteSuccessful = false;
-
-            try {
-                muteSuccessful = mCarAudioManager.setMediaMute(true);
-
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "setMediaMute(true) status: " + muteSuccessful);
-                }
-            } catch (CarNotConnectedException e) {
-                Log.e(TAG, "mute() failed: " + e.getMessage());
-                e.printStackTrace();
-            }
-
-            if (muteSuccessful && mRadioTunerCallbacks.size() > 0) {
-                for (IRadioCallback callback : mRadioTunerCallbacks) {
-                    try {
-                        callback.onRadioMuteChanged(true);
-                    } catch (RemoteException e) {
-                        Log.e(TAG, "mute() notify failed: " + e.getMessage());
-                    }
-                }
-            }
-
-            return muteSuccessful;
+            return setMuted(true);
         }
 
         /**
@@ -600,18 +580,8 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
          */
         @Override
         public boolean unMute() {
-            if (mRadioManager == null) {
-                return false;
-            }
+            if (!setMuted(false)) return false;
 
-            if (mCarAudioManager == null) {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "toggleMute() called, but not connected to CarAudioManager");
-                }
-                return false;
-            }
-
-            // Requesting audio focus will automatically un-mute the radio if it had been muted.
             return requestAudioFocus() == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
         }
 
@@ -620,31 +590,12 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
          */
         @Override
         public boolean isMuted() {
-            if (!mHasAudioFocus) {
+            if (mRadioTuner == null) {
+                Log.e(TAG, "RadioManager is null");
                 return true;
             }
 
-            if (mRadioManager == null) {
-                return true;
-            }
-
-            if (mCarAudioManager == null) {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "isMuted() called, but not connected to CarAudioManager");
-                }
-                return true;
-            }
-
-            boolean isMuted = false;
-
-            try {
-                isMuted = mCarAudioManager.isMediaMuted();
-            } catch (CarNotConnectedException e) {
-                Log.e(TAG, "isMuted() failed: " + e.getMessage());
-                e.printStackTrace();
-            }
-
-            return isMuted;
+            return mRadioTuner.getMute();
         }
 
         /**
