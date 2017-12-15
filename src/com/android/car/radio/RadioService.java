@@ -17,10 +17,8 @@
 package com.android.car.radio;
 
 import android.app.Service;
-import android.car.hardware.radio.CarRadioManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.hardware.radio.RadioManager;
 import android.hardware.radio.RadioMetadata;
 import android.hardware.radio.RadioTuner;
@@ -31,12 +29,9 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.support.annotation.Nullable;
-import android.support.car.Car;
-import android.support.car.CarNotConnectedException;
-import android.support.car.CarConnectionCallback;
-import android.support.car.media.CarAudioManager;
 import android.text.TextUtils;
 import android.util.Log;
+
 import com.android.car.radio.demo.RadioDemo;
 import com.android.car.radio.service.IRadioCallback;
 import com.android.car.radio.service.IRadioManager;
@@ -64,7 +59,6 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
     private int mReOpenRadioTunerCount = 0;
     private final Handler mHandler = new Handler();
 
-    private Car mCarApi;
     private RadioTuner mRadioTuner;
 
     private boolean mRadioSuccessfullyInitialized;
@@ -85,7 +79,7 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
 
     private final List<RadioManager.ModuleProperties> mModules = new ArrayList<>();
 
-    private CarAudioManager mCarAudioManager;
+    private AudioManager mAudioManager;
     private AudioAttributes mRadioAudioAttributes;
 
     /**
@@ -120,12 +114,11 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
             Log.d(TAG, "onCreate()");
         }
 
-        // Connection to car services does not work for non-automotive yet, so this call needs to
-        // be guarded.
-        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
-            mCarApi = Car.createCar(this /* context */, mCarConnectionCallback);
-            mCarApi.connect();
-        }
+        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        mRadioAudioAttributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build();
 
         if (SystemProperties.getBoolean(RadioDemo.DEMO_MODE_PROPERTY, false)) {
             initializeDemo();
@@ -221,10 +214,6 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
         }
 
         close();
-
-        if (mCarApi != null) {
-            mCarApi.disconnect();
-        }
 
         super.onDestroy();
     }
@@ -342,13 +331,8 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
     }
 
     private int requestAudioFocus() {
-        int status = AudioManager.AUDIOFOCUS_REQUEST_FAILED;
-        try {
-            status = mCarAudioManager.requestAudioFocus(this, mRadioAudioAttributes,
+        int status = mAudioManager.requestAudioFocus(this, mRadioAudioAttributes,
                     AudioManager.AUDIOFOCUS_GAIN, 0);
-        } catch (CarNotConnectedException e) {
-            Log.e(TAG, "requestAudioFocus() failed", e);
-        }
 
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "requestAudioFocus status: " + status);
@@ -376,11 +360,7 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
             Log.d(TAG, "abandonAudioFocus()");
         }
 
-        if (mCarAudioManager == null) {
-            return;
-        }
-
-        mCarAudioManager.abandonAudioFocus(this, mRadioAudioAttributes);
+        mAudioManager.abandonAudioFocus(this, mRadioAudioAttributes);
         mHasAudioFocus = false;
 
         for (IRadioCallback callback : mRadioTunerCallbacks) {
@@ -437,39 +417,6 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
                 // Do nothing for all other cases.
         }
     }
-
-    /**
-     * {@link CarConnectionCallback} that retrieves the {@link CarRadioManager}.
-     */
-    private final CarConnectionCallback mCarConnectionCallback =
-            new CarConnectionCallback() {
-                @Override
-                public void onConnected(Car car) {
-                    if (Log.isLoggable(TAG, Log.DEBUG)) {
-                        Log.d(TAG, "Car service connected.");
-                    }
-                    try {
-                        // The CarAudioManager only needs to be retrieved once.
-                        if (mCarAudioManager == null) {
-                            mCarAudioManager = (CarAudioManager) mCarApi.getCarManager(
-                                    android.car.Car.AUDIO_SERVICE);
-
-                            mRadioAudioAttributes = mCarAudioManager.getAudioAttributesForCarUsage(
-                                    CarAudioManager.CAR_AUDIO_USAGE_RADIO);
-                        }
-                    } catch (CarNotConnectedException e) {
-                        //TODO finish
-                        Log.e(TAG, "Car not connected");
-                    }
-                }
-
-                @Override
-                public void onDisconnected(Car car) {
-                    if (Log.isLoggable(TAG, Log.DEBUG)) {
-                        Log.d(TAG, "Car service disconnected.");
-                    }
-                }
-            };
 
     private IRadioManager.Stub mBinder = new IRadioManager.Stub() {
         /**

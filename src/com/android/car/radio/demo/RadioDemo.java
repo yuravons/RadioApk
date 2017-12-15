@@ -15,7 +15,6 @@
  */
 package com.android.car.radio.demo;
 
-import android.car.hardware.radio.CarRadioManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.radio.RadioManager;
@@ -23,11 +22,8 @@ import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.os.RemoteException;
 import android.os.SystemProperties;
-import android.support.car.Car;
-import android.support.car.CarNotConnectedException;
-import android.support.car.CarConnectionCallback;
-import android.support.car.media.CarAudioManager;
 import android.util.Log;
+
 import com.android.car.radio.service.IRadioCallback;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.service.RadioStation;
@@ -57,8 +53,7 @@ public class RadioDemo implements AudioManager.OnAudioFocusChangeListener {
     private List<RadioStation> mCurrentStations = new ArrayList<>();
     private int mCurrentRadioBand = RadioManager.BAND_FM;
 
-    private Car mCarApi;
-    private CarAudioManager mCarAudioManager;
+    private AudioManager mAudioManager;
     private AudioAttributes mRadioAudioAttributes;
 
     private boolean mHasAudioFocus;
@@ -68,8 +63,11 @@ public class RadioDemo implements AudioManager.OnAudioFocusChangeListener {
 
     private RadioDemo(Context context) {
         if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
-            mCarApi = Car.createCar(context, mCarConnectionCallback);
-            mCarApi.connect();
+            mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            mRadioAudioAttributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build();
         }
     }
 
@@ -248,17 +246,8 @@ public class RadioDemo implements AudioManager.OnAudioFocusChangeListener {
      * @return {@code true} if the request succeeded.
      */
     private boolean requestAudioFocus() {
-        if (mCarAudioManager == null) {
-            return false;
-        }
-
-        int status = AudioManager.AUDIOFOCUS_REQUEST_FAILED;
-        try {
-            status = mCarAudioManager.requestAudioFocus(this, mRadioAudioAttributes,
-                    AudioManager.AUDIOFOCUS_GAIN, 0);
-        } catch (CarNotConnectedException e) {
-            Log.e(TAG, "requestAudioFocus() failed", e);
-        }
+        int status = mAudioManager.requestAudioFocus(this, mRadioAudioAttributes,
+                AudioManager.AUDIOFOCUS_GAIN, 0);
 
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "requestAudioFocus status: " + status);
@@ -281,45 +270,8 @@ public class RadioDemo implements AudioManager.OnAudioFocusChangeListener {
             Log.d(TAG, "abandonAudioFocus()");
         }
 
-        if (mCarAudioManager == null) {
-            return;
-        }
-
-        mCarAudioManager.abandonAudioFocus(this, mRadioAudioAttributes);
+        mAudioManager.abandonAudioFocus(this, mRadioAudioAttributes);
     }
-
-    /**
-     * {@link CarConnectionCallback} that retrieves the {@link CarRadioManager}.
-     */
-    private final CarConnectionCallback mCarConnectionCallback =
-            new CarConnectionCallback() {
-                @Override
-                public void onConnected(Car car) {
-                    if (Log.isLoggable(TAG, Log.DEBUG)) {
-                        Log.d(TAG, "Car service connected.");
-                    }
-                    try {
-                        // The CarAudioManager only needs to be retrieved once.
-                        if (mCarAudioManager == null) {
-                            mCarAudioManager = (CarAudioManager) mCarApi.getCarManager(
-                                    android.car.Car.AUDIO_SERVICE);
-
-                            mRadioAudioAttributes = mCarAudioManager.getAudioAttributesForCarUsage(
-                                    CarAudioManager.CAR_AUDIO_USAGE_RADIO);
-                        }
-                    } catch (CarNotConnectedException e) {
-                        //TODO finish
-                        Log.e(TAG, "Car not connected");
-                    }
-                }
-
-                @Override
-                public void onDisconnected(Car car) {
-                    if (Log.isLoggable(TAG, Log.DEBUG)) {
-                        Log.d(TAG, "Car service disconnected.");
-                    }
-                }
-            };
 
     /**
      * Switches to the corresponding radio band. This will update the list of current stations
