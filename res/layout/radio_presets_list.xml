@@ -48,7 +48,6 @@ limitations under the License.
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        app:offsetRows="false"
         app:showPagedListViewDivider="true"
         app:dividerStartMargin="@dimen/car_keyline_3"
         app:alignDividerEndTo="@id/preset_card"
