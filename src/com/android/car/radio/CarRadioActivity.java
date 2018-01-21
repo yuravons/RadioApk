@@ -75,6 +75,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setToolbarElevation(0f);
 
         mRadioController = new RadioController(this);
         setContentFragment(
