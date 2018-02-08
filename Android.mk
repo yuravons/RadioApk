@@ -34,12 +34,7 @@ LOCAL_PRIVILEGED_MODULE := true
 LOCAL_USE_AAPT2 := true
 
 LOCAL_STATIC_ANDROID_LIBRARIES += \
-    android-support-car \
-    android-support-design \
-    android-support-v4 \
-    android-support-v7-appcompat \
-    android-support-v7-cardview \
-    android-support-v7-recyclerview \
+    $(ANDROID_SUPPORT_CAR_TARGETS) \
     car-radio-service
 
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
