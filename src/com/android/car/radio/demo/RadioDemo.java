@@ -42,11 +42,6 @@ public class RadioDemo implements AudioManager.OnAudioFocusChangeListener {
      */
     public static final String DEMO_MODE_PROPERTY = "com.android.car.radio.demo";
 
-    /**
-     * The property name to enable the radio in demo mode with dual tuners.
-     */
-    public static final String DUAL_DEMO_MODE_PROPERTY = "com.android.car.radio.demo.dual";
-
     private static RadioDemo sInstance;
     private List<IRadioCallback> mCallbacks = new ArrayList<>();
 
@@ -206,11 +201,6 @@ public class RadioDemo implements AudioManager.OnAudioFocusChangeListener {
             @Override
             public boolean hasFocus() {
                 return mHasAudioFocus;
-            }
-
-            @Override
-            public boolean hasDualTuners() throws RemoteException {
-                return SystemProperties.getBoolean(RadioDemo.DUAL_DEMO_MODE_PROPERTY, false);
             }
         };
     }
