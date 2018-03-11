@@ -97,7 +97,7 @@ public class RadioController implements
     private PreScannedChannelLoader mChannelLoader;
 
     private final RadioDisplayController mRadioDisplayController;
-    private boolean mHasDualTuners;
+    private boolean mHasDualTuners = false;
 
     /**
      * Keeps track of if the user has manually muted the radio. This value is used to determine
@@ -222,8 +222,6 @@ public class RadioController implements
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "updateRadioDisplay(); current station: " + station);
             }
-
-            mHasDualTuners = mRadioManager.hasDualTuners();
 
             if (mHasDualTuners) {
                 initializeDualTunerController();
@@ -949,8 +947,6 @@ public class RadioController implements
                 if (mRadioErrorDisplay != null) {
                     mRadioErrorDisplay.setVisibility(View.GONE);
                 }
-
-                mHasDualTuners = mRadioManager.hasDualTuners();
 
                 if (mHasDualTuners) {
                     initializeDualTunerController();

@@ -37,6 +37,7 @@ import com.android.car.radio.service.IRadioCallback;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.service.RadioRds;
 import com.android.car.radio.service.RadioStation;
+import com.android.car.radio.platform.RadioManagerExt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,15 +70,7 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
     private String mCurrentArtist;
     private String mCurrentSongTitle;
 
-    private RadioManager mRadioManager;
-    private RadioBackgroundScanner mBackgroundScanner;
-    private RadioManager.FmBandDescriptor mFmDescriptor;
-    private RadioManager.AmBandDescriptor mAmDescriptor;
-
-    private RadioManager.FmBandConfig mFmConfig;
-    private RadioManager.AmBandConfig mAmConfig;
-
-    private final List<RadioManager.ModuleProperties> mModules = new ArrayList<>();
+    private RadioManagerExt mRadioManager;
 
     private AudioManager mAudioManager;
     private AudioAttributes mRadioAudioAttributes;
@@ -144,66 +137,7 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
      * Connects to the {@link RadioManager}.
      */
     private void initialze() {
-        mRadioManager = (RadioManager) getSystemService(Context.RADIO_SERVICE);
-
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "initialze(); mRadioManager: " + mRadioManager);
-        }
-
-        if (mRadioManager == null) {
-            Log.w(TAG, "RadioManager could not be loaded.");
-            return;
-        }
-
-        int status = mRadioManager.listModules(mModules);
-        if (status != RadioManager.STATUS_OK) {
-            Log.w(TAG, "Load modules failed with status: " + status);
-            return;
-        }
-
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "initialze(); listModules complete: " + mModules);
-        }
-
-        if (mModules.size() == 0) {
-            Log.w(TAG, "No radio modules on device.");
-            return;
-        }
-
-        boolean isDebugLoggable = Log.isLoggable(TAG, Log.DEBUG);
-
-        // Load the possible radio bands. For now, just accept FM and AM bands.
-        for (RadioManager.BandDescriptor band : mModules.get(0).getBands()) {
-            if (isDebugLoggable) {
-                Log.d(TAG, "loading band: " + band.toString());
-            }
-
-            if (mFmDescriptor == null && band.isFmBand()) {
-                mFmDescriptor = (RadioManager.FmBandDescriptor) band;
-            }
-
-            if (mAmDescriptor == null && band.isAmBand()) {
-                mAmDescriptor = (RadioManager.AmBandDescriptor) band;
-            }
-        }
-
-        if (mFmDescriptor == null && mAmDescriptor == null) {
-            Log.w(TAG, "No AM and FM radio bands could be loaded.");
-            return;
-        }
-
-        // TODO: Make stereo configurable depending on device.
-        mFmConfig = new RadioManager.FmBandConfig.Builder(mFmDescriptor)
-                .setStereo(true)
-                .build();
-        mAmConfig = new RadioManager.AmBandConfig.Builder(mAmDescriptor)
-                .setStereo(true)
-                .build();
-
-        // If there is a second tuner on the device, then set it up as the background scanner.
-        // TODO(b/63101896): we don't know if the second tuner is for the same medium, so we don't
-        // set background scanner for now.
-
+        mRadioManager = new RadioManagerExt(this);
         mRadioSuccessfullyInitialized = true;
     }
 
@@ -233,26 +167,12 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
         }
 
         mCurrentRadioBand = radioBand;
-        RadioManager.BandConfig config = getRadioConfig(radioBand);
-
-        if (config == null) {
-            Log.w(TAG, "Cannot create config for radio band: " + radioBand);
-            return RadioManager.STATUS_ERROR;
-        }
-
-        if (mRadioTuner != null) {
-            mRadioTuner.setConfiguration(config);
-        } else {
-            mRadioTuner = mRadioManager.openTuner(mModules.get(0).getId(), config, true,
-                    mInternalRadioTunerCallback, null /* handler */);
+        if (mRadioTuner == null) {
+            mRadioTuner = mRadioManager.openSession(mInternalRadioTunerCallback, null);
         }
 
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "openRadioBandInternal() STATUS_OK");
-        }
-
-        if (mBackgroundScanner != null) {
-            mBackgroundScanner.onRadioBandChanged(radioBand);
         }
 
         // Reset the counter for exponential backoff each time the radio tuner has been successfully
@@ -309,25 +229,6 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
 
         return new RadioStation(mCurrentRadioChannel, 0 /* subChannelNumber */,
                 mCurrentRadioBand, createCurrentRadioRds());
-    }
-
-    /**
-     * Returns the proper {@link android.hardware.radio.RadioManager.BandConfig} for the given
-     * radio band. {@code null} is returned if the band is not suppored.
-     */
-    @Nullable
-    private RadioManager.BandConfig getRadioConfig(int selectedRadioBand) {
-        switch (selectedRadioBand) {
-            case RadioManager.BAND_AM:
-            case RadioManager.BAND_AM_HD:
-                return mAmConfig;
-            case RadioManager.BAND_FM:
-            case RadioManager.BAND_FM_HD:
-                return mFmConfig;
-
-            default:
-                return null;
-        }
     }
 
     private int requestAudioFocus() {
@@ -618,15 +519,6 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
         @Override
         public boolean hasFocus() {
             return mHasAudioFocus;
-        }
-
-        /**
-         * Returns {@code true} if the current radio module has dual tuners, meaning that a tuner
-         * is available to scan for stations in the background.
-         */
-        @Override
-        public boolean hasDualTuners() {
-            return mModules.size() >= 2;
         }
     };
 
