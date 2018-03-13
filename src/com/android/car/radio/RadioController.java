@@ -400,11 +400,6 @@ public class RadioController implements
             return;
         }
 
-        if (mHasDualTuners) {
-            int position = mAdapter.getIndexOrInsertForStation(channel, mCurrentRadioBand);
-            mRadioDisplayController.setCurrentStationInList(position);
-        }
-
         switch (mCurrentRadioBand) {
             case RadioManager.BAND_FM:
                 setRadioChannelForFm(channel);
@@ -534,8 +529,8 @@ public class RadioController implements
     private void clearMetadataDisplay() {
         mCurrentRds = null;
 
-        mRadioDisplayController.setCurrentSongArtistOrStation(null);
-        mRadioDisplayController.setCurrentSongTitle(null);
+        mRadioDisplayController.setCurrentStation(null);
+        mRadioDisplayController.setCurrentSongTitleAndArtist(null, null);
     }
 
     /**
@@ -606,7 +601,7 @@ public class RadioController implements
             mAdapter = new PrescannedRadioStationAdapter();
         }
 
-        mRadioDisplayController.setChannelListDisplay(mRadioBackground, mAdapter);
+        mRadioDisplayController.setSingleChannelDisplay(mRadioBackground);
 
         // Initialize the loader that will load the pre-scanned channels for the current band.
         mActivity.getLoaderManager().initLoader(CHANNEL_LOADER_ID, null /* args */,
@@ -653,9 +648,6 @@ public class RadioController implements
         }
 
         mAdapter.setStations(preScannedStations);
-
-        int position = mAdapter.setStartingStation(mCurrentChannelNumber, mCurrentRadioBand);
-        mRadioDisplayController.setCurrentStationInList(position);
     }
 
     @Override
@@ -737,9 +729,9 @@ public class RadioController implements
             String programService = radioRds.getProgramService();
             String artistMetadata = radioRds.getSongArtist();
 
-            mRadioDisplayController.setCurrentSongArtistOrStation(
+            mRadioDisplayController.setCurrentStation(programService);
+            mRadioDisplayController.setCurrentSongTitleAndArtist(radioRds.getSongTitle(),
                     TextUtils.isEmpty(artistMetadata) ? programService : artistMetadata);
-            mRadioDisplayController.setCurrentSongTitle(radioRds.getSongTitle());
 
             // Since new metadata exists, update the preset that is stored in the database if
             // it exists.
@@ -816,9 +808,6 @@ public class RadioController implements
                 } catch (RemoteException e) {
                     Log.e(TAG, "backwardSeek(); remote exception: " + e.getMessage());
                 }
-
-                int position = mAdapter.getCurrentPosition();
-                mRadioDisplayController.setCurrentStationInList(position);
             }
         }
     };
@@ -854,9 +843,6 @@ public class RadioController implements
                 } catch (RemoteException e) {
                     Log.e(TAG, "forwardSeek(); remote exception: " + e.getMessage());
                 }
-
-                int position = mAdapter.getCurrentPosition();
-                mRadioDisplayController.setCurrentStationInList(position);
             }
         }
     };
