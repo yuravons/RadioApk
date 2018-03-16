@@ -124,7 +124,7 @@ limitations under the License.
     <dimen name="manual_tuner_top_padding">@dimen/radio_default_spacing</dimen>
 
     <!-- The size of the numbers in the manual tuner dialpad. -->
-    <dimen name="manual_tuner_dialpad_text_size">50sp</dimen>
+    <dimen name="manual_tuner_dialpad_text_size">64sp</dimen>
 
     <!-- The top margin for the dialpad. This value is negative to pull the dialpad up a bit
          for visual purposes. -->
@@ -132,9 +132,5 @@ limitations under the License.
 
     <!-- The spacing between the buttons on the dialpad. -->
     <dimen name="manual_tuner_dialpad_horizontal_spacing">56dp</dimen>
-    <dimen name="manual_tuner_dialpad_vertical_spacing">0dp</dimen>
-
-    <!-- The size of the container that houses the back button in the manual tuner. The back button
-         is centered within this container. -->
-    <dimen name="manual_tuner_back_button_container_size">@dimen/car_keyline_2</dimen>
+    <dimen name="manual_tuner_dialpad_vertical_spacing">24sp</dimen>
 </resources>
