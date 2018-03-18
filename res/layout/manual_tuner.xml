@@ -40,8 +40,8 @@ limitations under the License.
             <FrameLayout
                 android:layout_marginTop="@dimen/manual_tuner_back_button_top_margin"
                 android:layout_gravity="start|top"
-                android:layout_width="@dimen/manual_tuner_back_button_container_size"
-                android:layout_height="@dimen/manual_tuner_back_button_container_size">
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
 
                 <ImageView
                     android:id="@+id/exit_manual_tuner_button"
@@ -54,7 +54,7 @@ limitations under the License.
             </FrameLayout>
 
             <include
-                android:layout_gravity="center_horizontal"
+                android:layout_gravity="center"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 layout="@layout/manual_tuner_dialpad" />
