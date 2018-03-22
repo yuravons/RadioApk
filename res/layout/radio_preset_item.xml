@@ -21,21 +21,19 @@ limitations under the License.
 
     <!-- This FrameLayout ensures that the preset_item_metadata starts at car_keyline_3
          while the radio_station_channels starts at car_keyline_1. -->
-    <FrameLayout
-        android:layout_width="@dimen/car_keyline_3"
-        android:layout_height="match_parent">
-
-        <TextView
-            android:id="@+id/preset_station_channel"
-            android:background="@drawable/preset_channel_bg"
-            android:layout_marginStart="@dimen/car_keyline_1"
-            android:layout_width="@dimen/car_preset_number_bg_width"
-            android:layout_height="@dimen/car_preset_number_bg_height"
-            android:layout_gravity="center_vertical"
-            android:gravity="center"
-            android:textSize="@dimen/car_body2_size"
-            style="@style/RadioPresetItemChannelText" />
-    </FrameLayout>
+    <TextView
+        android:id="@+id/preset_station_channel"
+        android:layout_marginStart="@dimen/car_keyline_1"
+        android:layout_marginEnd="@dimen/car_keyline_1"
+        android:layout_width="@dimen/car_preset_number_bg_width"
+        android:layout_height="@dimen/car_preset_number_bg_height"
+        android:layout_gravity="center"
+        android:paddingLeft="@dimen/car_keyline_1"
+        android:paddingRight="@dimen/car_keyline_1"
+        android:gravity="center"
+        android:background="@drawable/preset_channel_bg"
+        android:textSize="@dimen/car_body2_size"
+        style="@style/RadioPresetItemChannelText" />
 
     <TextView
         android:id="@+id/preset_item_metadata"
@@ -46,13 +44,14 @@ limitations under the License.
         android:layout_marginEnd="@dimen/radio_default_spacing"
         style="@style/RadioPresetItemMetadataText" />
 
-    <ImageView
-        android:id="@+id/preset_equalizer"
-        android:layout_width="@dimen/preset_equalizer_size"
-        android:layout_height="@dimen/preset_equalizer_size"
-        android:layout_gravity="center_vertical"
+    <ImageButton
+        android:id="@+id/preset_button"
         android:layout_marginEnd="@dimen/car_keyline_1"
-        android:src="@drawable/ic_equalizer"
-        android:visibility="gone" />
+        android:layout_gravity="center_vertical|right"
+        android:layout_width="@dimen/car_preset_favorite_button_size"
+        android:layout_height="@dimen/car_preset_favorite_button_size"
+        android:gravity="right"
+        android:src="@drawable/ic_star_filled"
+        style="@style/RadioButton" />
 
 </LinearLayout>
