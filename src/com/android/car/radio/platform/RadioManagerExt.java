@@ -19,44 +19,88 @@ package com.android.car.radio.platform;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Context;
+import android.hardware.radio.RadioManager.BandDescriptor;
 import android.hardware.radio.RadioManager;
 import android.hardware.radio.RadioTuner;
 import android.os.Handler;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
+/**
+ * Proposed extensions to android.hardware.radio.RadioManager.
+ *
+ * They might eventually get pushed to the framework.
+ */
 public class RadioManagerExt {
     private static final String TAG = "BcRadioApp.mgrext";
 
+    private final Object mLock = new Object();
+
     private final @NonNull RadioManager mRadioManager;
+    private List<RadioManager.ModuleProperties> mModules;
+    private @Nullable List<BandDescriptor> mAmFmRegionConfig;
 
     public RadioManagerExt(@NonNull Context ctx) {
         mRadioManager = (RadioManager)ctx.getSystemService(Context.RADIO_SERVICE);
         Objects.requireNonNull(mRadioManager, "RadioManager could not be loaded");
     }
 
+    /* Select only one region. HAL 2.x moves region selection responsibility from the app to the
+     * Broadcast Radio service, so we won't implement region selection based on bands in the app.
+     */
+    private @Nullable List<BandDescriptor> reduceAmFmBands(@Nullable BandDescriptor[] bands) {
+        if (bands == null || bands.length == 0) return null;
+        int region = bands[0].getRegion();
+        Log.d(TAG, "Auto-selecting region " + region);
+
+        return Arrays.stream(bands).filter(band -> band.getRegion() == region).
+                collect(Collectors.toList());
+    }
+
+    private void initModules() {
+        synchronized (mLock) {
+            if (mModules != null) return;
+
+            mModules = new ArrayList<>();
+            int status = mRadioManager.listModules(mModules);
+            if (status != RadioManager.STATUS_OK) {
+                Log.w(TAG, "Couldn't get radio module list: " + status);
+                return;
+            }
+
+            if (mModules.size() == 0) {
+                Log.i(TAG, "No radio modules on this device");
+                return;
+            }
+
+            // For now, we open first radio module only.
+            RadioManager.ModuleProperties module = mModules.get(0);
+            mAmFmRegionConfig = reduceAmFmBands(module.getBands());
+        }
+    }
+
     public @Nullable RadioTuner openSession(RadioTuner.Callback callback, Handler handler) {
         Log.i(TAG, "Opening broadcast radio session...");
 
-        List<RadioManager.ModuleProperties> modules = new ArrayList<>();
-        int status = mRadioManager.listModules(modules);
-        if (status != RadioManager.STATUS_OK) {
-            Log.w(TAG, "Couldn't get radio module list: " + status);
-            return null;
-        }
-
-        if (modules.size() == 0) {
-            Log.i(TAG, "No radio modules on this device");
-            return null;
-        }
+        initModules();
+        if (mModules.size() == 0) return null;
 
         // For now, we open first radio module only.
-        return mRadioManager.openTuner(modules.get(0).getId(),
+        RadioManager.ModuleProperties module = mModules.get(0);
+
+        return mRadioManager.openTuner(module.getId(),
                 null,  // BandConfig - let the service automatically select one.
                 true,  // withAudio
                 callback, handler);
+    }
+
+    public @Nullable List<BandDescriptor> getAmFmRegionConfig() {
+        initModules();
+        return mAmFmRegionConfig;
     }
 }

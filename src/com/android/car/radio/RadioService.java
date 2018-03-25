@@ -24,6 +24,7 @@ import android.hardware.radio.RadioMetadata;
 import android.hardware.radio.RadioTuner;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -31,8 +32,12 @@ import android.os.SystemProperties;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
+import android.support.v4.media.MediaBrowserCompat.MediaItem;
+import android.support.v4.media.MediaBrowserServiceCompat;
 
 import com.android.car.radio.demo.RadioDemo;
+import com.android.car.radio.media.BrowseTree;
+import com.android.car.radio.media.TunerSession;
 import com.android.car.radio.service.IRadioCallback;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.service.RadioRds;
@@ -49,8 +54,12 @@ import java.util.List;
  *
  * <p>Utilize the {@link RadioBinder} to perform radio operations.
  */
-public class RadioService extends Service implements AudioManager.OnAudioFocusChangeListener {
-    private static String TAG = "Em.RadioService";
+public class RadioService extends MediaBrowserServiceCompat
+        implements AudioManager.OnAudioFocusChangeListener {
+
+    private static String TAG = "BcRadioApp.uisrv";
+
+    public static String ACTION_UI_SERVICE = "com.android.car.radio.ACTION_UI_SERVICE";
 
     /**
      * The amount of time to wait before re-trying to open the {@link #mRadioTuner}.
@@ -75,6 +84,9 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
     private AudioManager mAudioManager;
     private AudioAttributes mRadioAudioAttributes;
 
+    private BrowseTree mBrowseTree;
+    private TunerSession mMediaSession;
+
     /**
      * Whether or not this {@link RadioService} currently has audio focus, meaning it is the
      * primary driver of media. Usually, interaction with the radio will be prefaced with an
@@ -93,10 +105,10 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
 
     @Override
     public IBinder onBind(Intent intent) {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "onBind(); Intent: " + intent);
+        if (ACTION_UI_SERVICE.equals(intent.getAction())) {
+            return mBinder;
         }
-        return mBinder;
+        return super.onBind(intent);
     }
 
     @Override
@@ -118,6 +130,12 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
         } else {
             initialze();
         }
+
+        mBrowseTree = new BrowseTree(this);
+        mMediaSession = new TunerSession(this, mBinder);
+        setSessionToken(mMediaSession.getSessionToken());
+
+        mBrowseTree.setAmFmRegionConfig(mRadioManager.getAmFmRegionConfig());
     }
 
     /**
@@ -147,6 +165,7 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
             Log.d(TAG, "onDestroy()");
         }
 
+        mMediaSession.release();
         close();
 
         super.onDestroy();
@@ -536,6 +555,8 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
             clearMetadata();
 
             if (info != null) {
+                mMediaSession.notifyProgramInfoChanged(info);
+
                 mCurrentRadioChannel = info.getChannel();
 
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
@@ -678,4 +699,14 @@ public class RadioService extends Service implements AudioManager.OnAudioFocusCh
     }
 
     private final Runnable mOpenRadioTunerRunnable = () -> openRadioBandInternal(mCurrentRadioBand);
+
+    @Override
+    public BrowserRoot onGetRoot(String clientPackageName, int clientUid, Bundle rootHints) {
+        return mBrowseTree.getRoot(clientPackageName, clientUid, rootHints);
+    }
+
+    @Override
+    public void onLoadChildren(final String parentMediaId, final Result<List<MediaItem>> result) {
+        mBrowseTree.loadChildren(parentMediaId, result);
+    }
 }

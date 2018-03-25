@@ -46,6 +46,9 @@
             android:name=".RadioService"
             android:label="@string/service_name"
             android:exported="true">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
         </service>
     </application>
 </manifest>
