@@ -199,7 +199,8 @@ public class RadioController implements
             Log.d(TAG, "starting radio");
         }
 
-        Intent bindIntent = new Intent(mActivity, RadioService.class);
+        Intent bindIntent = new Intent(RadioService.ACTION_UI_SERVICE, null /* uri */,
+                mActivity, RadioService.class);
         if (!mActivity.bindService(bindIntent, mServiceConnection, Context.BIND_AUTO_CREATE)) {
             Log.e(TAG, "Failed to connect to RadioService.");
         }

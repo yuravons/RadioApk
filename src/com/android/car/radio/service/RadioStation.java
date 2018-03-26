@@ -16,9 +16,12 @@
 
 package com.android.car.radio.service;
 
+import android.hardware.radio.RadioManager;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
+
+import com.android.car.radio.platform.ProgramSelectorExt;
 
 import java.util.Objects;
 
@@ -30,6 +33,15 @@ public class RadioStation implements Parcelable {
     private int mSubChannelNumber;
     private int mBand;
     private RadioRds mRds;
+
+    public static int guessBand(int freq) {
+        if (ProgramSelectorExt.isAmFrequency(freq)) return RadioManager.BAND_AM;
+        else return RadioManager.BAND_FM;
+    }
+
+    public RadioStation(int frequency) {
+        this(frequency, 0, guessBand(frequency), null);
+    }
 
     /**
      * @param channelNumber Channel number in Hz.
