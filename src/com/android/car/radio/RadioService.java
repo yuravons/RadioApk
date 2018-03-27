@@ -125,17 +125,19 @@ public class RadioService extends MediaBrowserServiceCompat
                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                 .build();
 
-        if (SystemProperties.getBoolean(RadioDemo.DEMO_MODE_PROPERTY, false)) {
+        // TODO(b/73950974): remove demo mode
+        boolean isDemo = SystemProperties.getBoolean(RadioDemo.DEMO_MODE_PROPERTY, false);
+        if (isDemo) {
             initializeDemo();
         } else {
             initialze();
         }
 
         mBrowseTree = new BrowseTree(this);
-        mMediaSession = new TunerSession(this, mBinder);
+        mMediaSession = new TunerSession(this, mBrowseTree, mBinder);
         setSessionToken(mMediaSession.getSessionToken());
 
-        mBrowseTree.setAmFmRegionConfig(mRadioManager.getAmFmRegionConfig());
+        mBrowseTree.setAmFmRegionConfig(isDemo ? null : mRadioManager.getAmFmRegionConfig());
     }
 
     /**
@@ -702,7 +704,8 @@ public class RadioService extends MediaBrowserServiceCompat
 
     @Override
     public BrowserRoot onGetRoot(String clientPackageName, int clientUid, Bundle rootHints) {
-        return mBrowseTree.getRoot(clientPackageName, clientUid, rootHints);
+        // TODO(b/75970985): check permissions, if necessary
+        return mBrowseTree.getRoot();
     }
 
     @Override
