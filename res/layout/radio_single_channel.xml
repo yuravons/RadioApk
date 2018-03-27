@@ -26,8 +26,6 @@ limitations under the License.
         android:id="@+id/radio_station_channel"
         android:layout_marginEnd="@dimen/car_keyline_1"
         android:layout_marginTop="@dimen/car_radio_station_top_margin"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         style="@style/RadioStationChannelText" />
@@ -38,7 +36,6 @@ limitations under the License.
     <TextView
         android:id="@+id/radio_station_band"
         android:layout_alignBaseline="@id/radio_station_channel"
-        android:layout_gravity="bottom|end"
         android:layout_toEndOf="@id/radio_station_channel"
         android:layout_marginStart="@dimen/car_keyline_1_neg"
         android:layout_marginTop="@dimen/car_radio_station_top_margin"
