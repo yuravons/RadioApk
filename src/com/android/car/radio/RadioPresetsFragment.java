@@ -39,7 +39,6 @@ import androidx.car.widget.PagedListView;
  */
 public class RadioPresetsFragment extends Fragment implements
         FragmentWithFade,
-        PresetsAdapter.OnPresetItemClickListener,
         RadioAnimationManager.OnExitCompleteListener,
         RadioController.RadioStationChangeListener,
         RadioStorage.PresetsChangeListener {
@@ -87,7 +86,8 @@ public class RadioPresetsFragment extends Fragment implements
     public void onViewCreated(View view, Bundle savedInstanceState) {
         Context context = getContext();
 
-        mPresetsAdapter.setOnPresetItemClickListener(this);
+        mPresetsAdapter.setOnPresetItemClickListener(mRadioController::tuneToRadioChannel);
+        mPresetsAdapter.setOnPresetItemFavoriteListener(this::handlePresetItemFavoriteChanged);
 
         mCurrentRadioCard = view.findViewById(R.id.current_radio_station_card);
 
@@ -226,10 +226,6 @@ public class RadioPresetsFragment extends Fragment implements
         }
     }
 
-    @Override
-    public void onPresetItemClicked(RadioStation station) {
-        mRadioController.tuneToRadioChannel(station);
-    }
 
     @Override
     public void onRadioStationChanged(RadioStation station) {
@@ -245,8 +241,14 @@ public class RadioPresetsFragment extends Fragment implements
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "onPresetsRefreshed()");
         }
+    }
 
-        setPresetsOnList(mRadioStorage.getPresets());
+    private void handlePresetItemFavoriteChanged(RadioStation radioStation, boolean saveAsFavorite) {
+        if (saveAsFavorite) {
+            mRadioStorage.storePreset(radioStation);
+        } else {
+            mRadioStorage.removePreset(radioStation);
+        }
     }
 
     /**

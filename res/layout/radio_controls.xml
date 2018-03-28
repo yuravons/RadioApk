@@ -67,6 +67,6 @@ limitations under the License.
         android:layout_height="@dimen/car_radio_controls_button_size"
         android:layout_weight="1"
         android:src="@drawable/ic_star_empty"
-        style="@style/RadioButton" />
+        style="@style/RadioButtonPreset" />
 
 </LinearLayout>
