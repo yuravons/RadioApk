@@ -38,13 +38,16 @@ import java.util.Objects;
 public class TunerSession extends MediaSessionCompat {
     private static final String TAG = "BcRadioApp.msess";
 
+    private final BrowseTree mBrowseTree;
     private final IRadioManager mUiSession;
     private final PlaybackStateCompat.Builder mPlaybackStateBuilder =
             new PlaybackStateCompat.Builder();
 
-    public TunerSession(@NonNull Context context, @NonNull IRadioManager uiSession) {
+    public TunerSession(@NonNull Context context, @NonNull BrowseTree browseTree,
+            @NonNull IRadioManager uiSession) {
         super(context, TAG);
 
+        mBrowseTree = Objects.requireNonNull(browseTree);
         mUiSession = Objects.requireNonNull(uiSession);
 
         // TODO(b/75970985): implement ACTION_STOP, ACTION_PAUSE, ACTION_PLAY
@@ -99,21 +102,8 @@ public class TunerSession extends MediaSessionCompat {
 
         @Override
         public void onPlayFromMediaId(String mediaId, Bundle extras) {
-            if (mediaId == null || mediaId.isEmpty()) {
-                Log.w(TAG, "Can't play from empty mediaId");
-                return;
-            }
-
-            if (mediaId.startsWith(BrowseTree.NODEPREFIX_AMFMCHANNEL)) {
-                String freqStr = mediaId.substring(BrowseTree.NODEPREFIX_AMFMCHANNEL.length());
-                int freqInt;
-                try {
-                    freqInt = Integer.parseInt(freqStr);
-                } catch (NumberFormatException ex) {
-                    Log.e(TAG, "Invalid frequency", ex);
-                    return;
-                }
-                RadioStation selector = new RadioStation(freqInt);
+            RadioStation selector = mBrowseTree.parseMediaId(mediaId);
+            if (selector != null) {
                 exec(() -> mUiSession.tune(selector));
             } else {
                 Log.e(TAG, "Invalid media ID: " + mediaId);
