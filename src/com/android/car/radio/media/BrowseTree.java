@@ -44,6 +44,47 @@ import java.util.Objects;
 public class BrowseTree {
     private static final String TAG = "BcRadioApp.BrowseTree";
 
+    /**
+     * Used as a long extra field to indicate the Broadcast Radio folder type of the media item.
+     * The value should be one of the following:
+     * <ul>
+     * <li>{@link #BCRADIO_FOLDER_TYPE_PROGRAMS}</li>
+     * <li>{@link #BCRADIO_FOLDER_TYPE_FAVORITES}</li>
+     * <li>{@link #BCRADIO_FOLDER_TYPE_BAND}</li>
+     * </ul>
+     *
+     * @see android.media.MediaDescription#getExtras()
+     */
+    public static final String EXTRA_BCRADIO_FOLDER_TYPE = "android.media.extra.EXTRA_BCRADIO_FOLDER_TYPE";
+
+    /**
+     * The type of folder that contains a list of Broadcast Radio programs available
+     * to tune at the moment.
+     */
+    public static final long BCRADIO_FOLDER_TYPE_PROGRAMS = 1;
+
+    /**
+     * The type of folder that contains a list of Broadcast Radio programs added
+     * to favorites (not necessarily available to tune at the moment).
+     *
+     * If this folder has {@link android.media.browse.MediaBrowser.MediaItem#FLAG_PLAYABLE} flag
+     * set, it can be used to play some program from the favorite list (selection depends on the
+     * radio app implementation).
+     */
+    public static final long BCRADIO_FOLDER_TYPE_FAVORITES = 2;
+
+    /**
+     * The type of folder that contains the list of all Broadcast Radio channels
+     * (frequency values valid in the current region) for a given band.
+     * Each band (like AM, FM) has its own, separate folder.
+     * These lists include all channels, whether or not some program is tunable through it.
+     *
+     * If this folder has {@link android.media.browse.MediaBrowser.MediaItem#FLAG_PLAYABLE} flag
+     * set, it can be used to tune to some channel within a given band (selection depends on the
+     * radio app implementation).
+     */
+    public static final long BCRADIO_FOLDER_TYPE_BAND = 3;
+
     private static final String NODE_ROOT = "root_id";
     private static final String NODE_PROGRAMS = "programs_id";
     private static final String NODE_FAVORITES = "favorites_id";
@@ -81,8 +122,22 @@ public class BrowseTree {
     }
 
     private static MediaItem createChild(MediaDescriptionCompat.Builder descBuilder,
-            String mediaId, String title, int flag) {
-        return new MediaItem(descBuilder.setMediaId(mediaId).setTitle(title).build(), flag);
+            String mediaId, String title) {
+        MediaDescriptionCompat desc = descBuilder.setMediaId(mediaId).setTitle(title).build();
+        return new MediaItem(desc, MediaItem.FLAG_PLAYABLE);
+    }
+
+    private static MediaItem createFolder(MediaDescriptionCompat.Builder descBuilder,
+            String mediaId, String title, boolean isPlayable, long folderType) {
+        Bundle extras = new Bundle();
+        extras.putLong(EXTRA_BCRADIO_FOLDER_TYPE, folderType);
+
+        MediaDescriptionCompat desc = descBuilder.
+                setMediaId(mediaId).setTitle(title).setExtras(extras).build();
+
+        int flags = MediaItem.FLAG_BROWSABLE;
+        if (isPlayable) flags |= MediaItem.FLAG_PLAYABLE;
+        return new MediaItem(desc, flags);
     }
 
     public void setAmFmRegionConfig(@Nullable List<BandDescriptor> amFmBands) {
@@ -148,7 +203,7 @@ public class BrowseTree {
                 String mediaId = identifierToMediaId(sel.getPrimaryId());
                 mProgramSelectors.put(mediaId, sel);
                 mProgramListCache.add(createChild(dbld, mediaId,
-                        ProgramInfoExt.getProgramName(program), MediaItem.FLAG_PLAYABLE));
+                        ProgramInfoExt.getProgramName(program)));
             }
 
             if (mProgramListCache.size() == 0) {
@@ -176,14 +231,15 @@ public class BrowseTree {
             mRootChildren = new ArrayList<>();
 
             MediaDescriptionCompat.Builder dbld = new MediaDescriptionCompat.Builder();
-            int f = MediaItem.FLAG_BROWSABLE;
             if (mProgramList != null) {
-                mRootChildren.add(createChild(dbld, NODE_PROGRAMS,
-                        mBrowserService.getString(R.string.program_list_text), f));
+                mRootChildren.add(createFolder(dbld, NODE_PROGRAMS,
+                        mBrowserService.getString(R.string.program_list_text),
+                        false, BCRADIO_FOLDER_TYPE_PROGRAMS));
             }
             if (true) {  // TODO(b/75970985): implement favorites support
-                mRootChildren.add(createChild(dbld, NODE_FAVORITES,
-                        mBrowserService.getString(R.string.favorites_list_text), f));
+                mRootChildren.add(createFolder(dbld, NODE_FAVORITES,
+                        mBrowserService.getString(R.string.favorites_list_text),
+                        true, BCRADIO_FOLDER_TYPE_FAVORITES));
             }
 
             MediaItem amRoot = amChannels.getBandRoot();
@@ -224,10 +280,8 @@ public class BrowseTree {
 
         public @Nullable MediaItem getBandRoot() {
             if (isEmpty()) return null;
-            int flag = MediaItem.FLAG_BROWSABLE | MediaItem.FLAG_PLAYABLE;
-            return new MediaItem((new MediaDescriptionCompat.Builder()).
-                    setMediaId(mMediaId).
-                    setTitle(mBrowserService.getString(mBandName)).build(), flag);
+            return createFolder(new MediaDescriptionCompat.Builder(), mMediaId,
+                    mBrowserService.getString(mBandName), true, BCRADIO_FOLDER_TYPE_BAND);
         }
 
         public List<MediaItem> getChannels() {
@@ -244,8 +298,7 @@ public class BrowseTree {
                     final int spacing = band.getSpacing();
                     for (int ch = lowerLimit; ch <= upperLimit; ch += spacing) {
                         mChannels.add(createChild(dbld, NODEPREFIX_AMFMCHANNEL + ch,
-                                ProgramSelectorExt.formatAmFmFrequency(ch, true),
-                                MediaItem.FLAG_PLAYABLE));
+                                ProgramSelectorExt.formatAmFmFrequency(ch, true)));
                     }
                 }
 
