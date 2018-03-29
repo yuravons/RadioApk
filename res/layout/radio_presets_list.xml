@@ -50,8 +50,8 @@ limitations under the License.
         android:visibility="gone"
         app:showPagedListViewDivider="true"
         app:dividerStartMargin="@dimen/car_keyline_3"
-        app:alignDividerEndTo="@id/preset_card"
-        app:alignDividerStartTo="@id/preset_card" />
+        app:alignDividerEndTo="@id/current_radio_station_card_controls"
+        app:alignDividerStartTo="@id/current_radio_station_card_controls" />
 
     <android.support.v7.widget.CardView
         android:id="@+id/current_radio_station_card"

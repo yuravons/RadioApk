@@ -23,9 +23,12 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import com.android.car.radio.service.RadioStation;
 import com.android.car.view.CardListBackgroundResolver;
+import java.util.Objects;
 
 /**
  * A {@link RecyclerView.ViewHolder} that can bind a {@link RadioStation} to the layout
@@ -37,13 +40,14 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
     private final RadioChannelColorMapper mColorMapper;
 
     private final OnPresetClickListener mPresetClickListener;
+    private final OnPresetFavoriteListener mPresetFavoriteListener;
 
     private final Context mContext;
     private final View mPresetsCard;
     private GradientDrawable mPresetItemChannelBg;
     private final TextView mPresetItemChannel;
     private final TextView mPresetItemMetadata;
-    private final View mEqualizer;
+    private ImageButton mPresetButton;
 
     /**
      * Interface for a listener when the View held by this ViewHolder has been clicked.
@@ -58,10 +62,25 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
         void onPresetClicked(int position);
     }
 
+
+    /**
+     * Interface for a listener that will be notified when a favorite in the presets list has been
+     * toggled.
+     */
+    public interface OnPresetFavoriteListener {
+
+        /**
+         * Method called when an item's favorite status has been toggled
+         */
+        void onPresetFavoriteChanged(int position, boolean saveAsFavorite);
+    }
+
+
     /**
      * @param presetsView A view that contains the layout {@code R.layout.radio_preset_item}.
      */
-    public PresetsViewHolder(@NonNull View presetsView, @NonNull OnPresetClickListener listener) {
+    public PresetsViewHolder(@NonNull View presetsView, @NonNull OnPresetClickListener listener,
+            @NonNull OnPresetFavoriteListener favoriteListener) {
         super(presetsView);
 
         mContext = presetsView.getContext();
@@ -70,11 +89,12 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
         mPresetsCard.setOnClickListener(this);
 
         mColorMapper = RadioChannelColorMapper.getInstance(mContext);
-        mPresetClickListener = listener;
+        mPresetClickListener = Objects.requireNonNull(listener);
+        mPresetFavoriteListener = Objects.requireNonNull(favoriteListener);
 
         mPresetItemChannel = presetsView.findViewById(R.id.preset_station_channel);
         mPresetItemMetadata = presetsView.findViewById(R.id.preset_item_metadata);
-        mEqualizer = presetsView.findViewById(R.id.preset_equalizer);
+        mPresetButton = presetsView.findViewById(R.id.preset_button);
 
         mPresetItemChannelBg = (GradientDrawable) mPresetItemChannel.getBackground();
     }
@@ -106,8 +126,12 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
                 preset.getChannelNumber());
 
         mPresetItemChannel.setText(channelNumber);
-
-        mEqualizer.setVisibility(isActiveStation ? View.VISIBLE : View.GONE);
+        if (isActiveStation) {
+            mPresetItemChannel.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                    R.drawable.ic_equalizer, 0, 0, 0);
+        } else {
+            mPresetItemChannel.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0);
+        }
 
         mPresetItemChannelBg.setColor(mColorMapper.getColorForStation(preset));
 
@@ -121,5 +145,18 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
         } else {
             mPresetItemMetadata.setText(metadata.trim());
         }
+        mPresetButton.setTag(R.drawable.ic_star_filled);
+        mPresetButton.setOnClickListener(v -> {
+            boolean favoriteToggleOn =
+                    ((Integer) mPresetButton.getTag() == R.drawable.ic_star_empty);
+            if (favoriteToggleOn) {
+                mPresetButton.setImageResource(R.drawable.ic_star_filled);
+                mPresetButton.setTag(R.drawable.ic_star_filled);
+            } else {
+                mPresetButton.setImageResource(R.drawable.ic_star_empty);
+                mPresetButton.setTag(R.drawable.ic_star_empty);
+            }
+            mPresetFavoriteListener.onPresetFavoriteChanged(getAdapterPosition(), favoriteToggleOn);
+        });
     }
 }
