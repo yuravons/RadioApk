@@ -32,6 +32,8 @@ limitations under the License.
 
     <!-- The color of the radio control buttons. -->
     <color name="car_radio_control_button">@android:color/black</color>
+    <!-- The color of the radio control buttons. -->
+    <color name="car_radio_equalizer">@android:color/white</color>
 
     <!-- The color of the radio control buttons when they are disabled. -->
     <color name="car_radio_control_button_disabled">@color/car_grey_400</color>
