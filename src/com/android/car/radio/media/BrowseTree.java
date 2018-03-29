@@ -34,7 +34,6 @@ import android.util.Log;
 import com.android.car.radio.R;
 import com.android.car.radio.platform.ProgramInfoExt;
 import com.android.car.radio.platform.ProgramSelectorExt;
-import com.android.car.radio.service.RadioStation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -276,8 +275,7 @@ public class BrowseTree {
         return NODEPREFIX_PROGRAM + id.getType() + '/' + id.getValue();
     }
 
-    // TODO(b/75970985): parse to ProgramSelector, not RadioStation
-    public @Nullable RadioStation parseMediaId(@Nullable String mediaId) {
+    public @Nullable ProgramSelector parseMediaId(@Nullable String mediaId) {
         if (mediaId == null) return null;
 
         if (mediaId.startsWith(NODEPREFIX_AMFMCHANNEL)) {
@@ -289,16 +287,9 @@ public class BrowseTree {
                 Log.e(TAG, "Invalid frequency", ex);
                 return null;
             }
-            return new RadioStation(freqInt);
+            return ProgramSelectorExt.createAmFmSelector(freqInt);
         } else if (mediaId.startsWith(NODEPREFIX_PROGRAM)) {
-            ProgramSelector sel = mProgramSelectors.get(mediaId);
-            if (sel == null) return null;
-            try {
-                int freq = (int)sel.getFirstId(ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY);
-                return new RadioStation(freq);
-            } catch (IllegalArgumentException ex) {
-                return null;
-            }
+            return mProgramSelectors.get(mediaId);
         }
         return null;
     }

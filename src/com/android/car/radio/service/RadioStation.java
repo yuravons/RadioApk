@@ -16,11 +16,14 @@
 
 package com.android.car.radio.service;
 
+import android.annotation.NonNull;
+import android.annotation.Nullable;
+import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.Nullable;
 
+import com.android.car.radio.RadioStorage;
 import com.android.car.radio.platform.ProgramSelectorExt;
 
 import java.util.Objects;
@@ -29,18 +32,12 @@ import java.util.Objects;
  * A representation of a radio station.
  */
 public class RadioStation implements Parcelable {
-    private int mChannelNumber;
-    private int mSubChannelNumber;
-    private int mBand;
-    private RadioRds mRds;
+    private final ProgramSelector mSelector;
+    private final RadioRds mRds;
 
-    public static int guessBand(int freq) {
-        if (ProgramSelectorExt.isAmFrequency(freq)) return RadioManager.BAND_AM;
-        else return RadioManager.BAND_FM;
-    }
-
-    public RadioStation(int frequency) {
-        this(frequency, 0, guessBand(frequency), null);
+    public RadioStation(@NonNull ProgramSelector selector, @Nullable RadioRds rds) {
+        mSelector = Objects.requireNonNull(selector);
+        mRds = rds;
     }
 
     /**
@@ -55,37 +52,39 @@ public class RadioStation implements Parcelable {
      */
     public RadioStation(int channelNumber, int subChannelNumber, int band,
             @Nullable RadioRds rds) {
-        mChannelNumber = channelNumber;
-        mSubChannelNumber = subChannelNumber;
-        mBand = band;
-        mRds = rds;
+        if (channelNumber == RadioStorage.INVALID_RADIO_CHANNEL) {
+            mSelector = null;
+            mRds = null;
+        } else {
+            mSelector = ProgramSelectorExt.createAmFmSelector(channelNumber);
+            mRds = rds;
+        }
     }
 
     private RadioStation(Parcel in) {
-        mChannelNumber = in.readInt();
-        mSubChannelNumber = in.readInt();
-        mBand = in.readInt();
-        mRds = in.readParcelable(RadioRds.class.getClassLoader());
+        mSelector = in.readTypedObject(ProgramSelector.CREATOR);
+        mRds = in.readTypedObject(RadioRds.CREATOR);
     }
 
     @Override
     public void writeToParcel(Parcel out, int flags) {
-        out.writeInt(mChannelNumber);
-        out.writeInt(mSubChannelNumber);
-        out.writeInt(mBand);
-        out.writeParcelable(mRds, 0);
+        out.writeTypedObject(mSelector, 0);
+        out.writeTypedObject(mRds, 0);
+    }
+
+    public @NonNull ProgramSelector getSelector() {
+        return Objects.requireNonNull(mSelector);
     }
 
     public int getChannelNumber() {
-        return mChannelNumber;
-    }
-
-    public int getSubChannelNumber() {
-        return mSubChannelNumber;
+        if (mSelector == null) return RadioStorage.INVALID_RADIO_CHANNEL;
+        return (int)mSelector.getFirstId(ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY);
     }
 
     public int getRadioBand() {
-        return mBand;
+        if (mSelector == null) return RadioStorage.INVALID_RADIO_BAND;
+        if (ProgramSelectorExt.isAmFrequency(getChannelNumber())) return RadioManager.BAND_AM;
+        else return RadioManager.BAND_FM;
     }
 
     @Nullable
@@ -95,32 +94,21 @@ public class RadioStation implements Parcelable {
 
     @Override
     public String toString() {
-        return String.format("RadioStation [channel: %s, subchannel: %s, band: %s, rds: %s]",
-                mChannelNumber, mSubChannelNumber, mBand, mRds);
+        return String.format("RadioStation [selector: %s, rds: %s]", mSelector, mRds);
     }
 
-    /**
-     * Returns {@code true} if two {@link RadioStation}s are equal. RadioStations are considered
-     * equal if they have the same channel and subchannel numbers.
-     */
+    // stations are considered equal if their selectors are equal
     @Override
-    public boolean equals(Object object) {
-        if (object == this) {
-            return true;
-        }
-
-        if (!(object instanceof RadioStation)) {
-            return false;
-        }
-
-        RadioStation station = (RadioStation) object;
-        return station.getChannelNumber() == mChannelNumber
-                && station.getSubChannelNumber() == mSubChannelNumber;
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof RadioStation)) return false;
+        RadioStation other = (RadioStation) obj;
+        return Objects.equals(mSelector, other.mSelector);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(mChannelNumber, mSubChannelNumber);
+        return Objects.hash(mSelector);
     }
 
     @Override
@@ -128,8 +116,8 @@ public class RadioStation implements Parcelable {
         return 0;
     }
 
-    public static final Parcelable.Creator<RadioStation> CREATOR = new
-            Parcelable.Creator<RadioStation>() {
+    public static final Parcelable.Creator<RadioStation> CREATOR =
+            new Parcelable.Creator<RadioStation>() {
                 public RadioStation createFromParcel(Parcel in) {
                     return new RadioStation(in);
                 }

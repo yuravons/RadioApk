@@ -20,6 +20,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.radio.ProgramList;
+import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
 import android.hardware.radio.RadioMetadata;
 import android.hardware.radio.RadioTuner;
@@ -357,24 +358,13 @@ public class RadioService extends MediaBrowserServiceCompat
          * as a {@link android.hardware.radio.RadioTuner.Callback}.
          */
         @Override
-        public void tune(RadioStation radioStation) {
-            if (mRadioManager == null || radioStation == null
+        public void tune(ProgramSelector sel) {
+            if (mRadioManager == null || sel == null
                     || requestAudioFocus() != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 return;
             }
 
-            if (mRadioTuner == null || radioStation.getRadioBand() != mCurrentRadioBand) {
-                int radioStatus = openRadioBandInternal(radioStation.getRadioBand());
-                if (radioStatus == RadioManager.STATUS_ERROR) {
-                    return;
-                }
-            }
-
-            int status = mRadioTuner.tune(radioStation.getChannelNumber(), 0 /* subChannel */);
-
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Tuning to station: " + radioStation + "\n\tstatus: " + status);
-            }
+            mRadioTuner.tune(sel);
         }
 
         /**

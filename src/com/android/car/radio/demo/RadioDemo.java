@@ -17,6 +17,7 @@ package com.android.car.radio.demo;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -73,10 +74,12 @@ public class RadioDemo implements AudioManager.OnAudioFocusChangeListener {
     public IRadioManager.Stub createDemoManager() {
         return new IRadioManager.Stub() {
             @Override
-            public void tune(RadioStation station) throws RemoteException {
-                if (station == null || !requestAudioFocus()) {
+            public void tune(ProgramSelector sel) throws RemoteException {
+                if (sel == null || !requestAudioFocus()) {
                     return;
                 }
+
+                RadioStation station = new RadioStation(sel, null);
 
                 if (station.getRadioBand() != mCurrentRadioBand) {
                     switchRadioBand(station.getRadioBand());
