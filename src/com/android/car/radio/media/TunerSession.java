@@ -58,7 +58,6 @@ public class TunerSession extends MediaSessionCompat {
 
         // TODO(b/75970985): ACTION_SET_RATING, setRatingType, onSetRating
         // TODO(b/75970985): setSessionActivity when Car/Media app supports getSessionActivity
-        // TODO(b/75970985): notifyProgramInfoChanged for the currently tuned station
 
         setCallback(new TunerSessionCallback());
 

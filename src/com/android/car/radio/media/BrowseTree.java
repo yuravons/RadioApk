@@ -19,6 +19,7 @@ package com.android.car.radio.media;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.annotation.StringRes;
+import android.hardware.radio.ProgramList;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.BandDescriptor;
 import android.hardware.radio.RadioManager;
@@ -31,11 +32,14 @@ import android.support.v4.media.MediaDescriptionCompat;
 import android.util.Log;
 
 import com.android.car.radio.R;
+import com.android.car.radio.platform.ProgramInfoExt;
 import com.android.car.radio.platform.ProgramSelectorExt;
 import com.android.car.radio.service.RadioStation;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class BrowseTree {
@@ -47,6 +51,7 @@ public class BrowseTree {
 
     private static final String NODEPREFIX_BAND = "band:";
     private static final String NODEPREFIX_AMFMCHANNEL = "amfm:";
+    private static final String NODEPREFIX_PROGRAM = "program:";
 
     private static final BrowserRoot mRoot = new BrowserRoot(NODE_ROOT, null);
 
@@ -59,6 +64,14 @@ public class BrowseTree {
             NODEPREFIX_BAND + "am", R.string.radio_am_text);
     private final AmFmChannelList fmChannels = new AmFmChannelList(
             NODEPREFIX_BAND + "fm", R.string.radio_fm_text);
+
+    private final ProgramList.OnCompleteListener mProgramListCompleteListener =
+            this::onProgramListUpdated;
+    @Nullable private ProgramList mProgramList;
+    @Nullable private List<RadioManager.ProgramInfo> mProgramListSnapshot;
+    @Nullable private List<MediaItem> mProgramListCache;
+    private final List<Runnable> mProgramListTasks = new ArrayList<>();
+    private final Map<String, ProgramSelector> mProgramSelectors = new HashMap<>();
 
     public BrowseTree(@NonNull MediaBrowserServiceCompat browserService) {
         mBrowserService = Objects.requireNonNull(browserService);
@@ -93,6 +106,71 @@ public class BrowseTree {
         }
     }
 
+    private void onProgramListUpdated() {
+        synchronized (mLock) {
+            mProgramListSnapshot = mProgramList.toList();
+            mProgramListCache = null;
+            mBrowserService.notifyChildrenChanged(NODE_PROGRAMS);
+
+            for (Runnable task : mProgramListTasks) {
+                task.run();
+            }
+            mProgramListTasks.clear();
+        }
+    }
+
+    public void setProgramList(@Nullable ProgramList programList) {
+        synchronized (mLock) {
+            if (mProgramList != null) {
+                mProgramList.removeOnCompleteListener(mProgramListCompleteListener);
+            }
+            mProgramList = programList;
+            if (programList != null) {
+                mProgramList.addOnCompleteListener(mProgramListCompleteListener);
+            }
+            mBrowserService.notifyChildrenChanged(NODE_ROOT);
+        }
+    }
+
+    private List<MediaItem> getPrograms() {
+        synchronized (mLock) {
+            if (mProgramListSnapshot == null) {
+                Log.w(TAG, "There is no snapshot of the program list");
+                return null;
+            }
+
+            if (mProgramListCache != null) return mProgramListCache;
+            mProgramListCache = new ArrayList<>();
+
+            MediaDescriptionCompat.Builder dbld = new MediaDescriptionCompat.Builder();
+
+            for (RadioManager.ProgramInfo program : mProgramListSnapshot) {
+                ProgramSelector sel = program.getSelector();
+                String mediaId = identifierToMediaId(sel.getPrimaryId());
+                mProgramSelectors.put(mediaId, sel);
+                mProgramListCache.add(createChild(dbld, mediaId,
+                        ProgramInfoExt.getProgramName(program), MediaItem.FLAG_PLAYABLE));
+            }
+
+            if (mProgramListCache.size() == 0) {
+                Log.v(TAG, "Program list is empty");
+            }
+            return mProgramListCache;
+        }
+    }
+
+    private void sendPrograms(final Result<List<MediaItem>> result) {
+        synchronized (mLock) {
+            if (mProgramListSnapshot != null) {
+                result.sendResult(getPrograms());
+            } else {
+                Log.d(TAG, "Program list is not ready yet");
+                result.detach();
+                mProgramListTasks.add(() -> result.sendResult(getPrograms()));
+            }
+        }
+    }
+
     private List<MediaItem> getRootChildren() {
         synchronized (mLock) {
             if (mRootChildren != null) return mRootChildren;
@@ -100,9 +178,11 @@ public class BrowseTree {
 
             MediaDescriptionCompat.Builder dbld = new MediaDescriptionCompat.Builder();
             int f = MediaItem.FLAG_BROWSABLE;
-            if (true) {  // TODO(b/75970985): implement program list and favorites support
+            if (mProgramList != null) {
                 mRootChildren.add(createChild(dbld, NODE_PROGRAMS,
                         mBrowserService.getString(R.string.program_list_text), f));
+            }
+            if (true) {  // TODO(b/75970985): implement favorites support
                 mRootChildren.add(createChild(dbld, NODE_FAVORITES,
                         mBrowserService.getString(R.string.favorites_list_text), f));
             }
@@ -180,6 +260,8 @@ public class BrowseTree {
 
         if (NODE_ROOT.equals(parentMediaId)) {
             result.sendResult(getRootChildren());
+        } else if (NODE_PROGRAMS.equals(parentMediaId)) {
+            sendPrograms(result);
         } else if (parentMediaId.equals(amChannels.mMediaId)) {
             result.sendResult(amChannels.getChannels());
         } else if (parentMediaId.equals(fmChannels.mMediaId)) {
@@ -190,19 +272,34 @@ public class BrowseTree {
         }
     }
 
+    private static @NonNull String identifierToMediaId(@NonNull ProgramSelector.Identifier id) {
+        return NODEPREFIX_PROGRAM + id.getType() + '/' + id.getValue();
+    }
+
     // TODO(b/75970985): parse to ProgramSelector, not RadioStation
     public @Nullable RadioStation parseMediaId(@Nullable String mediaId) {
         if (mediaId == null) return null;
-        if (!mediaId.startsWith(NODEPREFIX_AMFMCHANNEL)) return null;
 
-        String freqStr = mediaId.substring(NODEPREFIX_AMFMCHANNEL.length());
-        int freqInt;
-        try {
-            freqInt = Integer.parseInt(freqStr);
-        } catch (NumberFormatException ex) {
-            Log.e(TAG, "Invalid frequency", ex);
-            return null;
+        if (mediaId.startsWith(NODEPREFIX_AMFMCHANNEL)) {
+            String freqStr = mediaId.substring(NODEPREFIX_AMFMCHANNEL.length());
+            int freqInt;
+            try {
+                freqInt = Integer.parseInt(freqStr);
+            } catch (NumberFormatException ex) {
+                Log.e(TAG, "Invalid frequency", ex);
+                return null;
+            }
+            return new RadioStation(freqInt);
+        } else if (mediaId.startsWith(NODEPREFIX_PROGRAM)) {
+            ProgramSelector sel = mProgramSelectors.get(mediaId);
+            if (sel == null) return null;
+            try {
+                int freq = (int)sel.getFirstId(ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY);
+                return new RadioStation(freq);
+            } catch (IllegalArgumentException ex) {
+                return null;
+            }
         }
-        return new RadioStation(freqInt);
+        return null;
     }
 }
