@@ -29,12 +29,10 @@ import java.util.List;
 public class PreScannedChannelLoader extends AsyncTaskLoader<List<RadioStation>> {
     private final static int INVALID_RADIO_BAND = -1;
 
-    private final RadioStorage mRadioStorage;
     private int mCurrentRadioBand = INVALID_RADIO_BAND;
 
     public PreScannedChannelLoader(Context context) {
         super(context);
-        mRadioStorage = RadioStorage.getInstance(context);
     }
 
     /**
@@ -59,6 +57,7 @@ public class PreScannedChannelLoader extends AsyncTaskLoader<List<RadioStation>>
             return Collections.emptyList();
         }
 
-        return mRadioStorage.getPreScannedStationsForBand(mCurrentRadioBand);
+        // TODO(b/73950974): load program list here (if we want to use AsyncTaskLoader for that)
+        return Collections.emptyList();
     }
 }
