@@ -132,7 +132,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
         }
 
         if (station != null) {
-            mRadioController.tuneToRadioChannel(station);
+            mRadioController.tune(station.getSelector());
         }
     }
 
