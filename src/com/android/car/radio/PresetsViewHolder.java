@@ -96,7 +96,8 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
         mPresetItemMetadata = presetsView.findViewById(R.id.preset_item_metadata);
         mPresetButton = presetsView.findViewById(R.id.preset_button);
 
-        mPresetItemChannelBg = (GradientDrawable) mPresetItemChannel.getBackground();
+        mPresetItemChannelBg = (GradientDrawable)
+                presetsView.findViewById(R.id.preset_station_background).getBackground();
     }
 
     @Override
