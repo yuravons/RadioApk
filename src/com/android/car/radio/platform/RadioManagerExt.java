@@ -23,6 +23,7 @@ import android.hardware.radio.RadioManager.BandDescriptor;
 import android.hardware.radio.RadioManager;
 import android.hardware.radio.RadioTuner;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -41,6 +42,8 @@ public class RadioManagerExt {
 
     private final Object mLock = new Object();
 
+    private final HandlerThread mCallbackHandlerThread = new HandlerThread("BcRadioApp.cbhandler");
+
     private final @NonNull RadioManager mRadioManager;
     private List<RadioManager.ModuleProperties> mModules;
     private @Nullable List<BandDescriptor> mAmFmRegionConfig;
@@ -48,6 +51,7 @@ public class RadioManagerExt {
     public RadioManagerExt(@NonNull Context ctx) {
         mRadioManager = (RadioManager)ctx.getSystemService(Context.RADIO_SERVICE);
         Objects.requireNonNull(mRadioManager, "RadioManager could not be loaded");
+        mCallbackHandlerThread.start();
     }
 
     /* Select only one region. HAL 2.x moves region selection responsibility from the app to the
@@ -90,13 +94,32 @@ public class RadioManagerExt {
         initModules();
         if (mModules.size() == 0) return null;
 
+        /* We won't need custom default wrapper when we push these proposed extensions to the
+         * framework; this is solely to avoid deadlock on onConfigurationChanged callback versus
+         * waitForInitialization.
+         */
+        Handler hwHandler = new Handler(mCallbackHandlerThread.getLooper());
+
         // For now, we open first radio module only.
         RadioManager.ModuleProperties module = mModules.get(0);
+        TunerCallbackAdapterExt cbExt = new TunerCallbackAdapterExt(callback, handler);
 
-        return mRadioManager.openTuner(module.getId(),
+        RadioTuner tuner = mRadioManager.openTuner(
+                module.getId(),
                 null,  // BandConfig - let the service automatically select one.
                 true,  // withAudio
-                callback, handler);
+                cbExt, hwHandler);
+        if (tuner == null) return null;
+
+        if (module.isInitializationRequired()) {
+            if (!cbExt.waitForInitialization()) {
+                Log.w(TAG, "Timed out waiting for tuner initialization");
+                tuner.close();
+                return null;
+            }
+        }
+
+        return tuner;
     }
 
     public @Nullable List<BandDescriptor> getAmFmRegionConfig() {

@@ -19,6 +19,7 @@ package com.android.car.radio.media;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Context;
+import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -30,7 +31,6 @@ import android.util.Log;
 
 import com.android.car.radio.platform.ProgramInfoExt;
 import com.android.car.radio.service.IRadioManager;
-import com.android.car.radio.service.RadioStation;
 import com.android.car.radio.utils.ThrowingRunnable;
 
 import java.util.Objects;
@@ -58,7 +58,6 @@ public class TunerSession extends MediaSessionCompat {
 
         // TODO(b/75970985): ACTION_SET_RATING, setRatingType, onSetRating
         // TODO(b/75970985): setSessionActivity when Car/Media app supports getSessionActivity
-        // TODO(b/75970985): notifyProgramInfoChanged for the currently tuned station
 
         setCallback(new TunerSessionCallback());
 
@@ -102,7 +101,7 @@ public class TunerSession extends MediaSessionCompat {
 
         @Override
         public void onPlayFromMediaId(String mediaId, Bundle extras) {
-            RadioStation selector = mBrowseTree.parseMediaId(mediaId);
+            ProgramSelector selector = mBrowseTree.parseMediaId(mediaId);
             if (selector != null) {
                 exec(() -> mUiSession.tune(selector));
             } else {

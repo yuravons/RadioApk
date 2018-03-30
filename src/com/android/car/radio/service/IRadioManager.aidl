@@ -17,15 +17,16 @@ package com.android.car.radio.service;
 
 import com.android.car.radio.service.IRadioCallback;
 import com.android.car.radio.service.RadioStation;
+import android.hardware.radio.ProgramSelector;
 
 /**
  * Interface for apps to communicate with the radio.
  */
 interface IRadioManager {
     /**
-     * Tunes the radio to the given frequency.
+     * Tunes to a given program.
      */
-    void tune(in RadioStation station);
+    void tune(in ProgramSelector sel);
 
     /**
      * Seeks the radio forward.

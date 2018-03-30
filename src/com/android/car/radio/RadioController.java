@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.content.Loader;
 import android.content.ServiceConnection;
 import android.graphics.Color;
+import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
 import android.hardware.radio.RadioTuner;
 import android.media.AudioManager;
@@ -38,6 +39,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
+import com.android.car.radio.platform.ProgramSelectorExt;
 import com.android.car.radio.service.IRadioCallback;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.service.RadioRds;
@@ -253,15 +255,13 @@ public class RadioController implements
     /**
      * Tunes the radio to the given channel if it is valid and a {@link RadioTuner} has been opened.
      */
-    public void tuneToRadioChannel(RadioStation radioStation) {
-        if (mRadioManager == null) {
-            return;
-        }
+    public void tune(ProgramSelector sel) {
+        if (mRadioManager == null) return;
 
         try {
-            mRadioManager.tune(radioStation);
-        } catch (RemoteException e) {
-            Log.e(TAG, "tuneToRadioChannel(); remote exception: " + e.getMessage());
+            mRadioManager.tune(sel);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to tune", ex);
         }
     }
 
@@ -350,9 +350,7 @@ public class RadioController implements
 
         // Tune to a stored radio channel if it exists.
         if (mCurrentChannelNumber != RadioStorage.INVALID_RADIO_CHANNEL) {
-            RadioStation station = new RadioStation(mCurrentChannelNumber, 0 /* subchannel */,
-                    mCurrentRadioBand, mCurrentRds);
-            tuneToRadioChannel(station);
+            tune(ProgramSelectorExt.createAmFmSelector(mCurrentChannelNumber));
         } else {
             // Otherwise, ensure that the radio is on a valid radio station (i.e. it will not
             // start playing static) by initiating a seek.
@@ -803,11 +801,7 @@ public class RadioController implements
                 }
 
                 // Tune to the previous station, and then update the UI to reflect that tune.
-                try {
-                    mRadioManager.tune(prevStation);
-                } catch (RemoteException e) {
-                    Log.e(TAG, "backwardSeek(); remote exception: " + e.getMessage());
-                }
+                tune(prevStation.getSelector());
             }
         }
     };
@@ -838,11 +832,7 @@ public class RadioController implements
                 }
 
                 // Tune to the next station, and then update the UI to reflect that tune.
-                try {
-                    mRadioManager.tune(nextStation);
-                } catch (RemoteException e) {
-                    Log.e(TAG, "forwardSeek(); remote exception: " + e.getMessage());
-                }
+                tune(nextStation.getSelector());
             }
         }
     };
