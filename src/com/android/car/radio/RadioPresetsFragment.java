@@ -20,6 +20,7 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.hardware.radio.ProgramSelector;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -27,7 +28,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.android.car.radio.service.RadioStation;
+import com.android.car.radio.media.Program;
 
 import java.util.List;
 
@@ -209,7 +210,7 @@ public class RadioPresetsFragment extends Fragment implements
         mRadioController.setShouldColorStatusBar(true);
         mRadioController.setRadioStationChangeListener(this);
 
-        mPresetsAdapter.setActiveRadioStation(mRadioController.getCurrentRadioStation());
+        mPresetsAdapter.setActiveRadioStation(mRadioController.getCurrentSelector());
     }
 
     @Override
@@ -228,12 +229,8 @@ public class RadioPresetsFragment extends Fragment implements
 
 
     @Override
-    public void onRadioStationChanged(RadioStation station) {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "onRadioStationChanged(): " + station);
-        }
-
-        mPresetsAdapter.setActiveRadioStation(station);
+    public void onRadioStationChanged(ProgramSelector selector) {
+        mPresetsAdapter.setActiveRadioStation(selector);
     }
 
     @Override
@@ -243,7 +240,7 @@ public class RadioPresetsFragment extends Fragment implements
         }
     }
 
-    private void handlePresetItemFavoriteChanged(RadioStation radioStation, boolean saveAsFavorite) {
+    private void handlePresetItemFavoriteChanged(Program radioStation, boolean saveAsFavorite) {
         if (saveAsFavorite) {
             mRadioStorage.storePreset(radioStation);
         } else {
@@ -254,15 +251,9 @@ public class RadioPresetsFragment extends Fragment implements
     /**
      * Sets the given list of presets into the PagedListView {@link #mPresetsList}.
      */
-    private void setPresetsOnList(List<RadioStation> presets) {
+    private void setPresetsOnList(List<Program> presets) {
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "setPresetsOnList(). # of presets: " + presets.size());
-        }
-
-        if (Log.isLoggable(TAG, Log.VERBOSE)) {
-            for (RadioStation radioStation : presets) {
-                Log.v(TAG, "\t" + radioStation);
-            }
         }
 
         mPresetsAdapter.setPresets(presets);
