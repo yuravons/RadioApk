@@ -86,7 +86,7 @@ public class RadioPresetsFragment extends Fragment implements
     public void onViewCreated(View view, Bundle savedInstanceState) {
         Context context = getContext();
 
-        mPresetsAdapter.setOnPresetItemClickListener(mRadioController::tuneToRadioChannel);
+        mPresetsAdapter.setOnPresetItemClickListener(mRadioController::tune);
         mPresetsAdapter.setOnPresetItemFavoriteListener(this::handlePresetItemFavoriteChanged);
 
         mCurrentRadioCard = view.findViewById(R.id.current_radio_station_card);

@@ -17,6 +17,7 @@
 package com.android.car.radio;
 
 import android.annotation.Nullable;
+import android.hardware.radio.ProgramSelector;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -54,9 +55,9 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsViewHolder>
         /**
          * Method called when an item in the preset list has been clicked.
          *
-         * @param radioStation The {@link RadioStation} corresponding to the clicked preset.
+         * @param selector The {@link ProgramSelector} corresponding to the clicked preset.
          */
-        void onPresetItemClicked(RadioStation radioStation);
+        void onPresetItemClicked(ProgramSelector selector);
     }
 
     /**
@@ -145,7 +146,7 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsViewHolder>
         }
 
         if (mPresetClickListener != null && getItemCount() > position) {
-            mPresetClickListener.onPresetItemClicked(mPresets.get(position));
+            mPresetClickListener.onPresetItemClicked(mPresets.get(position).getSelector());
         }
     }
 
