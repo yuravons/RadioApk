@@ -37,7 +37,6 @@ import android.util.Log;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
 import android.support.v4.media.MediaBrowserServiceCompat;
 
-import com.android.car.radio.demo.RadioDemo;
 import com.android.car.radio.media.Program;
 import com.android.car.radio.media.BrowseTree;
 import com.android.car.radio.media.TunerSession;
@@ -131,13 +130,7 @@ public class RadioService extends MediaBrowserServiceCompat
                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                 .build();
 
-        // TODO(b/73950974): remove demo mode
-        boolean isDemo = SystemProperties.getBoolean(RadioDemo.DEMO_MODE_PROPERTY, false);
-        if (isDemo) {
-            initializeDemo();
-        } else {
-            initialze();
-        }
+        initialze();
 
         mBrowseTree = new BrowseTree(this);
         mMediaSession = new TunerSession(this, mBrowseTree, mBinder);
@@ -148,23 +141,8 @@ public class RadioService extends MediaBrowserServiceCompat
         favDemo.add(new Program(ProgramSelectorExt.createAmFmSelector(97300), "Alice"));
         mBrowseTree.setFavorites(favDemo);
 
-        if (!isDemo) {
-            mBrowseTree.setAmFmRegionConfig(mRadioManager.getAmFmRegionConfig());
-            openRadioBandInternal(mCurrentRadioBand);
-        }
-    }
-
-    /**
-     * Initializes this service to use a demo {@link IRadioManager}.
-     *
-     * @see RadioDemo
-     */
-    private void initializeDemo() {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "initializeDemo()");
-        }
-
-        mBinder = RadioDemo.getInstance(this /* context */).createDemoManager();
+        mBrowseTree.setAmFmRegionConfig(mRadioManager.getAmFmRegionConfig());
+        openRadioBandInternal(mCurrentRadioBand);
     }
 
     /**
