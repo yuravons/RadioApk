@@ -76,8 +76,9 @@ public class TunerSession extends MediaSessionCompat {
     }
 
     public void notifyProgramInfoChanged(@NonNull ProgramInfo info) {
-        setMetadata(MediaMetadataCompat.fromMediaMetadata(ProgramInfoExt.toMediaMetadata(
-                info, false /* TODO(b/75970985): handle isFavorite */)));
+        boolean fav = mBrowseTree.isFavorite(info.getSelector());
+        setMetadata(MediaMetadataCompat.fromMediaMetadata(
+                ProgramInfoExt.toMediaMetadata(info, fav)));
     }
 
     private void exec(ThrowingRunnable<RemoteException> func) {

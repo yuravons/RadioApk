@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class BrowseTree {
     private static final String TAG = "BcRadioApp.BrowseTree";
@@ -112,6 +113,9 @@ public class BrowseTree {
     @Nullable private List<MediaItem> mProgramListCache;
     private final List<Runnable> mProgramListTasks = new ArrayList<>();
     private final Map<String, ProgramSelector> mProgramSelectors = new HashMap<>();
+
+    @Nullable Set<Program> mFavorites;
+    @Nullable private List<MediaItem> mFavoritesCache;
 
     public BrowseTree(@NonNull MediaBrowserServiceCompat browserService) {
         mBrowserService = Objects.requireNonNull(browserService);
@@ -200,7 +204,7 @@ public class BrowseTree {
 
             for (RadioManager.ProgramInfo program : mProgramListSnapshot) {
                 ProgramSelector sel = program.getSelector();
-                String mediaId = identifierToMediaId(sel.getPrimaryId());
+                String mediaId = selectorToMediaId(sel);
                 mProgramSelectors.put(mediaId, sel);
                 mProgramListCache.add(createChild(dbld, mediaId,
                         ProgramInfoExt.getProgramName(program)));
@@ -225,6 +229,42 @@ public class BrowseTree {
         }
     }
 
+    public void setFavorites(@Nullable Set<Program> favorites) {
+        synchronized (mLock) {
+            boolean rootChanged = (mFavorites == null) != (favorites == null);
+            mFavorites = favorites;
+            mFavoritesCache = null;
+            mBrowserService.notifyChildrenChanged(NODE_FAVORITES);
+            if (rootChanged) mBrowserService.notifyChildrenChanged(NODE_ROOT);
+        }
+    }
+
+    boolean isFavorite(@NonNull ProgramSelector selector) {
+        synchronized (mLock) {
+            if (mFavorites == null) return false;
+            return mFavorites.contains(new Program(selector, ""));
+        }
+    }
+
+    private List<MediaItem> getFavorites() {
+        synchronized (mLock) {
+            if (mFavorites == null) return null;
+            if (mFavoritesCache != null) return mFavoritesCache;
+            mFavoritesCache = new ArrayList<>();
+
+            MediaDescriptionCompat.Builder dbld = new MediaDescriptionCompat.Builder();
+
+            for (Program fav : mFavorites) {
+                ProgramSelector sel = fav.getSelector();
+                String mediaId = selectorToMediaId(sel);
+                mProgramSelectors.putIfAbsent(mediaId, sel);  // prefer program list entries
+                mFavoritesCache.add(createChild(dbld, mediaId, fav.getName()));
+            }
+
+            return mFavoritesCache;
+        }
+    }
+
     private List<MediaItem> getRootChildren() {
         synchronized (mLock) {
             if (mRootChildren != null) return mRootChildren;
@@ -236,7 +276,7 @@ public class BrowseTree {
                         mBrowserService.getString(R.string.program_list_text),
                         false, BCRADIO_FOLDER_TYPE_PROGRAMS));
             }
-            if (true) {  // TODO(b/75970985): implement favorites support
+            if (mFavorites != null) {
                 mRootChildren.add(createFolder(dbld, NODE_FAVORITES,
                         mBrowserService.getString(R.string.favorites_list_text),
                         true, BCRADIO_FOLDER_TYPE_FAVORITES));
@@ -314,6 +354,8 @@ public class BrowseTree {
             result.sendResult(getRootChildren());
         } else if (NODE_PROGRAMS.equals(parentMediaId)) {
             sendPrograms(result);
+        } else if (NODE_FAVORITES.equals(parentMediaId)) {
+            result.sendResult(getFavorites());
         } else if (parentMediaId.equals(amChannels.mMediaId)) {
             result.sendResult(amChannels.getChannels());
         } else if (parentMediaId.equals(fmChannels.mMediaId)) {
@@ -324,7 +366,8 @@ public class BrowseTree {
         }
     }
 
-    private static @NonNull String identifierToMediaId(@NonNull ProgramSelector.Identifier id) {
+    private static @NonNull String selectorToMediaId(@NonNull ProgramSelector sel) {
+        ProgramSelector.Identifier id = sel.getPrimaryId();
         return NODEPREFIX_PROGRAM + id.getType() + '/' + id.getValue();
     }
 
