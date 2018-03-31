@@ -24,16 +24,28 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.android.car.radio.RadioStorage;
+import com.android.car.radio.media.Program;
 import com.android.car.radio.platform.ProgramSelectorExt;
 
 import java.util.Objects;
 
 /**
  * A representation of a radio station.
+ *
+ * TODO(b/73950974): replace with media.Program
  */
 public class RadioStation implements Parcelable {
     private final ProgramSelector mSelector;
     private final RadioRds mRds;
+
+    public RadioStation(@NonNull Program program) {
+        this(program.getSelector(), new RadioRds(program.getName(), null, null));
+    }
+
+    public @NonNull Program toProgram() {
+        String name = (mRds == null) ? null : mRds.getProgramService();
+        return new Program(mSelector, (name == null) ? "" : name);
+    }
 
     public RadioStation(@NonNull ProgramSelector selector, @Nullable RadioRds rds) {
         mSelector = Objects.requireNonNull(selector);
