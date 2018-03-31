@@ -121,6 +121,8 @@ limitations under the License.
 
     <!-- The top padding before the content within the manual tuner. -->
     <dimen name="manual_tuner_top_padding">@dimen/radio_default_spacing</dimen>
+    <!-- The left padding before the content within the manual tuner. -->
+    <dimen name="manual_tuner_left_padding">@dimen/radio_default_spacing</dimen>
 
     <!-- The size of the numbers in the manual tuner dialpad. -->
     <dimen name="manual_tuner_dialpad_text_size">64sp</dimen>
@@ -128,8 +130,4 @@ limitations under the License.
     <!-- The top margin for the dialpad. This value is negative to pull the dialpad up a bit
          for visual purposes. -->
     <dimen name="manual_tuner_dialpad_top_margin">-16dp</dimen>
-
-    <!-- The spacing between the buttons on the dialpad. -->
-    <dimen name="manual_tuner_dialpad_horizontal_spacing">56dp</dimen>
-    <dimen name="manual_tuner_dialpad_vertical_spacing">24sp</dimen>
 </resources>
