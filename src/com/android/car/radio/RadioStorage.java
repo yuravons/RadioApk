@@ -27,8 +27,6 @@ import android.support.annotation.WorkerThread;
 import android.util.Log;
 import com.android.car.radio.media.Program;
 import com.android.car.radio.service.RadioStation;
-import com.android.car.radio.demo.DemoRadioStations;
-import com.android.car.radio.demo.RadioDemo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,27 +65,7 @@ public class RadioStorage {
         void onPresetsRefreshed();
     }
 
-    /**
-     * Listener that will be called when something in the pre-scanned channels has changed.
-     */
-    public interface PreScannedChannelChangeListener {
-        /**
-         * Notifies that the pre-scanned channels for the given radio band has changed.
-         *
-         * @param radioBand One of the band values in {@link RadioManager}.
-         */
-        void onPreScannedChannelChange(int radioBand);
-    }
-
     private Set<PresetsChangeListener> mPresetListeners = new HashSet<>();
-
-    /**
-     * Set of listeners that will be notified whenever pre-scanned channels have changed.
-     *
-     * <p>Note that this set is not initialized because pre-scanned channels are only needed if
-     * dual-tuners exist in the current radio. Thus, this set is created conditionally.
-     */
-    private Set<PreScannedChannelChangeListener> mPreScannedListeners;
 
     // TODO(b/73950974): use Set, not List
     @NonNull private List<Program> mPresets = new ArrayList<>();
@@ -126,29 +104,6 @@ public class RadioStorage {
      */
     public void removePresetsChangeListener(PresetsChangeListener listener) {
         mPresetListeners.remove(listener);
-    }
-
-    /**
-     * Registers the given {@link PreScannedChannelChangeListener} to be notified of changes to
-     * pre-scanned channels.
-     */
-    public void addPreScannedChannelChangeListener(PreScannedChannelChangeListener listener) {
-        if (mPreScannedListeners == null) {
-            mPreScannedListeners = new HashSet<>();
-        }
-
-        mPreScannedListeners.add(listener);
-    }
-
-    /**
-     * Unregisters the given {@link PreScannedChannelChangeListener}.
-     */
-    public void removePreScannedChannelChangeListener(PreScannedChannelChangeListener listener) {
-        if (mPreScannedListeners == null) {
-            return;
-        }
-
-        mPreScannedListeners.remove(listener);
     }
 
     /**
@@ -277,65 +232,12 @@ public class RadioStorage {
     }
 
     /**
-     * Stores the list of {@link RadioStation}s as the pre-scanned stations for the given radio
-     * band.
-     *
-     * @param radioBand One of {@link RadioManager#BAND_FM}, {@link RadioManager#BAND_AM},
-     * {@link RadioManager#BAND_FM_HD} or {@link RadioManager#BAND_AM_HD}.
-     */
-    public void storePreScannedStations(int radioBand, List<RadioStation> stations) {
-        if (stations == null) {
-            return;
-        }
-
-        // Converting to an array rather than passing a List to the execute to avoid any potential
-        // heap pollution via AsyncTask's varargs.
-        new StorePreScannedAsyncTask(radioBand).execute(
-                stations.toArray(new RadioStation[stations.size()]));
-    }
-
-    /**
-     * Returns the list of pre-scanned radio channels for the given band.
-     */
-    @NonNull
-    @WorkerThread
-    public List<RadioStation> getPreScannedStationsForBand(int radioBand) {
-        if (SystemProperties.getBoolean(RadioDemo.DEMO_MODE_PROPERTY, false)) {
-            switch (radioBand) {
-                case RadioManager.BAND_AM:
-                    return DemoRadioStations.getAmStations();
-
-                case RadioManager.BAND_FM:
-                default:
-                    return DemoRadioStations.getFmStations();
-
-            }
-        }
-
-        return sRadioDatabase.getAllPreScannedStationsForBand(radioBand);
-    }
-
-    /**
      * Calls {@link PresetsChangeListener#onPresetsRefreshed()} for all registered
      * {@link PresetsChangeListener}s.
      */
     private void notifyPresetsListeners() {
         for (PresetsChangeListener listener : mPresetListeners) {
             listener.onPresetsRefreshed();
-        }
-    }
-
-    /**
-     * Calls {@link PreScannedChannelChangeListener#onPreScannedChannelChange(int)} for all
-     * registered {@link PreScannedChannelChangeListener}s.
-     */
-    private void notifyPreScannedListeners(int radioBand) {
-        if (mPreScannedListeners == null) {
-            return;
-        }
-
-        for (PreScannedChannelChangeListener listener : mPreScannedListeners) {
-            listener.onPreScannedChannelChange(radioBand);
         }
     }
 
@@ -422,38 +324,6 @@ public class RadioStorage {
         public void onPostExecute(Boolean result) {
             if (result) {
                 notifyPresetsListeners();
-            }
-        }
-    }
-
-    /**
-     * {@link AsyncTask} that will store a list of pre-scanned {@link RadioStation}s that is passed
-     * to its {@link AsyncTask#execute(Object[])}.
-     */
-    private class StorePreScannedAsyncTask extends AsyncTask<RadioStation, Void, Boolean> {
-        private static final String TAG = "Em.StorePreScannedAT";
-        private final int mRadioBand;
-
-        public StorePreScannedAsyncTask(int radioBand) {
-            mRadioBand = radioBand;
-        }
-
-        @Override
-        protected Boolean doInBackground(RadioStation... radioStations) {
-            boolean result = sRadioDatabase.insertPreScannedStations(mRadioBand,
-                    Arrays.asList(radioStations));
-
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Store pre-scanned stations success: " + result);
-            }
-
-            return result;
-        }
-
-        @Override
-        public void onPostExecute(Boolean result) {
-            if (result) {
-                notifyPreScannedListeners(mRadioBand);
             }
         }
     }

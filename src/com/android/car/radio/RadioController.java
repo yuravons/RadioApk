@@ -54,7 +54,6 @@ import java.util.List;
  */
 public class RadioController implements
         RadioStorage.PresetsChangeListener,
-        RadioStorage.PreScannedChannelChangeListener,
         LoaderManager.LoaderCallbacks<List<RadioStation>> {
     private static final String TAG = "Em.RadioController";
     private static final int CHANNEL_LOADER_ID = 0;
@@ -586,7 +585,6 @@ public class RadioController implements
 
         mActivity.unbindService(mServiceConnection);
         mRadioStorage.removePresetsChangeListener(this);
-        mRadioStorage.removePreScannedChannelChangeListener(this);
 
         if (mRadioManager != null) {
             try {
@@ -607,8 +605,6 @@ public class RadioController implements
             Log.d(TAG, "initializeDualTunerController()");
         }
 
-        mRadioStorage.addPreScannedChannelChangeListener(RadioController.this);
-
         if (mAdapter == null) {
             mAdapter = new PrescannedRadioStationAdapter();
         }
@@ -626,15 +622,6 @@ public class RadioController implements
         ProgramSelector sel = getCurrentSelectorLocal();
         if (sel == null) return;
         mRadioDisplayController.setChannelIsPreset(mRadioStorage.isPreset(sel));
-    }
-
-    @Override
-    public void onPreScannedChannelChange(int radioBand) {
-        // If pre-scanned channels have changed for the current radio band, then refresh the list
-        // that is currently being displayed.
-        if (radioBand == mCurrentRadioBand && mChannelLoader != null) {
-            mChannelLoader.forceLoad();
-        }
     }
 
     @Override
