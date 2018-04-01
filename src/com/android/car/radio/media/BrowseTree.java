@@ -19,6 +19,7 @@ package com.android.car.radio.media;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.annotation.StringRes;
+import android.hardware.radio.ProgramList;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.BandDescriptor;
 import android.hardware.radio.RadioManager;
@@ -31,15 +32,59 @@ import android.support.v4.media.MediaDescriptionCompat;
 import android.util.Log;
 
 import com.android.car.radio.R;
+import com.android.car.radio.platform.ProgramInfoExt;
 import com.android.car.radio.platform.ProgramSelectorExt;
-import com.android.car.radio.service.RadioStation;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class BrowseTree {
     private static final String TAG = "BcRadioApp.BrowseTree";
+
+    /**
+     * Used as a long extra field to indicate the Broadcast Radio folder type of the media item.
+     * The value should be one of the following:
+     * <ul>
+     * <li>{@link #BCRADIO_FOLDER_TYPE_PROGRAMS}</li>
+     * <li>{@link #BCRADIO_FOLDER_TYPE_FAVORITES}</li>
+     * <li>{@link #BCRADIO_FOLDER_TYPE_BAND}</li>
+     * </ul>
+     *
+     * @see android.media.MediaDescription#getExtras()
+     */
+    public static final String EXTRA_BCRADIO_FOLDER_TYPE = "android.media.extra.EXTRA_BCRADIO_FOLDER_TYPE";
+
+    /**
+     * The type of folder that contains a list of Broadcast Radio programs available
+     * to tune at the moment.
+     */
+    public static final long BCRADIO_FOLDER_TYPE_PROGRAMS = 1;
+
+    /**
+     * The type of folder that contains a list of Broadcast Radio programs added
+     * to favorites (not necessarily available to tune at the moment).
+     *
+     * If this folder has {@link android.media.browse.MediaBrowser.MediaItem#FLAG_PLAYABLE} flag
+     * set, it can be used to play some program from the favorite list (selection depends on the
+     * radio app implementation).
+     */
+    public static final long BCRADIO_FOLDER_TYPE_FAVORITES = 2;
+
+    /**
+     * The type of folder that contains the list of all Broadcast Radio channels
+     * (frequency values valid in the current region) for a given band.
+     * Each band (like AM, FM) has its own, separate folder.
+     * These lists include all channels, whether or not some program is tunable through it.
+     *
+     * If this folder has {@link android.media.browse.MediaBrowser.MediaItem#FLAG_PLAYABLE} flag
+     * set, it can be used to tune to some channel within a given band (selection depends on the
+     * radio app implementation).
+     */
+    public static final long BCRADIO_FOLDER_TYPE_BAND = 3;
 
     private static final String NODE_ROOT = "root_id";
     private static final String NODE_PROGRAMS = "programs_id";
@@ -47,6 +92,7 @@ public class BrowseTree {
 
     private static final String NODEPREFIX_BAND = "band:";
     private static final String NODEPREFIX_AMFMCHANNEL = "amfm:";
+    private static final String NODEPREFIX_PROGRAM = "program:";
 
     private static final BrowserRoot mRoot = new BrowserRoot(NODE_ROOT, null);
 
@@ -60,6 +106,17 @@ public class BrowseTree {
     private final AmFmChannelList fmChannels = new AmFmChannelList(
             NODEPREFIX_BAND + "fm", R.string.radio_fm_text);
 
+    private final ProgramList.OnCompleteListener mProgramListCompleteListener =
+            this::onProgramListUpdated;
+    @Nullable private ProgramList mProgramList;
+    @Nullable private List<RadioManager.ProgramInfo> mProgramListSnapshot;
+    @Nullable private List<MediaItem> mProgramListCache;
+    private final List<Runnable> mProgramListTasks = new ArrayList<>();
+    private final Map<String, ProgramSelector> mProgramSelectors = new HashMap<>();
+
+    @Nullable Set<Program> mFavorites;
+    @Nullable private List<MediaItem> mFavoritesCache;
+
     public BrowseTree(@NonNull MediaBrowserServiceCompat browserService) {
         mBrowserService = Objects.requireNonNull(browserService);
     }
@@ -69,8 +126,22 @@ public class BrowseTree {
     }
 
     private static MediaItem createChild(MediaDescriptionCompat.Builder descBuilder,
-            String mediaId, String title, int flag) {
-        return new MediaItem(descBuilder.setMediaId(mediaId).setTitle(title).build(), flag);
+            String mediaId, String title) {
+        MediaDescriptionCompat desc = descBuilder.setMediaId(mediaId).setTitle(title).build();
+        return new MediaItem(desc, MediaItem.FLAG_PLAYABLE);
+    }
+
+    private static MediaItem createFolder(MediaDescriptionCompat.Builder descBuilder,
+            String mediaId, String title, boolean isPlayable, long folderType) {
+        Bundle extras = new Bundle();
+        extras.putLong(EXTRA_BCRADIO_FOLDER_TYPE, folderType);
+
+        MediaDescriptionCompat desc = descBuilder.
+                setMediaId(mediaId).setTitle(title).setExtras(extras).build();
+
+        int flags = MediaItem.FLAG_BROWSABLE;
+        if (isPlayable) flags |= MediaItem.FLAG_PLAYABLE;
+        return new MediaItem(desc, flags);
     }
 
     public void setAmFmRegionConfig(@Nullable List<BandDescriptor> amFmBands) {
@@ -93,18 +164,122 @@ public class BrowseTree {
         }
     }
 
+    private void onProgramListUpdated() {
+        synchronized (mLock) {
+            mProgramListSnapshot = mProgramList.toList();
+            mProgramListCache = null;
+            mBrowserService.notifyChildrenChanged(NODE_PROGRAMS);
+
+            for (Runnable task : mProgramListTasks) {
+                task.run();
+            }
+            mProgramListTasks.clear();
+        }
+    }
+
+    public void setProgramList(@Nullable ProgramList programList) {
+        synchronized (mLock) {
+            if (mProgramList != null) {
+                mProgramList.removeOnCompleteListener(mProgramListCompleteListener);
+            }
+            mProgramList = programList;
+            if (programList != null) {
+                mProgramList.addOnCompleteListener(mProgramListCompleteListener);
+            }
+            mBrowserService.notifyChildrenChanged(NODE_ROOT);
+        }
+    }
+
+    private List<MediaItem> getPrograms() {
+        synchronized (mLock) {
+            if (mProgramListSnapshot == null) {
+                Log.w(TAG, "There is no snapshot of the program list");
+                return null;
+            }
+
+            if (mProgramListCache != null) return mProgramListCache;
+            mProgramListCache = new ArrayList<>();
+
+            MediaDescriptionCompat.Builder dbld = new MediaDescriptionCompat.Builder();
+
+            for (RadioManager.ProgramInfo program : mProgramListSnapshot) {
+                ProgramSelector sel = program.getSelector();
+                String mediaId = selectorToMediaId(sel);
+                mProgramSelectors.put(mediaId, sel);
+                mProgramListCache.add(createChild(dbld, mediaId,
+                        ProgramInfoExt.getProgramName(program)));
+            }
+
+            if (mProgramListCache.size() == 0) {
+                Log.v(TAG, "Program list is empty");
+            }
+            return mProgramListCache;
+        }
+    }
+
+    private void sendPrograms(final Result<List<MediaItem>> result) {
+        synchronized (mLock) {
+            if (mProgramListSnapshot != null) {
+                result.sendResult(getPrograms());
+            } else {
+                Log.d(TAG, "Program list is not ready yet");
+                result.detach();
+                mProgramListTasks.add(() -> result.sendResult(getPrograms()));
+            }
+        }
+    }
+
+    public void setFavorites(@Nullable Set<Program> favorites) {
+        synchronized (mLock) {
+            boolean rootChanged = (mFavorites == null) != (favorites == null);
+            mFavorites = favorites;
+            mFavoritesCache = null;
+            mBrowserService.notifyChildrenChanged(NODE_FAVORITES);
+            if (rootChanged) mBrowserService.notifyChildrenChanged(NODE_ROOT);
+        }
+    }
+
+    boolean isFavorite(@NonNull ProgramSelector selector) {
+        synchronized (mLock) {
+            if (mFavorites == null) return false;
+            return mFavorites.contains(new Program(selector, ""));
+        }
+    }
+
+    private List<MediaItem> getFavorites() {
+        synchronized (mLock) {
+            if (mFavorites == null) return null;
+            if (mFavoritesCache != null) return mFavoritesCache;
+            mFavoritesCache = new ArrayList<>();
+
+            MediaDescriptionCompat.Builder dbld = new MediaDescriptionCompat.Builder();
+
+            for (Program fav : mFavorites) {
+                ProgramSelector sel = fav.getSelector();
+                String mediaId = selectorToMediaId(sel);
+                mProgramSelectors.putIfAbsent(mediaId, sel);  // prefer program list entries
+                mFavoritesCache.add(createChild(dbld, mediaId, fav.getName()));
+            }
+
+            return mFavoritesCache;
+        }
+    }
+
     private List<MediaItem> getRootChildren() {
         synchronized (mLock) {
             if (mRootChildren != null) return mRootChildren;
             mRootChildren = new ArrayList<>();
 
             MediaDescriptionCompat.Builder dbld = new MediaDescriptionCompat.Builder();
-            int f = MediaItem.FLAG_BROWSABLE;
-            if (true) {  // TODO(b/75970985): implement program list and favorites support
-                mRootChildren.add(createChild(dbld, NODE_PROGRAMS,
-                        mBrowserService.getString(R.string.program_list_text), f));
-                mRootChildren.add(createChild(dbld, NODE_FAVORITES,
-                        mBrowserService.getString(R.string.favorites_list_text), f));
+            if (mProgramList != null) {
+                mRootChildren.add(createFolder(dbld, NODE_PROGRAMS,
+                        mBrowserService.getString(R.string.program_list_text),
+                        false, BCRADIO_FOLDER_TYPE_PROGRAMS));
+            }
+            if (mFavorites != null) {
+                mRootChildren.add(createFolder(dbld, NODE_FAVORITES,
+                        mBrowserService.getString(R.string.favorites_list_text),
+                        true, BCRADIO_FOLDER_TYPE_FAVORITES));
             }
 
             MediaItem amRoot = amChannels.getBandRoot();
@@ -145,10 +320,8 @@ public class BrowseTree {
 
         public @Nullable MediaItem getBandRoot() {
             if (isEmpty()) return null;
-            int flag = MediaItem.FLAG_BROWSABLE | MediaItem.FLAG_PLAYABLE;
-            return new MediaItem((new MediaDescriptionCompat.Builder()).
-                    setMediaId(mMediaId).
-                    setTitle(mBrowserService.getString(mBandName)).build(), flag);
+            return createFolder(new MediaDescriptionCompat.Builder(), mMediaId,
+                    mBrowserService.getString(mBandName), true, BCRADIO_FOLDER_TYPE_BAND);
         }
 
         public List<MediaItem> getChannels() {
@@ -165,8 +338,7 @@ public class BrowseTree {
                     final int spacing = band.getSpacing();
                     for (int ch = lowerLimit; ch <= upperLimit; ch += spacing) {
                         mChannels.add(createChild(dbld, NODEPREFIX_AMFMCHANNEL + ch,
-                                ProgramSelectorExt.formatAmFmFrequency(ch, true),
-                                MediaItem.FLAG_PLAYABLE));
+                                ProgramSelectorExt.formatAmFmFrequency(ch, true)));
                     }
                 }
 
@@ -180,6 +352,10 @@ public class BrowseTree {
 
         if (NODE_ROOT.equals(parentMediaId)) {
             result.sendResult(getRootChildren());
+        } else if (NODE_PROGRAMS.equals(parentMediaId)) {
+            sendPrograms(result);
+        } else if (NODE_FAVORITES.equals(parentMediaId)) {
+            result.sendResult(getFavorites());
         } else if (parentMediaId.equals(amChannels.mMediaId)) {
             result.sendResult(amChannels.getChannels());
         } else if (parentMediaId.equals(fmChannels.mMediaId)) {
@@ -190,19 +366,27 @@ public class BrowseTree {
         }
     }
 
-    // TODO(b/75970985): parse to ProgramSelector, not RadioStation
-    public @Nullable RadioStation parseMediaId(@Nullable String mediaId) {
-        if (mediaId == null) return null;
-        if (!mediaId.startsWith(NODEPREFIX_AMFMCHANNEL)) return null;
+    private static @NonNull String selectorToMediaId(@NonNull ProgramSelector sel) {
+        ProgramSelector.Identifier id = sel.getPrimaryId();
+        return NODEPREFIX_PROGRAM + id.getType() + '/' + id.getValue();
+    }
 
-        String freqStr = mediaId.substring(NODEPREFIX_AMFMCHANNEL.length());
-        int freqInt;
-        try {
-            freqInt = Integer.parseInt(freqStr);
-        } catch (NumberFormatException ex) {
-            Log.e(TAG, "Invalid frequency", ex);
-            return null;
+    public @Nullable ProgramSelector parseMediaId(@Nullable String mediaId) {
+        if (mediaId == null) return null;
+
+        if (mediaId.startsWith(NODEPREFIX_AMFMCHANNEL)) {
+            String freqStr = mediaId.substring(NODEPREFIX_AMFMCHANNEL.length());
+            int freqInt;
+            try {
+                freqInt = Integer.parseInt(freqStr);
+            } catch (NumberFormatException ex) {
+                Log.e(TAG, "Invalid frequency", ex);
+                return null;
+            }
+            return ProgramSelectorExt.createAmFmSelector(freqInt);
+        } else if (mediaId.startsWith(NODEPREFIX_PROGRAM)) {
+            return mProgramSelectors.get(mediaId);
         }
-        return new RadioStation(freqInt);
+        return null;
     }
 }

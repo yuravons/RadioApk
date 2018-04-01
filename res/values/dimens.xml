@@ -82,6 +82,9 @@ limitations under the License.
     <!-- The size of the text displaying the current channel number in the presets activity. -->
     <dimen name="car_preset_current_channel_text_size">46sp</dimen>
 
+    <!-- The space between the currently playing icon and the radio band -->
+    <dimen name="car_preset_equalizer_padding">8dp</dimen>
+
     <!-- The spacing between the current radio channel and the current radio band in the preset
          list. -->
     <dimen name="car_preset_current_channel_separator">8dp</dimen>
