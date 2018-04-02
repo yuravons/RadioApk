@@ -36,7 +36,11 @@ LOCAL_USE_AAPT2 := true
 
 LOCAL_STATIC_ANDROID_LIBRARIES += \
     android-support-car \
-    car-stream-ui-lib
+    car-stream-ui-lib \
+    android-support-constraint-layout
+
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    android-support-constraint-layout-solver
 
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 
