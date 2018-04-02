@@ -16,6 +16,7 @@
 package com.android.car.radio.service;
 
 import com.android.car.radio.service.IRadioCallback;
+import com.android.car.radio.media.Program;
 import com.android.car.radio.service.RadioStation;
 import android.hardware.radio.ProgramSelector;
 
@@ -56,6 +57,20 @@ interface IRadioManager {
      * Returns {@code true} if the radio is currently muted.
      */
     boolean isMuted();
+
+    /**
+     * Adds new program to favorites list.
+     *
+     * @param favorite A program to add to favorites list.
+     */
+    void addFavorite(in Program favorite);
+
+    /**
+     * Removes a program from favorites list.
+     *
+     * @param sel ProgramSelector of a favorite to remove.
+     */
+    void removeFavorite(in ProgramSelector sel);
 
     /**
      * Opens the radio for the given band.

@@ -880,12 +880,11 @@ public class RadioController implements
             String programService = mCurrentRds == null ? "" : mCurrentRds.getProgramService();
 
             ProgramSelector sel = getCurrentSelectorLocal();
-            Program program = new Program(sel, programService);
             boolean isPreset = mRadioStorage.isPreset(sel);
             if (isPreset) {
-                mRadioStorage.removePreset(program);
+                mRadioStorage.removePreset(sel);
             } else {
-                mRadioStorage.storePreset(program);
+                mRadioStorage.storePreset(new Program(sel, programService));
             }
 
             // Update the UI immediately. If the preset failed for some reason, the RadioStorage
