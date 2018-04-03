@@ -154,7 +154,7 @@ public class RadioStorage {
      *
      * @see #refreshPresets()
      */
-    public void removePreset(@NonNull Program preset) {
+    public void removePreset(@NonNull ProgramSelector preset) {
         new RemovePresetAsyncTask().execute(Objects.requireNonNull(preset));
     }
 
@@ -302,12 +302,12 @@ public class RadioStorage {
      * {@link AsyncTask} that will remove a single {@link Program} that is passed to its
      * {@link AsyncTask#execute(Object[])}.
      */
-    private class RemovePresetAsyncTask extends AsyncTask<Program, Void, Boolean> {
+    private class RemovePresetAsyncTask extends AsyncTask<ProgramSelector, Void, Boolean> {
         private static final String TAG = "Em.RemovePresetAT";
 
         @Override
-        protected Boolean doInBackground(Program... programs) {
-            boolean result = sRadioDatabase.deletePreset(new RadioStation(programs[0]));
+        protected Boolean doInBackground(ProgramSelector... selectors) {
+            boolean result = sRadioDatabase.deletePreset(new RadioStation(selectors[0], null));
 
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "Remove preset success: " + result);

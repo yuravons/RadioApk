@@ -174,6 +174,7 @@ public class RadioService extends MediaBrowserServiceCompat
     private void onPresetsChanged() {
         synchronized (mLock) {
             mBrowseTree.setFavorites(new HashSet<>(mRadioStorage.getPresets()));
+            mMediaSession.notifyFavoritesChanged();
         }
     }
 
@@ -464,6 +465,16 @@ public class RadioService extends MediaBrowserServiceCompat
             }
 
             return mRadioTuner.getMute();
+        }
+
+        @Override
+        public void addFavorite(Program program) {
+            mRadioStorage.storePreset(program);
+        }
+
+        @Override
+        public void removeFavorite(ProgramSelector sel) {
+            mRadioStorage.removePreset(sel);
         }
 
         /**
