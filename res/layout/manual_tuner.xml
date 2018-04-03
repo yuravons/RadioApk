@@ -28,17 +28,18 @@ limitations under the License.
         android:layout_height="match_parent"
         android:paddingTop="@dimen/manual_tuner_top_padding">
 
-        <FrameLayout
+        <LinearLayout
             android:layout_marginTop="@dimen/manual_tuner_dialpad_top_margin"
+            android:paddingLeft="@dimen/manual_tuner_left_padding"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1" >
+            android:layout_weight="1"
+            android:orientation="horizontal">
 
             <!-- This FrameLayout ensures that the back button is centered within the
                  manual_tuner_back_button_container_size despite the button's touch target
                  being smaller. -->
             <FrameLayout
-                android:layout_marginTop="@dimen/manual_tuner_back_button_top_margin"
                 android:layout_gravity="start|top"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
@@ -54,11 +55,9 @@ limitations under the License.
             </FrameLayout>
 
             <include
-                android:layout_gravity="center"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
                 layout="@layout/manual_tuner_dialpad" />
-        </FrameLayout>
+        </LinearLayout>
 
         <RelativeLayout
             android:layout_width="@dimen/manual_tuner_container_width"
@@ -119,13 +118,4 @@ limitations under the License.
                 android:src="@drawable/ic_backspace" />
         </RelativeLayout>
     </LinearLayout>
-
-    <!-- This dividing line is added as the last child so that it has the highest z-index. -->
-    <View
-        android:background="@color/car_list_divider"
-        android:layout_gravity="end|top"
-        android:layout_height="match_parent"
-        android:layout_width="1dp"
-        android:layout_marginEnd="@dimen/manual_tuner_container_width" />
-
 </FrameLayout>
