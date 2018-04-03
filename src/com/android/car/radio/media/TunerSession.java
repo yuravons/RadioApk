@@ -38,10 +38,13 @@ import java.util.Objects;
 public class TunerSession extends MediaSessionCompat {
     private static final String TAG = "BcRadioApp.msess";
 
+    private final Object mLock = new Object();
+
     private final BrowseTree mBrowseTree;
     private final IRadioManager mUiSession;
     private final PlaybackStateCompat.Builder mPlaybackStateBuilder =
             new PlaybackStateCompat.Builder();
+    @Nullable private ProgramInfo mCurrentProgram;
 
     public TunerSession(@NonNull Context context, @NonNull BrowseTree browseTree,
             @NonNull IRadioManager uiSession) {
@@ -54,9 +57,11 @@ public class TunerSession extends MediaSessionCompat {
         mPlaybackStateBuilder.setActions(
                 PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
                 PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
+                PlaybackStateCompat.ACTION_SET_RATING |
                 PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID);
 
-        // TODO(b/75970985): ACTION_SET_RATING, setRatingType, onSetRating
+        setRatingType(RatingCompat.RATING_HEART);
+
         // TODO(b/75970985): setSessionActivity when Car/Media app supports getSessionActivity
 
         setCallback(new TunerSessionCallback());
@@ -75,10 +80,24 @@ public class TunerSession extends MediaSessionCompat {
         }
     }
 
+    private void updateMetadata() {
+        synchronized (mLock) {
+            if (mCurrentProgram == null) return;
+            boolean fav = mBrowseTree.isFavorite(mCurrentProgram.getSelector());
+            setMetadata(MediaMetadataCompat.fromMediaMetadata(
+                    ProgramInfoExt.toMediaMetadata(mCurrentProgram, fav)));
+        }
+    }
+
     public void notifyProgramInfoChanged(@NonNull ProgramInfo info) {
-        boolean fav = mBrowseTree.isFavorite(info.getSelector());
-        setMetadata(MediaMetadataCompat.fromMediaMetadata(
-                ProgramInfoExt.toMediaMetadata(info, fav)));
+        synchronized (mLock) {
+            mCurrentProgram = info;
+            updateMetadata();
+        }
+    }
+
+    public void notifyFavoritesChanged() {
+        updateMetadata();
     }
 
     private void exec(ThrowingRunnable<RemoteException> func) {
@@ -98,6 +117,20 @@ public class TunerSession extends MediaSessionCompat {
         @Override
         public void onSkipToPrevious() {
             exec(() -> mUiSession.seekBackward());
+        }
+
+        @Override
+        public void onSetRating(RatingCompat rating) {
+            synchronized (mLock) {
+                if (mCurrentProgram == null) return;
+                if (rating.hasHeart()) {
+                    Program fav = Program.fromProgramInfo(mCurrentProgram);
+                    exec(() -> mUiSession.addFavorite(fav));
+                } else {
+                    ProgramSelector fav = mCurrentProgram.getSelector();
+                    exec(() -> mUiSession.removeFavorite(fav));
+                }
+            }
         }
 
         @Override

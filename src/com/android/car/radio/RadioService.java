@@ -70,8 +70,13 @@ public class RadioService extends MediaBrowserServiceCompat
      */
     private static final int RADIO_TUNER_REOPEN_DELAY_MS = 5000;
 
+    private final Object mLock = new Object();
+
     private int mReOpenRadioTunerCount = 0;
     private final Handler mHandler = new Handler();
+
+    private RadioStorage mRadioStorage;
+    private final RadioStorage.PresetsChangeListener mPresetsListener = this::onPresetsChanged;
 
     private RadioTuner mRadioTuner;
 
@@ -124,6 +129,8 @@ public class RadioService extends MediaBrowserServiceCompat
             Log.d(TAG, "onCreate()");
         }
 
+        mRadioStorage = RadioStorage.getInstance(this);
+
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         mRadioAudioAttributes = new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -136,13 +143,11 @@ public class RadioService extends MediaBrowserServiceCompat
         mMediaSession = new TunerSession(this, mBrowseTree, mBinder);
         setSessionToken(mMediaSession.getSessionToken());
 
-        // TODO(b/75970985): implement actual favorites
-        HashSet<Program> favDemo = new HashSet<>();
-        favDemo.add(new Program(ProgramSelectorExt.createAmFmSelector(97300), "Alice"));
-        mBrowseTree.setFavorites(favDemo);
-
         mBrowseTree.setAmFmRegionConfig(mRadioManager.getAmFmRegionConfig());
         openRadioBandInternal(mCurrentRadioBand);
+
+        mRadioStorage.addPresetsChangeListener(mPresetsListener);
+        onPresetsChanged();
     }
 
     /**
@@ -159,10 +164,18 @@ public class RadioService extends MediaBrowserServiceCompat
             Log.d(TAG, "onDestroy()");
         }
 
+        mRadioStorage.removePresetsChangeListener(mPresetsListener);
         mMediaSession.release();
         close();
 
         super.onDestroy();
+    }
+
+    private void onPresetsChanged() {
+        synchronized (mLock) {
+            mBrowseTree.setFavorites(new HashSet<>(mRadioStorage.getPresets()));
+            mMediaSession.notifyFavoritesChanged();
+        }
     }
 
     /**
@@ -452,6 +465,16 @@ public class RadioService extends MediaBrowserServiceCompat
             }
 
             return mRadioTuner.getMute();
+        }
+
+        @Override
+        public void addFavorite(Program program) {
+            mRadioStorage.storePreset(program);
+        }
+
+        @Override
+        public void removeFavorite(ProgramSelector sel) {
+            mRadioStorage.removePreset(sel);
         }
 
         /**

@@ -244,7 +244,7 @@ public class RadioPresetsFragment extends Fragment implements
         if (saveAsFavorite) {
             mRadioStorage.storePreset(radioStation);
         } else {
-            mRadioStorage.removePreset(radioStation);
+            mRadioStorage.removePreset(radioStation.getSelector());
         }
     }
 
