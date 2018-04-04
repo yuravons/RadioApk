@@ -115,7 +115,8 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
     /**
      * Binds the given {@link RadioStation} to this View within this ViewHolder.
      */
-    public void bindPreset(Program program, boolean isActiveStation, int itemCount) {
+    public void bindPreset(Program program, boolean isActiveStation, int itemCount,
+            boolean isFavorite) {
         // If the preset is null, clear any existing text.
         if (program == null) {
             mPresetItemChannel.setText(null);
@@ -151,18 +152,22 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
         } else {
             mPresetItemMetadata.setText(metadata.trim());
         }
-        mPresetButton.setTag(R.drawable.ic_star_filled);
+        setFavoriteButtonFilled(isFavorite);
         mPresetButton.setOnClickListener(v -> {
             boolean favoriteToggleOn =
                     ((Integer) mPresetButton.getTag() == R.drawable.ic_star_empty);
-            if (favoriteToggleOn) {
-                mPresetButton.setImageResource(R.drawable.ic_star_filled);
-                mPresetButton.setTag(R.drawable.ic_star_filled);
-            } else {
-                mPresetButton.setImageResource(R.drawable.ic_star_empty);
-                mPresetButton.setTag(R.drawable.ic_star_empty);
-            }
+            setFavoriteButtonFilled(favoriteToggleOn);
             mPresetFavoriteListener.onPresetFavoriteChanged(getAdapterPosition(), favoriteToggleOn);
         });
+    }
+
+    private void setFavoriteButtonFilled(boolean favoriteToggleOn) {
+        if (favoriteToggleOn) {
+            mPresetButton.setImageResource(R.drawable.ic_star_filled);
+            mPresetButton.setTag(R.drawable.ic_star_filled);
+        } else {
+            mPresetButton.setImageResource(R.drawable.ic_star_empty);
+            mPresetButton.setTag(R.drawable.ic_star_empty);
+        }
     }
 }
