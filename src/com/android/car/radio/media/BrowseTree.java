@@ -23,6 +23,7 @@ import android.hardware.radio.ProgramList;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.BandDescriptor;
 import android.hardware.radio.RadioManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
 import android.support.v4.media.MediaBrowserServiceCompat.BrowserRoot;
@@ -126,7 +127,9 @@ public class BrowseTree {
     }
 
     private static MediaItem createChild(MediaDescriptionCompat.Builder descBuilder,
-            String mediaId, String title) {
+            String mediaId, String title, ProgramSelector sel) {
+        Uri uri = ProgramSelectorExt.toUri(sel);
+        if (uri != null) descBuilder.setMediaUri(uri);
         MediaDescriptionCompat desc = descBuilder.setMediaId(mediaId).setTitle(title).build();
         return new MediaItem(desc, MediaItem.FLAG_PLAYABLE);
     }
@@ -207,7 +210,7 @@ public class BrowseTree {
                 String mediaId = selectorToMediaId(sel);
                 mProgramSelectors.put(mediaId, sel);
                 mProgramListCache.add(createChild(dbld, mediaId,
-                        ProgramInfoExt.getProgramName(program)));
+                        ProgramInfoExt.getProgramName(program), program.getSelector()));
             }
 
             if (mProgramListCache.size() == 0) {
@@ -258,7 +261,7 @@ public class BrowseTree {
                 ProgramSelector sel = fav.getSelector();
                 String mediaId = selectorToMediaId(sel);
                 mProgramSelectors.putIfAbsent(mediaId, sel);  // prefer program list entries
-                mFavoritesCache.add(createChild(dbld, mediaId, fav.getName()));
+                mFavoritesCache.add(createChild(dbld, mediaId, fav.getName(), sel));
             }
 
             return mFavoritesCache;
@@ -338,7 +341,8 @@ public class BrowseTree {
                     final int spacing = band.getSpacing();
                     for (int ch = lowerLimit; ch <= upperLimit; ch += spacing) {
                         mChannels.add(createChild(dbld, NODEPREFIX_AMFMCHANNEL + ch,
-                                ProgramSelectorExt.formatAmFmFrequency(ch, true)));
+                                ProgramSelectorExt.formatAmFmFrequency(ch, true),
+                                ProgramSelectorExt.createAmFmSelector(ch)));
                     }
                 }
 
