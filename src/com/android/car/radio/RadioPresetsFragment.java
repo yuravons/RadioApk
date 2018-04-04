@@ -210,7 +210,8 @@ public class RadioPresetsFragment extends Fragment implements
         mRadioController.setShouldColorStatusBar(true);
         mRadioController.setRadioStationChangeListener(this);
 
-        mPresetsAdapter.setActiveRadioStation(mRadioController.getCurrentSelector());
+        mPresetsAdapter.setActiveRadioStation(
+                mRadioController.getCurrentRadioStation().toProgram());
     }
 
     @Override
@@ -230,7 +231,9 @@ public class RadioPresetsFragment extends Fragment implements
 
     @Override
     public void onRadioStationChanged(ProgramSelector selector) {
-        mPresetsAdapter.setActiveRadioStation(selector);
+        mPresetsAdapter.setPresets(mRadioStorage.getPresets());
+        mPresetsAdapter.setActiveRadioStation(
+                mRadioController.getCurrentRadioStation().toProgram());
     }
 
     @Override
