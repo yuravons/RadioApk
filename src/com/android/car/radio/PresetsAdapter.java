@@ -41,7 +41,7 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsViewHolder>
     // Only one type of view in this adapter.
     private static final int PRESETS_VIEW_TYPE = 0;
 
-    private ProgramSelector mActiveProgram;
+    private Program mActiveProgram;
 
     private List<Program> mPresets;
     private OnPresetItemClickListener mPresetClickListener;
@@ -69,7 +69,8 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsViewHolder>
         /**
          * Method called when an item's favorite status has been toggled
          *
-         * @param radioStation The {@link RadioStation} corresponding to the clicked preset.
+         * @param program The {@link Program} corresponding to the clicked preset.
+         * @param saveAsFavorite Whether the program should be saved or removed as a favorite.
          */
         void onPresetItemFavoriteChanged(Program program, boolean saveAsFavorite);
     }
@@ -101,8 +102,8 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsViewHolder>
      * this adapter. This will cause that station to be highlighted in the list. If the station
      * passed to this method does not match any of the presets, then none will be highlighted.
      */
-    public void setActiveRadioStation(ProgramSelector selector) {
-        mActiveProgram = selector;
+    public void setActiveRadioStation(Program program) {
+        mActiveProgram = program;
         notifyDataSetChanged();
     }
 
@@ -117,10 +118,13 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsViewHolder>
 
     @Override
     public void onBindViewHolder(PresetsViewHolder holder, int position) {
+        if (getPresetCount() == 0) {
+            holder.bindPreset(mActiveProgram, true, getItemCount(), false);
+            return;
+        }
         Program station = mPresets.get(position);
-        boolean isActiveStation = station.getSelector().equals(mActiveProgram);
-
-        holder.bindPreset(station, isActiveStation, getItemCount());
+        boolean isActiveStation = station.getSelector().equals(mActiveProgram.getSelector());
+        holder.bindPreset(station, isActiveStation, getItemCount(), true);
     }
 
     @Override
@@ -130,7 +134,12 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsViewHolder>
 
     @Override
     public int getItemCount() {
-        return mPresets == null ? 0 : mPresets.size();
+        int numPresets = getPresetCount();
+        return (numPresets == 0) ? 1 : numPresets;
+    }
+
+    private int getPresetCount() {
+        return (mPresets == null) ? 0 : mPresets.size();
     }
 
     @Override
@@ -144,14 +153,21 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsViewHolder>
             Log.v(TAG, String.format("onPresetClicked(); item count: %d; position: %d",
                     getItemCount(), position));
         }
-
         if (mPresetClickListener != null && getItemCount() > position) {
+            if (getPresetCount() == 0) {
+                mPresetClickListener.onPresetItemClicked(mActiveProgram.getSelector());
+                return;
+            }
             mPresetClickListener.onPresetItemClicked(mPresets.get(position).getSelector());
         }
     }
 
     private void handlePresetFavoriteChanged (int position, boolean saveAsFavorite) {
         if (mPresetFavoriteListener != null && getItemCount() > position) {
+            if (getPresetCount() == 0) {
+                mPresetFavoriteListener.onPresetItemFavoriteChanged(mActiveProgram, saveAsFavorite);
+                return;
+            }
             mPresetFavoriteListener.onPresetItemFavoriteChanged(
                     mPresets.get(position), saveAsFavorite);
         }
