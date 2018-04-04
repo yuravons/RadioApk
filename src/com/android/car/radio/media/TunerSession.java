@@ -21,6 +21,7 @@ import android.annotation.Nullable;
 import android.content.Context;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.media.MediaMetadataCompat;
@@ -30,6 +31,7 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
 import com.android.car.radio.platform.ProgramInfoExt;
+import com.android.car.radio.platform.ProgramSelectorExt;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.utils.ThrowingRunnable;
 
@@ -58,12 +60,9 @@ public class TunerSession extends MediaSessionCompat {
                 PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
                 PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
                 PlaybackStateCompat.ACTION_SET_RATING |
-                PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID);
-
+                PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID |
+                PlaybackStateCompat.ACTION_PLAY_FROM_URI);
         setRatingType(RatingCompat.RATING_HEART);
-
-        // TODO(b/75970985): setSessionActivity when Car/Media app supports getSessionActivity
-
         setCallback(new TunerSessionCallback());
 
         // TODO(b/75970985): track playback state, don't hardcode it
@@ -140,6 +139,16 @@ public class TunerSession extends MediaSessionCompat {
                 exec(() -> mUiSession.tune(selector));
             } else {
                 Log.e(TAG, "Invalid media ID: " + mediaId);
+            }
+        }
+
+        @Override
+        public void onPlayFromUri(Uri uri, Bundle extras) {
+            ProgramSelector selector = ProgramSelectorExt.fromUri(uri);
+            if (selector != null) {
+                exec(() -> mUiSession.tune(selector));
+            } else {
+                Log.e(TAG, "Invalid URI: " + uri);
             }
         }
     }
