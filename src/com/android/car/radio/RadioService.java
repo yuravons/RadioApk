@@ -44,6 +44,7 @@ import com.android.car.radio.service.IRadioCallback;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.service.RadioRds;
 import com.android.car.radio.service.RadioStation;
+import com.android.car.radio.platform.ImageMemoryCache;
 import com.android.car.radio.platform.ProgramSelectorExt;
 import com.android.car.radio.platform.RadioManagerExt;
 
@@ -89,6 +90,7 @@ public class RadioService extends MediaBrowserServiceCompat
     private String mCurrentSongTitle;
 
     private RadioManagerExt mRadioManager;
+    private ImageMemoryCache mImageCache;
 
     private AudioManager mAudioManager;
     private AudioAttributes mRadioAudioAttributes;
@@ -137,10 +139,10 @@ public class RadioService extends MediaBrowserServiceCompat
                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                 .build();
 
-        initialze();
-
+        mRadioManager = new RadioManagerExt(this);
+        mImageCache = new ImageMemoryCache(mRadioManager, 1000);
         mBrowseTree = new BrowseTree(this);
-        mMediaSession = new TunerSession(this, mBrowseTree, mBinder);
+        mMediaSession = new TunerSession(this, mBrowseTree, mBinder, mImageCache);
         setSessionToken(mMediaSession.getSessionToken());
 
         mBrowseTree.setAmFmRegionConfig(mRadioManager.getAmFmRegionConfig());
@@ -148,13 +150,7 @@ public class RadioService extends MediaBrowserServiceCompat
 
         mRadioStorage.addPresetsChangeListener(mPresetsListener);
         onPresetsChanged();
-    }
 
-    /**
-     * Connects to the {@link RadioManager}.
-     */
-    private void initialze() {
-        mRadioManager = new RadioManagerExt(this);
         mRadioSuccessfullyInitialized = true;
     }
 

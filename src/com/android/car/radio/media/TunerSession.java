@@ -30,6 +30,7 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
+import com.android.car.radio.platform.ImageResolver;
 import com.android.car.radio.platform.ProgramInfoExt;
 import com.android.car.radio.platform.ProgramSelectorExt;
 import com.android.car.radio.service.IRadioManager;
@@ -43,16 +44,18 @@ public class TunerSession extends MediaSessionCompat {
     private final Object mLock = new Object();
 
     private final BrowseTree mBrowseTree;
+    @Nullable private final ImageResolver mImageResolver;
     private final IRadioManager mUiSession;
     private final PlaybackStateCompat.Builder mPlaybackStateBuilder =
             new PlaybackStateCompat.Builder();
     @Nullable private ProgramInfo mCurrentProgram;
 
     public TunerSession(@NonNull Context context, @NonNull BrowseTree browseTree,
-            @NonNull IRadioManager uiSession) {
+            @NonNull IRadioManager uiSession, @Nullable ImageResolver imageResolver) {
         super(context, TAG);
 
         mBrowseTree = Objects.requireNonNull(browseTree);
+        mImageResolver = imageResolver;
         mUiSession = Objects.requireNonNull(uiSession);
 
         // TODO(b/75970985): implement ACTION_STOP, ACTION_PAUSE, ACTION_PLAY
@@ -84,7 +87,7 @@ public class TunerSession extends MediaSessionCompat {
             if (mCurrentProgram == null) return;
             boolean fav = mBrowseTree.isFavorite(mCurrentProgram.getSelector());
             setMetadata(MediaMetadataCompat.fromMediaMetadata(
-                    ProgramInfoExt.toMediaMetadata(mCurrentProgram, fav)));
+                    ProgramInfoExt.toMediaMetadata(mCurrentProgram, fav, mImageResolver)));
         }
     }
 
