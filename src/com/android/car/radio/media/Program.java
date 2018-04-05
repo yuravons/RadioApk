@@ -17,6 +17,8 @@
 package com.android.car.radio.media;
 
 import android.annotation.NonNull;
+import android.annotation.Nullable;
+import android.graphics.Bitmap;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.Parcel;
@@ -47,6 +49,11 @@ public final class Program implements Parcelable {
 
     public @NonNull String getName() {
         return mName;
+    }
+
+    public @Nullable Bitmap getIcon() {
+        // TODO(b/75970985): implement saving icons
+        return null;
     }
 
     @Override

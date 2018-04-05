@@ -19,6 +19,7 @@ package com.android.car.radio.platform;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.hardware.radio.RadioManager.BandDescriptor;
 import android.hardware.radio.RadioManager;
 import android.hardware.radio.RadioTuner;
@@ -28,7 +29,9 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -39,6 +42,9 @@ import java.util.stream.Collectors;
  */
 public class RadioManagerExt {
     private static final String TAG = "BcRadioApp.mgrext";
+
+    // For now, we open first radio module only.
+    private static final int HARDCODED_MODULE_INDEX = 0;
 
     private final Object mLock = new Object();
 
@@ -82,8 +88,7 @@ public class RadioManagerExt {
                 return;
             }
 
-            // For now, we open first radio module only.
-            RadioManager.ModuleProperties module = mModules.get(0);
+            RadioManager.ModuleProperties module = mModules.get(HARDCODED_MODULE_INDEX);
             mAmFmRegionConfig = reduceAmFmBands(module.getBands());
         }
     }
@@ -100,8 +105,7 @@ public class RadioManagerExt {
          */
         Handler hwHandler = new Handler(mCallbackHandlerThread.getLooper());
 
-        // For now, we open first radio module only.
-        RadioManager.ModuleProperties module = mModules.get(0);
+        RadioManager.ModuleProperties module = mModules.get(HARDCODED_MODULE_INDEX);
         TunerCallbackAdapterExt cbExt = new TunerCallbackAdapterExt(callback, handler);
 
         RadioTuner tuner = mRadioManager.openTuner(
@@ -109,7 +113,9 @@ public class RadioManagerExt {
                 null,  // BandConfig - let the service automatically select one.
                 true,  // withAudio
                 cbExt, hwHandler);
+        mSessions.put(module.getId(), tuner);
         if (tuner == null) return null;
+        RadioMetadataExt.setModuleId(module.getId());
 
         if (module.isInitializationRequired()) {
             if (!cbExt.waitForInitialization()) {
@@ -125,5 +131,21 @@ public class RadioManagerExt {
     public @Nullable List<BandDescriptor> getAmFmRegionConfig() {
         initModules();
         return mAmFmRegionConfig;
+    }
+
+    /* This won't be necessary when we push this code to the framework,
+     * as we really need only module references. */
+    private static Map<Integer, RadioTuner> mSessions = new HashMap<>();
+
+    public @Nullable Bitmap getMetadataImage(long globalId) {
+        if (globalId == 0) return null;
+
+        int moduleId = (int)(globalId >>> 32);
+        int localId = (int)(globalId & 0xFFFFFFFF);
+
+        RadioTuner tuner = mSessions.get(moduleId);
+        if (tuner == null) return null;
+
+        return tuner.getMetadataImage(localId);
     }
 }
