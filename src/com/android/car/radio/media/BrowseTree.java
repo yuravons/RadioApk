@@ -19,10 +19,13 @@ package com.android.car.radio.media;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.annotation.StringRes;
+import android.graphics.Bitmap;
 import android.hardware.radio.ProgramList;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.BandDescriptor;
 import android.hardware.radio.RadioManager;
+import android.hardware.radio.RadioMetadata;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
 import android.support.v4.media.MediaBrowserServiceCompat.BrowserRoot;
@@ -32,8 +35,10 @@ import android.support.v4.media.MediaDescriptionCompat;
 import android.util.Log;
 
 import com.android.car.radio.R;
+import com.android.car.radio.platform.ImageResolver;
 import com.android.car.radio.platform.ProgramInfoExt;
 import com.android.car.radio.platform.ProgramSelectorExt;
+import com.android.car.radio.platform.RadioMetadataExt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,6 +103,7 @@ public class BrowseTree {
 
     private final Object mLock = new Object();
     private final @NonNull MediaBrowserServiceCompat mBrowserService;
+    private final @Nullable ImageResolver mImageResolver;
 
     private List<MediaItem> mRootChildren;
 
@@ -117,8 +123,10 @@ public class BrowseTree {
     @Nullable Set<Program> mFavorites;
     @Nullable private List<MediaItem> mFavoritesCache;
 
-    public BrowseTree(@NonNull MediaBrowserServiceCompat browserService) {
+    public BrowseTree(@NonNull MediaBrowserServiceCompat browserService,
+            @Nullable ImageResolver imageResolver) {
         mBrowserService = Objects.requireNonNull(browserService);
+        mImageResolver = imageResolver;
     }
 
     public BrowserRoot getRoot() {
@@ -126,8 +134,13 @@ public class BrowseTree {
     }
 
     private static MediaItem createChild(MediaDescriptionCompat.Builder descBuilder,
-            String mediaId, String title) {
-        MediaDescriptionCompat desc = descBuilder.setMediaId(mediaId).setTitle(title).build();
+            String mediaId, String title, ProgramSelector sel, Bitmap icon) {
+        MediaDescriptionCompat desc = descBuilder.
+                setMediaId(mediaId).
+                setMediaUri(ProgramSelectorExt.toUri(sel)).
+                setTitle(title).
+                setIconBitmap(icon).
+                build();
         return new MediaItem(desc, MediaItem.FLAG_PLAYABLE);
     }
 
@@ -206,8 +219,17 @@ public class BrowseTree {
                 ProgramSelector sel = program.getSelector();
                 String mediaId = selectorToMediaId(sel);
                 mProgramSelectors.put(mediaId, sel);
+
+                Bitmap icon = null;
+                RadioMetadata meta = program.getMetadata();
+                if (meta != null && mImageResolver != null) {
+                    long id = RadioMetadataExt.getGlobalBitmapId(meta,
+                            RadioMetadata.METADATA_KEY_ICON);
+                    if (id != 0) icon = mImageResolver.resolve(id);
+                }
+
                 mProgramListCache.add(createChild(dbld, mediaId,
-                        ProgramInfoExt.getProgramName(program)));
+                        ProgramInfoExt.getProgramName(program), program.getSelector(), icon));
             }
 
             if (mProgramListCache.size() == 0) {
@@ -258,7 +280,7 @@ public class BrowseTree {
                 ProgramSelector sel = fav.getSelector();
                 String mediaId = selectorToMediaId(sel);
                 mProgramSelectors.putIfAbsent(mediaId, sel);  // prefer program list entries
-                mFavoritesCache.add(createChild(dbld, mediaId, fav.getName()));
+                mFavoritesCache.add(createChild(dbld, mediaId, fav.getName(), sel, fav.getIcon()));
             }
 
             return mFavoritesCache;
@@ -338,7 +360,8 @@ public class BrowseTree {
                     final int spacing = band.getSpacing();
                     for (int ch = lowerLimit; ch <= upperLimit; ch += spacing) {
                         mChannels.add(createChild(dbld, NODEPREFIX_AMFMCHANNEL + ch,
-                                ProgramSelectorExt.formatAmFmFrequency(ch, true)));
+                                ProgramSelectorExt.formatAmFmFrequency(ch, true),
+                                ProgramSelectorExt.createAmFmSelector(ch), null));
                     }
                 }
 
