@@ -141,7 +141,7 @@ public class RadioService extends MediaBrowserServiceCompat
 
         mRadioManager = new RadioManagerExt(this);
         mImageCache = new ImageMemoryCache(mRadioManager, 1000);
-        mBrowseTree = new BrowseTree(this);
+        mBrowseTree = new BrowseTree(this, mImageCache);
         mMediaSession = new TunerSession(this, mBrowseTree, mBinder, mImageCache);
         setSessionToken(mMediaSession.getSessionToken());
 
