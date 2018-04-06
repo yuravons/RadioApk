@@ -59,6 +59,15 @@ public class ProgramInfoExt {
         return "";
     }
 
+    public static @NonNull RadioMetadata getMetadata(@NonNull ProgramInfo info) {
+        RadioMetadata meta = info.getMetadata();
+        if (meta != null) return meta;
+
+        /* Creating new Metadata object on each get won't be necessary after we
+         * push this code to the framework. */
+        return (new RadioMetadata.Builder()).build();
+    }
+
     public static @NonNull MediaMetadata toMediaMetadata(@NonNull ProgramInfo info,
             boolean isFavorite, @Nullable ImageResolver imageResolver) {
         MediaMetadata.Builder bld = new MediaMetadata.Builder();
