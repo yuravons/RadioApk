@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.hardware.radio.ProgramList;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
+import android.hardware.radio.RadioManager.ProgramInfo;
 import android.hardware.radio.RadioMetadata;
 import android.hardware.radio.RadioTuner;
 import android.media.AudioAttributes;
@@ -42,9 +43,8 @@ import com.android.car.radio.media.BrowseTree;
 import com.android.car.radio.media.TunerSession;
 import com.android.car.radio.service.IRadioCallback;
 import com.android.car.radio.service.IRadioManager;
-import com.android.car.radio.service.RadioRds;
-import com.android.car.radio.service.RadioStation;
 import com.android.car.radio.platform.ImageMemoryCache;
+import com.android.car.radio.platform.ProgramInfoExt;
 import com.android.car.radio.platform.ProgramSelectorExt;
 import com.android.car.radio.platform.RadioManagerExt;
 
@@ -82,12 +82,9 @@ public class RadioService extends MediaBrowserServiceCompat
     private RadioTuner mRadioTuner;
 
     private boolean mRadioSuccessfullyInitialized;
-    private int mCurrentRadioBand = RadioManager.BAND_FM;
-    private int mCurrentRadioChannel = RadioStorage.INVALID_RADIO_CHANNEL;
 
-    private String mCurrentChannelInfo;
-    private String mCurrentArtist;
-    private String mCurrentSongTitle;
+    private ProgramInfo mCurrentProgram;
+    private int mCurrentRadioBand = RadioManager.BAND_FM;
 
     private RadioManagerExt mRadioManager;
     private ImageMemoryCache mImageCache;
@@ -204,55 +201,6 @@ public class RadioService extends MediaBrowserServiceCompat
         mReOpenRadioTunerCount = 0;
 
         return RadioManager.STATUS_OK;
-    }
-
-    /**
-     * Returns a {@link RadioRds} object that holds all the current radio metadata. If all the
-     * metadata is empty, then {@code null} is returned.
-     */
-    @Nullable
-    private RadioRds createCurrentRadioRds() {
-        if (TextUtils.isEmpty(mCurrentChannelInfo) && TextUtils.isEmpty(mCurrentArtist)
-                && TextUtils.isEmpty(mCurrentSongTitle)) {
-            return null;
-        }
-
-        return new RadioRds(mCurrentChannelInfo, mCurrentArtist, mCurrentSongTitle);
-    }
-
-    /**
-     * Creates a {@link RadioStation} that encapsulates all the information about the current
-     * radio station.
-     */
-    private RadioStation createCurrentRadioStation() {
-        // mCurrentRadioChannel can possibly be invalid if this class never receives a callback
-        // for onProgramInfoChanged(). As a result, manually retrieve the information for the
-        // current station from RadioTuner if this is the case.
-        if (mCurrentRadioChannel == RadioStorage.INVALID_RADIO_CHANNEL && mRadioTuner != null) {
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "createCurrentRadioStation(); invalid current radio channel. "
-                        + "Calling getProgramInformation for valid station");
-            }
-
-            // getProgramInformation() expects an array of size 1.
-            RadioManager.ProgramInfo[] info = new RadioManager.ProgramInfo[1];
-            int status = mRadioTuner.getProgramInformation(info);
-
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "getProgramInformation() status: " + status + "; info: " + info[0]);
-            }
-
-            if (status == RadioManager.STATUS_OK && info[0] != null) {
-                mCurrentRadioChannel = info[0].getChannel();
-
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "program info channel: " + mCurrentRadioChannel);
-                }
-            }
-        }
-
-        return new RadioStation(mCurrentRadioChannel, 0 /* subChannelNumber */,
-                mCurrentRadioBand, createCurrentRadioRds());
     }
 
     private int requestAudioFocus() {
@@ -520,13 +468,9 @@ public class RadioService extends MediaBrowserServiceCompat
             mRadioTunerCallbacks.remove(callback);
         }
 
-        /**
-         * Returns a {@link RadioStation} that encapsulates the information about the current
-         * station the radio is tuned to.
-         */
         @Override
-        public RadioStation getCurrentRadioStation() {
-            return createCurrentRadioStation();
+        public ProgramInfo getCurrentProgramInfo() {
+            return mCurrentProgram;
         }
 
         /**
@@ -555,53 +499,20 @@ public class RadioService extends MediaBrowserServiceCompat
      */
     private class InternalRadioCallback extends RadioTuner.Callback {
         @Override
-        public void onProgramInfoChanged(RadioManager.ProgramInfo info) {
+        public void onProgramInfoChanged(ProgramInfo info) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "onProgramInfoChanged(); info: " + info);
+                Log.d(TAG, "Program info changed: " + info);
             }
 
-            clearMetadata();
+            mCurrentProgram = info;
+            mMediaSession.notifyProgramInfoChanged(info);
 
-            if (info != null) {
-                mMediaSession.notifyProgramInfoChanged(info);
-
-                mCurrentRadioChannel = info.getChannel();
-
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "onProgramInfoChanged(); info channel: " + mCurrentRadioChannel);
+            for (IRadioCallback callback : mRadioTunerCallbacks) {
+                try {
+                    callback.onCurrentProgramInfoChanged(info);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "Failed to notify about changed radio station", e);
                 }
-            }
-
-            RadioStation station = createCurrentRadioStation();
-
-            try {
-                for (IRadioCallback callback : mRadioTunerCallbacks) {
-                    callback.onRadioStationChanged(station);
-                }
-            } catch (RemoteException e) {
-                Log.e(TAG, "onProgramInfoChanged(); "
-                        + "Failed to notify IRadioCallbacks: " + e.getMessage());
-            }
-        }
-
-        @Override
-        public void onMetadataChanged(RadioMetadata metadata) {
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "onMetadataChanged(); metadata: " + metadata);
-            }
-
-            clearMetadata();
-            updateMetadata(metadata);
-
-            RadioRds radioRds = createCurrentRadioRds();
-
-            try {
-                for (IRadioCallback callback : mRadioTunerCallbacks) {
-                    callback.onRadioMetadataChanged(radioRds);
-                }
-            } catch (RemoteException e) {
-                Log.e(TAG, "onMetadataChanged(); "
-                        + "Failed to notify IRadioCallbacks: " + e.getMessage());
             }
         }
 
@@ -610,8 +521,6 @@ public class RadioService extends MediaBrowserServiceCompat
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "onConfigurationChanged(): config: " + config);
             }
-
-            clearMetadata();
 
             if (config != null) {
                 mCurrentRadioBand = config.getType();
@@ -671,34 +580,6 @@ public class RadioService extends MediaBrowserServiceCompat
 
             if (mRadioTuner == null) {
                 openRadioBandInternal(mCurrentRadioBand);
-            }
-        }
-
-        /**
-         * Sets all metadata fields to {@code null}.
-         */
-        private void clearMetadata() {
-            mCurrentChannelInfo = null;
-            mCurrentArtist = null;
-            mCurrentSongTitle = null;
-        }
-
-        /**
-         * Retrieves the relevant information off the given {@link RadioMetadata} object and
-         * sets them correspondingly on {@link #mCurrentChannelInfo}, {@link #mCurrentArtist}
-         * and {@link #mCurrentSongTitle}.
-         */
-        private void updateMetadata(RadioMetadata metadata) {
-            if (metadata != null) {
-                mCurrentChannelInfo = metadata.getString(RadioMetadata.METADATA_KEY_RDS_PS);
-                mCurrentArtist = metadata.getString(RadioMetadata.METADATA_KEY_ARTIST);
-                mCurrentSongTitle = metadata.getString(RadioMetadata.METADATA_KEY_TITLE);
-
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, String.format("updateMetadata(): [channel info: %s, artist: %s, "
-                            + "song title: %s]", mCurrentChannelInfo, mCurrentArtist,
-                            mCurrentSongTitle));
-                }
             }
         }
     }
