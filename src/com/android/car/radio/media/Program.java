@@ -78,7 +78,7 @@ public final class Program implements Parcelable {
     }
 
     public static @NonNull Program fromProgramInfo(@NonNull ProgramInfo info) {
-        return new Program(info.getSelector(), ProgramInfoExt.getProgramName(info));
+        return new Program(info.getSelector(), ProgramInfoExt.getProgramName(info, 0));
     }
 
     private Program(Parcel in) {

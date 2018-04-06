@@ -556,8 +556,8 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
             updateRadioChannelDisplay(sel);
 
-            // TODO(b/73950974): display name, but not frequency (if the name is missing)
-            mRadioDisplayController.setCurrentStation(ProgramInfoExt.getProgramName(info));
+            mRadioDisplayController.setCurrentStation(
+                    ProgramInfoExt.getProgramName(info, ProgramInfoExt.NAME_NO_CHANNEL_FALLBACK));
             RadioMetadata meta = ProgramInfoExt.getMetadata(mCurrentProgram);
             mRadioDisplayController.setCurrentSongTitleAndArtist(
                     meta.getString(RadioMetadata.METADATA_KEY_TITLE),

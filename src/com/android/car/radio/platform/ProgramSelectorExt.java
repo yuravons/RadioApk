@@ -16,6 +16,7 @@
 
 package com.android.car.radio.platform;
 
+import android.annotation.IntDef;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.hardware.radio.ProgramSelector;
@@ -24,6 +25,8 @@ import android.hardware.radio.RadioManager;
 import android.net.Uri;
 import android.util.Log;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +42,35 @@ import java.util.function.BiFunction;
  */
 public class ProgramSelectorExt {
     private static final String TAG = "BcRadioApp.pselext";
+
+    /**
+     * If this is AM/FM channel (or any other technology using different modulations),
+     * don't return modulation part.
+     */
+    public static final int NAME_NO_MODULATION = 1 << 0;
+
+    /**
+     * Return only modulation part of channel name.
+     *
+     * If this is not a radio technology using modulation, return nothing
+     * (unless combined with other _ONLY flags in the future).
+     *
+     * If this returns non-null string, it's guaranteed that {@link #NAME_NO_MODULATION}
+     * will return the complement of channel name.
+     */
+    public static final int NAME_MODULATION_ONLY = 1 << 1;
+
+    /**
+     * Flags to control how channel values are converted to string with {@link #getDisplayName}.
+     *
+     * Upper 16 bits are reserved for {@link ProgramInfoExt#NameFlag}.
+     */
+    @IntDef(prefix = { "NAME_" }, flag = true, value = {
+        NAME_NO_MODULATION,
+        NAME_MODULATION_ONLY,
+    })
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface NameFlag {}
 
     private static final String URI_SCHEME_BROADCASTRADIO = "broadcastradio";
     private static final String URI_AUTHORITY_PROGRAM = "program";
@@ -103,20 +135,45 @@ public class ProgramSelectorExt {
         return frequencyKhz > 60000 && frequencyKhz < 110000;
     }
 
-    public static @Nullable String formatAmFmFrequency(long frequencyKhz, boolean withBandName) {
+    static @Nullable String formatAmFmFrequency(long frequencyKhz, @NameFlag int flags) {
+        String channel;
+        String modulation;
+
         if (isAmFrequency(frequencyKhz)) {
-            return Long.toString(frequencyKhz) + (withBandName ? " AM" : "");
-        }
-        if (isFmFrequency(frequencyKhz)) {
-            return FORMAT_FM.format(frequencyKhz / 1000f) + (withBandName ? " FM" : "");
+            channel = Long.toString(frequencyKhz);
+            modulation = "AM";
+        } else if (isFmFrequency(frequencyKhz)) {
+            channel = FORMAT_FM.format(frequencyKhz / 1000f);
+            modulation = "FM";
+        } else {
+            Log.w(TAG, "AM/FM frequency out of range: " + frequencyKhz);
+            return null;
         }
 
-        Log.w(TAG, "AM/FM frequency out of range: " + frequencyKhz);
-        return null;
+        if ((flags & NAME_MODULATION_ONLY) != 0) return modulation;
+        if ((flags & NAME_NO_MODULATION) != 0) return channel;
+        return channel + ' ' + modulation;
     }
 
     public static @NonNull ProgramSelector createAmFmSelector(int frequencyKhz) {
         return ProgramSelector.createAmFmSelector(RadioManager.BAND_INVALID, frequencyKhz);
+    }
+
+    public static boolean hasId(@NonNull ProgramSelector sel,
+            @ProgramSelector.IdentifierType int type) {
+        try {
+            sel.getFirstId(type);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    public static boolean isAmFmProgram(@NonNull ProgramSelector sel) {
+        int priType = sel.getPrimaryId().getType();
+        return priType == ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY
+                || priType == ProgramSelector.IDENTIFIER_TYPE_RDS_PI
+                || priType == ProgramSelector.IDENTIFIER_TYPE_HD_STATION_ID_EXT;
     }
 
     /**
@@ -128,11 +185,19 @@ public class ProgramSelectorExt {
      * @param sel the program selector
      * @return Channel name or null, if radio technology doesn't present channel names to the user.
      */
-    public static @Nullable String getDisplayName(@NonNull ProgramSelector sel) {
-        Identifier pri = sel.getPrimaryId();
+    public static @Nullable String getDisplayName(@NonNull ProgramSelector sel,
+            @NameFlag int flags) {
+        if (isAmFmProgram(sel)) {
+            if (!hasId(sel, ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY)) return null;
+            long freq = sel.getFirstId(ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY);
+            return formatAmFmFrequency(freq, flags);
+        }
 
-        if (pri.getType() == ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY) {
-            return formatAmFmFrequency(pri.getValue(), true);
+        if ((flags & NAME_MODULATION_ONLY) != 0) return null;
+
+        if (sel.getPrimaryId().getType() == ProgramSelector.IDENTIFIER_TYPE_SXM_SERVICE_ID) {
+            if (!hasId(sel, ProgramSelector.IDENTIFIER_TYPE_SXM_CHANNEL)) return null;
+            return Long.toString(sel.getFirstId(ProgramSelector.IDENTIFIER_TYPE_SXM_CHANNEL));
         }
 
         return null;
