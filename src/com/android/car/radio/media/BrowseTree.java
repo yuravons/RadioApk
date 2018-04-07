@@ -229,7 +229,7 @@ public class BrowseTree {
                 }
 
                 mProgramListCache.add(createChild(dbld, mediaId,
-                        ProgramInfoExt.getProgramName(program), program.getSelector(), icon));
+                        ProgramInfoExt.getProgramName(program, 0), program.getSelector(), icon));
             }
 
             if (mProgramListCache.size() == 0) {
@@ -359,9 +359,9 @@ public class BrowseTree {
                     final int upperLimit = band.getUpperLimit();
                     final int spacing = band.getSpacing();
                     for (int ch = lowerLimit; ch <= upperLimit; ch += spacing) {
+                        ProgramSelector sel = ProgramSelectorExt.createAmFmSelector(ch);
                         mChannels.add(createChild(dbld, NODEPREFIX_AMFMCHANNEL + ch,
-                                ProgramSelectorExt.formatAmFmFrequency(ch, true),
-                                ProgramSelectorExt.createAmFmSelector(ch), null));
+                                ProgramSelectorExt.getDisplayName(sel, 0), sel, null));
                     }
                 }
 
