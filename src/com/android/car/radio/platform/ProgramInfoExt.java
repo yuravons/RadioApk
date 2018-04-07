@@ -16,14 +16,19 @@
 
 package com.android.car.radio.platform;
 
+import android.annotation.IntDef;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.graphics.Bitmap;
+import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.hardware.radio.RadioMetadata;
 import android.media.MediaMetadata;
 import android.media.Rating;
 import android.util.Log;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * Proposed extensions to android.hardware.radio.RadioManager.ProgramInfo.
@@ -32,6 +37,25 @@ import android.util.Log;
  */
 public class ProgramInfoExt {
     private static final String TAG = "BcRadioApp.pinfoext";
+
+    /**
+     * If there is no suitable program name, return null instead of doing
+     * a fallback to channel display name.
+     */
+    public static final int NAME_NO_CHANNEL_FALLBACK = 1 << 16;
+
+    /**
+     * Flags to control how to fetch program name with {@link #getProgramName}.
+     *
+     * Lower 16 bits are reserved for {@link ProgramSelectorExt#NameFlag}.
+     */
+    @IntDef(prefix = { "NAME_" }, flag = true, value = {
+        ProgramSelectorExt.NAME_NO_MODULATION,
+        ProgramSelectorExt.NAME_MODULATION_ONLY,
+        NAME_NO_CHANNEL_FALLBACK,
+    })
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface NameFlag {}
 
     private static final char EN_DASH = '\u2013';
     private static final String TITLE_SEPARATOR = " " + EN_DASH + " ";
@@ -44,7 +68,13 @@ public class ProgramInfoExt {
         RadioMetadata.METADATA_KEY_RDS_PS,
     };
 
-    public static @NonNull String getProgramName(@NonNull ProgramInfo info) {
+    /**
+     * Returns program name suitable to display.
+     *
+     * If there is no program name, it falls back to channel name. Flags related to
+     * the channel name display will be forwarded to the channel name generation method.
+     */
+    public static @NonNull String getProgramName(@NonNull ProgramInfo info, @NameFlag int flags) {
         RadioMetadata meta = info.getMetadata();
         if (meta != null) {
             for (String key : programNameOrder) {
@@ -53,9 +83,23 @@ public class ProgramInfoExt {
             }
         }
 
-        String sel = ProgramSelectorExt.getDisplayName(info.getSelector());
-        if (sel != null) return sel;
-        Log.w(TAG, "ProgramInfo without a name");
+        if ((flags & NAME_NO_CHANNEL_FALLBACK) != 0) return "";
+
+        ProgramSelector sel = info.getSelector();
+
+        // if it's AM/FM program, prefer to display currently used AF frequency
+        if (ProgramSelectorExt.isAmFmProgram(sel)) {
+            ProgramSelector.Identifier phy = info.getPhysicallyTunedTo();
+            if (phy != null && phy.getType() == ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY) {
+                String chName = ProgramSelectorExt.formatAmFmFrequency(phy.getValue(), flags);
+                if (chName != null) return chName;
+            }
+        }
+
+        String selName = ProgramSelectorExt.getDisplayName(sel, flags);
+        if (selName != null) return selName;
+
+        Log.w(TAG, "ProgramInfo without a name nor channel name");
         return "";
     }
 
@@ -72,7 +116,7 @@ public class ProgramInfoExt {
             boolean isFavorite, @Nullable ImageResolver imageResolver) {
         MediaMetadata.Builder bld = new MediaMetadata.Builder();
 
-        bld.putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, getProgramName(info));
+        bld.putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, getProgramName(info, 0));
 
         RadioMetadata meta = info.getMetadata();
         if (meta != null) {
