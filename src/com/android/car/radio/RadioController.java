@@ -72,6 +72,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
     private static final int CHANNEL_CHANGE_DURATION_MS = 200;
 
+    private final ValueAnimator mAnimator = new ValueAnimator();
     private int mCurrentlyDisplayedChannel;  // for animation purposes
     private ProgramInfo mCurrentProgram;
 
@@ -341,13 +342,11 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     // TODO(b/73950974): move channel animation to RadioDisplayController
     private void updateRadioChannelDisplay(@NonNull ProgramSelector sel) {
         int priType = sel.getPrimaryId().getType();
-        boolean isAmFmProgram = (priType == ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY
-                || priType == ProgramSelector.IDENTIFIER_TYPE_RDS_PI
-                || priType == ProgramSelector.IDENTIFIER_TYPE_HD_STATION_ID_EXT);
-        int freq = isAmFmProgram ?
-                (int)sel.getFirstId(ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY) : 0;
 
-        if (freq == 0) {
+        mAnimator.cancel();
+
+        if (!ProgramSelectorExt.isAmFmProgram(sel)
+                || !ProgramSelectorExt.hasId(sel, ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY)) {
             // channel animation is implemented for AM/FM only
             mCurrentlyDisplayedChannel = 0;
             mRadioDisplayController.setChannelNumber("");
@@ -357,43 +356,31 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
             return;
         }
 
+        int freq = (int)sel.getFirstId(ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY);
+
+        boolean wasAm = ProgramSelectorExt.isAmFrequency(mCurrentlyDisplayedChannel);
+        boolean wasFm = ProgramSelectorExt.isFmFrequency(mCurrentlyDisplayedChannel);
         boolean isAm = ProgramSelectorExt.isAmFrequency(freq);
         int band = isAm ? RadioManager.BAND_AM : RadioManager.BAND_FM;
 
         mCurrentRadioBand = band;
         updateAmFmDisplayState();
 
-        if (isAm) updateRadioChannelForAm(mCurrentlyDisplayedChannel, freq);
-        else updateRadioChannelForFm(mCurrentlyDisplayedChannel, freq);
+        if (isAm && wasAm || !isAm && wasFm) {
+            mAnimator.setIntValues((int)mCurrentlyDisplayedChannel, (int)freq);
+            mAnimator.setDuration(CHANNEL_CHANGE_DURATION_MS);
+            mAnimator.addUpdateListener(animation -> mRadioDisplayController.setChannelNumber(
+                    ProgramSelectorExt.formatAmFmFrequency((int)animation.getAnimatedValue(),
+                            ProgramSelectorExt.NAME_NO_MODULATION)));
+            mAnimator.start();
+        } else {
+            // it's a different band - don't animate
+            mRadioDisplayController.setChannelNumber(
+                    ProgramSelectorExt.getDisplayName(sel, ProgramSelectorExt.NAME_NO_MODULATION));
+        }
         mCurrentlyDisplayedChannel = freq;
 
         maybeUpdateBackgroundColor(freq);
-    }
-
-    private void updateRadioChannelForAm(int from, int to) {
-        // No need for animation if channel wasn't AM
-        if (!ProgramSelectorExt.isAmFrequency(from)) {
-            mRadioDisplayController.setChannelNumber(
-                    RadioChannelFormatter.AM_FORMATTER.format(to));
-            return;
-        }
-
-        animateRadioChannelChange(from, to, mAmAnimatorListener);
-    }
-
-    private void updateRadioChannelForFm(int from, int to) {
-        // FM channels are displayed in Khz. e.g. 88500 is displayed as 88.5.
-        float channelInKHz = (float) to / 1000;
-
-        // No need for animation if channel wasn't FM
-        if (!ProgramSelectorExt.isFmFrequency(from)) {
-            mRadioDisplayController.setChannelNumber(
-                    RadioChannelFormatter.FM_FORMATTER.format(channelInKHz));
-            return;
-        }
-
-        float startChannelNumber = (float) from / 1000;
-        animateRadioChannelChange(startChannelNumber, channelInKHz, mFmAnimatorListener);
     }
 
     /**
@@ -455,19 +442,6 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     }
 
     /**
-     * Animates the text in channel number from the given starting value to the given
-     * end value.
-     */
-    private void animateRadioChannelChange(float startValue, float endValue,
-            ValueAnimator.AnimatorUpdateListener listener) {
-        ValueAnimator animator = new ValueAnimator();
-        animator.setObjectValues(startValue, endValue);
-        animator.setDuration(CHANNEL_CHANGE_DURATION_MS);
-        animator.addUpdateListener(listener);
-        animator.start();
-    }
-
-    /**
      * Clears all metadata including song title, artist and station information.
      */
     private void clearMetadataDisplay() {
@@ -523,30 +497,6 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
         boolean isPreset = (info != null) && mRadioStorage.isPreset(info.getSelector());
         mRadioDisplayController.setChannelIsPreset(isPreset);
     }
-
-    /**
-     * Value animator for AM values.
-     */
-    private ValueAnimator.AnimatorUpdateListener mAmAnimatorListener =
-            new ValueAnimator.AnimatorUpdateListener() {
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    mRadioDisplayController.setChannelNumber(
-                            RadioChannelFormatter.AM_FORMATTER.format(
-                                    animation.getAnimatedValue()));
-                }
-            };
-
-    /**
-     * Value animator for FM values.
-     */
-    private ValueAnimator.AnimatorUpdateListener mFmAnimatorListener =
-            new ValueAnimator.AnimatorUpdateListener() {
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    mRadioDisplayController.setChannelNumber(
-                            RadioChannelFormatter.FM_FORMATTER.format(
-                                    animation.getAnimatedValue()));
-                }
-            };
 
     private final IRadioCallback.Stub mCallback = new IRadioCallback.Stub() {
         @Override

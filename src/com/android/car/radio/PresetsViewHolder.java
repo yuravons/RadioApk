@@ -28,6 +28,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.android.car.radio.media.Program;
+import com.android.car.radio.platform.ProgramSelectorExt;
 import com.android.car.radio.service.RadioStation;
 import com.android.car.view.CardListBackgroundResolver;
 
@@ -129,10 +130,8 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
 
         CardListBackgroundResolver.setBackground(mPresetsCard, getAdapterPosition(), itemCount);
 
-        String channelNumber = RadioChannelFormatter.formatRadioChannel(preset.getRadioBand(),
-                preset.getChannelNumber());
-
-        mPresetItemChannel.setText(channelNumber);
+        mPresetItemChannel.setText(ProgramSelectorExt.getDisplayName(
+                program.getSelector(), ProgramSelectorExt.NAME_NO_MODULATION));
         if (isActiveStation) {
             mPresetItemChannel.setCompoundDrawablesRelativeWithIntrinsicBounds(
                     R.drawable.ic_equalizer, 0, 0, 0);
