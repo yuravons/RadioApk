@@ -392,7 +392,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
             return;
         }
 
-        int newColor = mColorMapper.getColorForStation(mCurrentRadioBand, channel);
+        int newColor = mColorMapper.getColorForChannel(channel);
 
         // No animation required if the colors are the same.
         if (newColor == mCurrentBackgroundColor) {

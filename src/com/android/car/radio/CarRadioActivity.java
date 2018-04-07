@@ -17,6 +17,7 @@
 package com.android.car.radio;
 
 import android.content.Intent;
+import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -24,8 +25,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
 import android.util.Pair;
-
-import com.android.car.radio.service.RadioStation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -128,7 +127,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
     }
 
     @Override
-    public void onStationSelected(RadioStation station) {
+    public void onStationSelected(ProgramSelector sel) {
         maybeDismissManualTuner();
 
         Fragment fragment = getCurrentFragment();
@@ -136,8 +135,8 @@ public class CarRadioActivity extends CarDrawerActivity implements
             ((FragmentWithFade) fragment).fadeInContent();
         }
 
-        if (station != null) {
-            mRadioController.tune(station.getSelector());
+        if (sel != null) {
+            mRadioController.tune(sel);
         }
     }
 

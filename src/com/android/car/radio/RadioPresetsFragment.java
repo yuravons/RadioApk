@@ -215,7 +215,7 @@ public class RadioPresetsFragment extends Fragment implements
         // TODO(b/73950974): use callback only
         ProgramInfo info = mRadioController.getCurrentProgramInfo();
         if (info != null) {
-            mPresetsAdapter.setActiveRadioStation(Program.fromProgramInfo(info));
+            mPresetsAdapter.setActiveProgram(Program.fromProgramInfo(info));
         }
     }
 
@@ -238,7 +238,7 @@ public class RadioPresetsFragment extends Fragment implements
     @Override
     public void onProgramInfoChanged(@NonNull ProgramInfo info) {
         mPresetsAdapter.setPresets(mRadioStorage.getPresets());
-        mPresetsAdapter.setActiveRadioStation(Program.fromProgramInfo(info));
+        mPresetsAdapter.setActiveProgram(Program.fromProgramInfo(info));
     }
 
     @Override
@@ -248,11 +248,11 @@ public class RadioPresetsFragment extends Fragment implements
         }
     }
 
-    private void handlePresetItemFavoriteChanged(Program radioStation, boolean saveAsFavorite) {
+    private void handlePresetItemFavoriteChanged(Program program, boolean saveAsFavorite) {
         if (saveAsFavorite) {
-            mRadioStorage.storePreset(radioStation);
+            mRadioStorage.storePreset(program);
         } else {
-            mRadioStorage.removePreset(radioStation.getSelector());
+            mRadioStorage.removePreset(program.getSelector());
         }
     }
 
