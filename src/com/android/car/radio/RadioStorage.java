@@ -217,6 +217,7 @@ public class RadioStorage {
             return;
         }
 
+        // TODO(b/73950974): don't store if it's already the same
         switch (band) {
             case RadioManager.BAND_AM:
                 sSharedPref.edit().putInt(PREF_KEY_RADIO_CHANNEL_AM, channel).apply();

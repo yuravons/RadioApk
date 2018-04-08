@@ -19,8 +19,10 @@ package com.android.car.radio;
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.annotation.NonNull;
 import android.content.Context;
 import android.hardware.radio.ProgramSelector;
+import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -41,7 +43,7 @@ import androidx.car.widget.PagedListView;
 public class RadioPresetsFragment extends Fragment implements
         FragmentWithFade,
         RadioAnimationManager.OnExitCompleteListener,
-        RadioController.RadioStationChangeListener,
+        RadioController.ProgramInfoChangeListener,
         RadioStorage.PresetsChangeListener {
     private static final String TAG = "PresetsFragment";
     private static final int ANIM_DURATION_MS = 200;
@@ -208,15 +210,19 @@ public class RadioPresetsFragment extends Fragment implements
         super.onStart();
         mRadioController.initialize(getView());
         mRadioController.setShouldColorStatusBar(true);
-        mRadioController.setRadioStationChangeListener(this);
+        mRadioController.setProgramInfoChangeListener(this);
 
-        mPresetsAdapter.setActiveRadioStation(
-                mRadioController.getCurrentRadioStation().toProgram());
+        // TODO(b/73950974): use callback only
+        ProgramInfo info = mRadioController.getCurrentProgramInfo();
+        if (info != null) {
+            mPresetsAdapter.setActiveRadioStation(Program.fromProgramInfo(info));
+        }
     }
 
     @Override
     public void onDestroy() {
         mRadioStorage.removePresetsChangeListener(this);
+        mRadioController.setProgramInfoChangeListener(null);
         mPresetListExitListener = null;
         super.onDestroy();
     }
@@ -230,10 +236,9 @@ public class RadioPresetsFragment extends Fragment implements
 
 
     @Override
-    public void onRadioStationChanged(ProgramSelector selector) {
+    public void onProgramInfoChanged(@NonNull ProgramInfo info) {
         mPresetsAdapter.setPresets(mRadioStorage.getPresets());
-        mPresetsAdapter.setActiveRadioStation(
-                mRadioController.getCurrentRadioStation().toProgram());
+        mPresetsAdapter.setActiveRadioStation(Program.fromProgramInfo(info));
     }
 
     @Override

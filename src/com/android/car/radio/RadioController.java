@@ -18,16 +18,17 @@ package com.android.car.radio;
 
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
+import android.annotation.NonNull;
 import android.app.Activity;
-import android.app.LoaderManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.Loader;
 import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
+import android.hardware.radio.RadioManager.ProgramInfo;
+import android.hardware.radio.RadioMetadata;
 import android.hardware.radio.RadioTuner;
 import android.media.AudioManager;
 import android.os.Bundle;
@@ -40,23 +41,20 @@ import android.util.Log;
 import android.view.View;
 
 import com.android.car.radio.media.Program;
+import com.android.car.radio.platform.ProgramInfoExt;
 import com.android.car.radio.platform.ProgramSelectorExt;
 import com.android.car.radio.service.IRadioCallback;
 import com.android.car.radio.service.IRadioManager;
-import com.android.car.radio.service.RadioRds;
-import com.android.car.radio.service.RadioStation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A controller that handles the display of metadata on the current radio station.
  */
-public class RadioController implements
-        RadioStorage.PresetsChangeListener,
-        LoaderManager.LoaderCallbacks<List<RadioStation>> {
+public class RadioController implements RadioStorage.PresetsChangeListener {
     private static final String TAG = "Em.RadioController";
-    private static final int CHANNEL_LOADER_ID = 0;
 
     /**
      * The percentage by which to darken the color that should be set on the status bar.
@@ -74,8 +72,8 @@ public class RadioController implements
 
     private static final int CHANNEL_CHANGE_DURATION_MS = 200;
 
-    private int mCurrentChannelNumber = RadioStorage.INVALID_RADIO_CHANNEL;
-    private boolean mChannelDisplayBugWorkaround = false;  // TODO(b/73950974): clean up this mess
+    private int mCurrentlyDisplayedChannel;  // for animation purposes
+    private ProgramInfo mCurrentProgram;
 
     private final Activity mActivity;
     private IRadioManager mRadioManager;
@@ -96,11 +94,7 @@ public class RadioController implements
     private final RadioChannelColorMapper mColorMapper;
     @ColorInt private int mCurrentBackgroundColor = INVALID_BACKGROUND_COLOR;
 
-    private PrescannedRadioStationAdapter mAdapter;
-    private PreScannedChannelLoader mChannelLoader;
-
     private final RadioDisplayController mRadioDisplayController;
-    private boolean mHasDualTuners = false;
 
     /**
      * Keeps track of if the user has manually muted the radio. This value is used to determine
@@ -119,20 +113,18 @@ public class RadioController implements
     private final String mAmBandString;
     private final String mFmBandString;
 
-    private RadioRds mCurrentRds;
-
-    private RadioStationChangeListener mStationChangeListener;
+    private ProgramInfoChangeListener mProgramInfoChangeListener;
 
     /**
      * Interface for a class that will be notified when the current radio station has been changed.
      */
-    public interface RadioStationChangeListener {
+    public interface ProgramInfoChangeListener {
         /**
          * Called when the current radio station has changed in the radio.
          *
-         * @param selector The current radio station.
+         * @param info The current radio station.
          */
-        void onRadioStationChanged(ProgramSelector selector);
+        void onProgramInfoChanged(@NonNull ProgramInfo info);
     }
 
     public RadioController(Activity activity) {
@@ -189,8 +181,8 @@ public class RadioController implements
     /**
      * Sets the listener that will be notified whenever the radio station changes.
      */
-    public void setRadioStationChangeListener(RadioStationChangeListener listener) {
-        mStationChangeListener = listener;
+    public void setProgramInfoChangeListener(ProgramInfoChangeListener listener) {
+        mProgramInfoChangeListener = listener;
     }
 
     /**
@@ -221,33 +213,13 @@ public class RadioController implements
         }
 
         try {
-            RadioStation station = mRadioManager.getCurrentRadioStation();
-
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "updateRadioDisplay(); current station: " + station);
-            }
-
-            if (mHasDualTuners) {
-                initializeDualTunerController();
-            } else {
-                mRadioDisplayController.setSingleChannelDisplay(mRadioBackground);
-            }
-
-            // Update the AM/FM band display.
-            mCurrentRadioBand = station.getRadioBand();
-            updateAmFmDisplayState();
-
-            // Update the channel number.
-            setRadioChannel(station.getChannelNumber());
+            mRadioDisplayController.setSingleChannelDisplay(mRadioBackground);
 
             // Ensure the play button properly reflects the current mute state.
             mRadioDisplayController.setPlayPauseButtonState(mRadioManager.isMuted());
 
-            mCallback.onRadioMetadataChanged(station.getRds());
-
-            if (mStationChangeListener != null) {
-                mStationChangeListener.onRadioStationChanged(station.getSelector());
-            }
+            // TODO(b/73950974): use callback only
+            mCallback.onCurrentProgramInfoChanged(mRadioManager.getCurrentProgramInfo());
         } catch (RemoteException e) {
             Log.e(TAG, "updateRadioDisplay(); remote exception: " + e.getMessage());
         }
@@ -277,32 +249,12 @@ public class RadioController implements
      * Returns the radio station that is currently playing on the radio. If this controller is
      * not connected to the {@link RadioService} or a radio station cannot be retrieved, then
      * {@code null} is returned.
+     *
+     * TODO(b/73950974): use callback only
      */
     @Nullable
-    public RadioStation getCurrentRadioStation() {
-        if (mRadioManager == null) {
-            return null;
-        }
-
-        try {
-            return mRadioManager.getCurrentRadioStation();
-        } catch (RemoteException e) {
-            Log.e(TAG, "getCurrentRadioStation(); error retrieving current station: "
-                    + e.getMessage());
-        }
-
-        return null;
-    }
-
-    public @Nullable ProgramSelector getCurrentSelectorLocal() {
-        int ch = mCurrentChannelNumber;
-        if (ch == RadioStorage.INVALID_RADIO_CHANNEL) return null;
-        return ProgramSelectorExt.createAmFmSelector(ch);
-    }
-
-    public @Nullable ProgramSelector getCurrentSelector() {
-        RadioStation station = getCurrentRadioStation();
-        return station == null ? null : station.getSelector();
+    public ProgramInfo getCurrentProgramInfo() {
+        return mCurrentProgram;
     }
 
     /**
@@ -315,9 +267,6 @@ public class RadioController implements
         if (mRadioManager == null || radioBand == mCurrentRadioBand) {
             return;
         }
-
-        // Reset the channel number so that we do not animate number changes between band changes.
-        mCurrentChannelNumber = RadioStorage.INVALID_RADIO_CHANNEL;
 
         setCurrentRadioBand(radioBand);
         mRadioStorage.storeRadioBand(mCurrentRadioBand);
@@ -353,24 +302,17 @@ public class RadioController implements
      * the radio is always on a valid radio station.
      */
     private void maybeTuneToStoredRadioChannel() {
-        mCurrentChannelNumber = mRadioStorage.getStoredRadioChannel(mCurrentRadioBand);
-        mChannelDisplayBugWorkaround = true;
+        int storedChannel = mRadioStorage.getStoredRadioChannel(mCurrentRadioBand);
 
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, String.format("maybeTuneToStoredRadioChannel(); band: %s, channel %s",
-                    mCurrentRadioBand, mCurrentChannelNumber));
-        }
-
-        // Tune to a stored radio channel if it exists.
-        if (mCurrentChannelNumber != RadioStorage.INVALID_RADIO_CHANNEL) {
-            tune(getCurrentSelectorLocal());
+        if (storedChannel != RadioStorage.INVALID_RADIO_CHANNEL) {
+            Log.i(TAG, "Restoring stored program: " + storedChannel);
+            tune(ProgramSelectorExt.createAmFmSelector(storedChannel));
         } else {
-            // Otherwise, ensure that the radio is on a valid radio station (i.e. it will not
-            // start playing static) by initiating a seek.
+            Log.i(TAG, "No stored program, seeking forward to not play static");
             try {
                 mRadioManager.seekForward();
             } catch (RemoteException e) {
-                Log.e(TAG, "maybeTuneToStoredRadioChannel(); remote exception: " + e.getMessage());
+                Log.e(TAG, "Couldn't seek forward", e);
             }
         }
     }
@@ -396,70 +338,61 @@ public class RadioController implements
         }
     }
 
-    /**
-     * Sets the radio channel to display.
-     * @param channel The radio channel frequency in Hz.
-     */
-    private void setRadioChannel(int channel) {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Setting radio channel: " + channel);
-        }
+    // TODO(b/73950974): move channel animation to RadioDisplayController
+    private void updateRadioChannelDisplay(@NonNull ProgramSelector sel) {
+        int priType = sel.getPrimaryId().getType();
+        boolean isAmFmProgram = (priType == ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY
+                || priType == ProgramSelector.IDENTIFIER_TYPE_RDS_PI
+                || priType == ProgramSelector.IDENTIFIER_TYPE_HD_STATION_ID_EXT);
+        int freq = isAmFmProgram ?
+                (int)sel.getFirstId(ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY) : 0;
 
-        if (channel <= 0) {
-            mCurrentChannelNumber = channel;
+        if (freq == 0) {
+            // channel animation is implemented for AM/FM only
+            mCurrentlyDisplayedChannel = 0;
             mRadioDisplayController.setChannelNumber("");
+
+            mCurrentRadioBand = RadioStorage.INVALID_RADIO_BAND;
+            updateAmFmDisplayState();
             return;
         }
 
-        switch (mCurrentRadioBand) {
-            case RadioManager.BAND_FM:
-                setRadioChannelForFm(channel);
-                break;
+        boolean isAm = ProgramSelectorExt.isAmFrequency(freq);
+        int band = isAm ? RadioManager.BAND_AM : RadioManager.BAND_FM;
 
-            case RadioManager.BAND_AM:
-                setRadioChannelForAm(channel);
-                break;
+        mCurrentRadioBand = band;
+        updateAmFmDisplayState();
 
-            // TODO: Support BAND_FM_HD and BAND_AM_HD.
+        if (isAm) updateRadioChannelForAm(mCurrentlyDisplayedChannel, freq);
+        else updateRadioChannelForFm(mCurrentlyDisplayedChannel, freq);
+        mCurrentlyDisplayedChannel = freq;
 
-            default:
-                // Do nothing and don't check presets, so return here.
-                return;
-        }
-
-        mCurrentChannelNumber = channel;
-
-        mRadioDisplayController.setChannelIsPreset(mRadioStorage.isPreset(
-                ProgramSelectorExt.createAmFmSelector(channel)));
-
-        mRadioStorage.storeRadioChannel(mCurrentRadioBand, mCurrentChannelNumber);
-
-        maybeUpdateBackgroundColor();
+        maybeUpdateBackgroundColor(freq);
     }
 
-    private void setRadioChannelForAm(int channel) {
-        // No need for animation if radio channel has never been set.
-        if (mCurrentChannelNumber == RadioStorage.INVALID_RADIO_CHANNEL) {
+    private void updateRadioChannelForAm(int from, int to) {
+        // No need for animation if channel wasn't AM
+        if (!ProgramSelectorExt.isAmFrequency(from)) {
             mRadioDisplayController.setChannelNumber(
-                    RadioChannelFormatter.AM_FORMATTER.format(channel));
+                    RadioChannelFormatter.AM_FORMATTER.format(to));
             return;
         }
 
-        animateRadioChannelChange(mCurrentChannelNumber, channel, mAmAnimatorListener);
+        animateRadioChannelChange(from, to, mAmAnimatorListener);
     }
 
-    private void setRadioChannelForFm(int channel) {
+    private void updateRadioChannelForFm(int from, int to) {
         // FM channels are displayed in Khz. e.g. 88500 is displayed as 88.5.
-        float channelInKHz = (float) channel / 1000;
+        float channelInKHz = (float) to / 1000;
 
-        // No need for animation if radio channel has never been set.
-        if (mCurrentChannelNumber == RadioStorage.INVALID_RADIO_CHANNEL) {
+        // No need for animation if channel wasn't FM
+        if (!ProgramSelectorExt.isFmFrequency(from)) {
             mRadioDisplayController.setChannelNumber(
                     RadioChannelFormatter.FM_FORMATTER.format(channelInKHz));
             return;
         }
 
-        float startChannelNumber = (float) mCurrentChannelNumber / 1000;
+        float startChannelNumber = (float) from / 1000;
         animateRadioChannelChange(startChannelNumber, channelInKHz, mFmAnimatorListener);
     }
 
@@ -467,12 +400,12 @@ public class RadioController implements
      * Checks if the color of the radio background should be changed, and if so, animates that
      * color change.
      */
-    private void maybeUpdateBackgroundColor() {
+    private void maybeUpdateBackgroundColor(int channel) {
         if (mRadioBackground == null) {
             return;
         }
 
-        int newColor = mColorMapper.getColorForStation(mCurrentRadioBand, mCurrentChannelNumber);
+        int newColor = mColorMapper.getColorForStation(mCurrentRadioBand, channel);
 
         // No animation required if the colors are the same.
         if (newColor == mCurrentBackgroundColor) {
@@ -538,29 +471,15 @@ public class RadioController implements
      * Clears all metadata including song title, artist and station information.
      */
     private void clearMetadataDisplay() {
-        mCurrentRds = null;
-
         mRadioDisplayController.setCurrentStation(null);
         mRadioDisplayController.setCurrentSongTitleAndArtist(null, null);
     }
 
     /**
-     * Sets the internal {@link #mCurrentRadioBand} to be the given radio band. Will also take care
-     * of restarting a load of the pre-scanned radio stations for the given band if there are dual
-     * tuners on the device.
+     * Sets the internal {@link #mCurrentRadioBand} to be the given radio band.
      */
     private void setCurrentRadioBand(int radioBand) {
-        if (mCurrentRadioBand == radioBand) {
-            return;
-        }
-
         mCurrentRadioBand = radioBand;
-
-        if (mChannelLoader != null) {
-            mAdapter.setStations(new ArrayList<>());
-            mChannelLoader.setCurrentRadioBand(radioBand);
-            mChannelLoader.forceLoad();
-        }
     }
 
     /**
@@ -597,61 +516,13 @@ public class RadioController implements
         close();
     }
 
-    /**
-     * Initializes all the extra components that are needed if this radio has dual tuners.
-     */
-    private void initializeDualTunerController() {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "initializeDualTunerController()");
-        }
-
-        if (mAdapter == null) {
-            mAdapter = new PrescannedRadioStationAdapter();
-        }
-
-        mRadioDisplayController.setSingleChannelDisplay(mRadioBackground);
-
-        // Initialize the loader that will load the pre-scanned channels for the current band.
-        mActivity.getLoaderManager().initLoader(CHANNEL_LOADER_ID, null /* args */,
-                RadioController.this /* callback */).forceLoad();
-    }
-
     @Override
     public void onPresetsRefreshed() {
         // Check if the current channel's preset status has changed.
-        ProgramSelector sel = getCurrentSelectorLocal();
-        if (sel == null) return;
-        mRadioDisplayController.setChannelIsPreset(mRadioStorage.isPreset(sel));
+        ProgramInfo info = mCurrentProgram;
+        boolean isPreset = (info != null) && mRadioStorage.isPreset(info.getSelector());
+        mRadioDisplayController.setChannelIsPreset(isPreset);
     }
-
-    @Override
-    public Loader<List<RadioStation>> onCreateLoader(int id, Bundle args) {
-        // Only one loader, so no need to check for id.
-        mChannelLoader = new PreScannedChannelLoader(mActivity /* context */);
-        mChannelLoader.setCurrentRadioBand(mCurrentRadioBand);
-
-        return mChannelLoader;
-    }
-
-    @Override
-    public void onLoadFinished(Loader<List<RadioStation>> loader,
-            List<RadioStation> preScannedStations) {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            int size = preScannedStations == null ? 0 : preScannedStations.size();
-            Log.d(TAG, "onLoadFinished(); number of pre-scanned stations: " + size);
-        }
-
-        if (Log.isLoggable(TAG, Log.VERBOSE) && preScannedStations != null) {
-            for (RadioStation station : preScannedStations) {
-                Log.v(TAG, "station: " + station.toString());
-            }
-        }
-
-        mAdapter.setStations(preScannedStations);
-    }
-
-    @Override
-    public void onLoaderReset(Loader<List<RadioStation>> loader) {}
 
     /**
      * Value animator for AM values.
@@ -679,69 +550,26 @@ public class RadioController implements
 
     private final IRadioCallback.Stub mCallback = new IRadioCallback.Stub() {
         @Override
-        public void onRadioStationChanged(RadioStation station) {
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "onRadioStationChanged: " + station);
-            }
+        public void onCurrentProgramInfoChanged(ProgramInfo info) {
+            mCurrentProgram = Objects.requireNonNull(info);
+            ProgramSelector sel = info.getSelector();
 
-            if (station == null) {
-                return;
-            }
+            updateRadioChannelDisplay(sel);
 
-            if (mCurrentChannelNumber != station.getChannelNumber() || mChannelDisplayBugWorkaround) {
-                mChannelDisplayBugWorkaround = false;
-                setRadioChannel(station.getChannelNumber());
-            }
+            mRadioDisplayController.setCurrentStation(
+                    ProgramInfoExt.getProgramName(info, ProgramInfoExt.NAME_NO_CHANNEL_FALLBACK));
+            RadioMetadata meta = ProgramInfoExt.getMetadata(mCurrentProgram);
+            mRadioDisplayController.setCurrentSongTitleAndArtist(
+                    meta.getString(RadioMetadata.METADATA_KEY_TITLE),
+                    meta.getString(RadioMetadata.METADATA_KEY_ARTIST));
 
-            onRadioMetadataChanged(station.getRds());
+            mRadioDisplayController.setChannelIsPreset(mRadioStorage.isPreset(sel));
+
+            mRadioStorage.storeRadioChannel(mCurrentRadioBand, info.getChannel());
 
             // Notify that the current radio station has changed.
-            if (mStationChangeListener != null) {
-                mStationChangeListener.onRadioStationChanged(getCurrentSelector());
-            }
-        }
-
-        /**
-         * Updates radio information based on the given {@link RadioRds}.
-         */
-        @Override
-        public void onRadioMetadataChanged(RadioRds radioRds) {
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "onMetadataChanged(); metadata: " + radioRds);
-            }
-
-            clearMetadataDisplay();
-
-            if (radioRds == null) {
-                return;
-            }
-
-            mCurrentRds = radioRds;
-
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "mCurrentRds: " + mCurrentRds);
-            }
-
-            String programService = radioRds.getProgramService();
-            String artistMetadata = radioRds.getSongArtist();
-
-            mRadioDisplayController.setCurrentStation(programService);
-            mRadioDisplayController.setCurrentSongTitleAndArtist(radioRds.getSongTitle(),
-                    TextUtils.isEmpty(artistMetadata) ? programService : artistMetadata);
-
-            // Since new metadata exists, update the preset that is stored in the database if
-            // it exists.
-            if (TextUtils.isEmpty(programService)) {
-                return;
-            }
-
-            ProgramSelector sel = getCurrentSelectorLocal();
-            if (mRadioStorage.isPreset(sel)) {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "Current channel is a preset; updating metadata in the database.");
-                }
-
-                mRadioStorage.storePreset(new Program(sel, programService));
+            if (mProgramInfoChangeListener != null) {
+                mProgramInfoChangeListener.onProgramInfoChanged(info);
             }
         }
 
@@ -753,9 +581,6 @@ public class RadioController implements
 
             setCurrentRadioBand(radioBand);
             updateAmFmDisplayState();
-
-            // Check that the radio channel is being correctly formatted.
-            setRadioChannel(mCurrentChannelNumber);
         }
 
         @Override
@@ -773,30 +598,16 @@ public class RadioController implements
     private final View.OnClickListener mBackwardSeekClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (mRadioManager == null) {
-                return;
-            }
+            if (mRadioManager == null) return;
 
+            // TODO(b/73950974): show some kind of animation
             clearMetadataDisplay();
 
-            if (!mHasDualTuners) {
-                try {
-                    mRadioManager.seekBackward();
-                } catch (RemoteException e) {
-                    Log.e(TAG, "backwardSeek(); remote exception: " + e.getMessage());
-                }
-                return;
-            }
-
-            RadioStation prevStation = mAdapter.getPrevStation();
-
-            if (prevStation != null) {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "Seek backwards to station: " + prevStation);
-                }
-
-                // Tune to the previous station, and then update the UI to reflect that tune.
-                tune(prevStation.getSelector());
+            try {
+                // TODO(b/73950974): watch for timeout and if it happens, display metadata back
+                mRadioManager.seekBackward();
+            } catch (RemoteException e) {
+                Log.e(TAG, "backwardSeek(); remote exception: " + e.getMessage());
             }
         }
     };
@@ -804,30 +615,14 @@ public class RadioController implements
     private final View.OnClickListener mForwardSeekClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (mRadioManager == null) {
-                return;
-            }
+            if (mRadioManager == null) return;
 
             clearMetadataDisplay();
 
-            if (!mHasDualTuners) {
-                try {
-                    mRadioManager.seekForward();
-                } catch (RemoteException e) {
-                    Log.e(TAG, "forwardSeek(); remote exception: " + e.getMessage());
-                }
-                return;
-            }
-
-            RadioStation nextStation = mAdapter.getNextStation();
-
-            if (nextStation != null) {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "Seek forward to station: " + nextStation);
-                }
-
-                // Tune to the next station, and then update the UI to reflect that tune.
-                tune(nextStation.getSelector());
+            try {
+                mRadioManager.seekForward();
+            } catch (RemoteException e) {
+                Log.e(TAG, "Couldn't seek forward", e);
             }
         }
     };
@@ -869,22 +664,16 @@ public class RadioController implements
         // there aren't multiple writes if the user presses the button quickly.
         @Override
         public void onClick(View v) {
-            if (mCurrentChannelNumber == RadioStorage.INVALID_RADIO_CHANNEL) {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "Attempting to store invalid radio station as a preset. Ignoring");
-                }
+            ProgramInfo info = mCurrentProgram;
+            if (info == null) return;
 
-                return;
-            }
+            ProgramSelector sel = mCurrentProgram.getSelector();
 
-            String programService = mCurrentRds == null ? "" : mCurrentRds.getProgramService();
-
-            ProgramSelector sel = getCurrentSelectorLocal();
             boolean isPreset = mRadioStorage.isPreset(sel);
             if (isPreset) {
                 mRadioStorage.removePreset(sel);
             } else {
-                mRadioStorage.storePreset(new Program(sel, programService));
+                mRadioStorage.storePreset(Program.fromProgramInfo(info));
             }
 
             // Update the UI immediately. If the preset failed for some reason, the RadioStorage
@@ -915,11 +704,7 @@ public class RadioController implements
                     mRadioErrorDisplay.setVisibility(View.GONE);
                 }
 
-                if (mHasDualTuners) {
-                    initializeDualTunerController();
-                } else {
-                    mRadioDisplayController.setSingleChannelDisplay(mRadioBackground);
-                }
+                mRadioDisplayController.setSingleChannelDisplay(mRadioBackground);
 
                 mRadioManager.addRadioTunerCallback(mCallback);
 
@@ -928,10 +713,6 @@ public class RadioController implements
                 // Upon successful connection, open the radio.
                 openRadioBand(radioBand);
                 maybeTuneToStoredRadioChannel();
-
-                if (mStationChangeListener != null) {
-                    mStationChangeListener.onRadioStationChanged(getCurrentSelector());
-                }
             } catch (RemoteException e) {
                 Log.e(TAG, "onServiceConnected(); remote exception: " + e.getMessage());
             }

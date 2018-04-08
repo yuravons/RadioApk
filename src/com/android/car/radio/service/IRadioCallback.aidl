@@ -15,27 +15,20 @@
  */
 package com.android.car.radio.service;
 
-import com.android.car.radio.service.RadioStation;
-import com.android.car.radio.service.RadioRds;
+import android.hardware.radio.RadioManager;
 
 /**
  * Interface for applications to listen for changes in the current radio state.
  */
 oneway interface IRadioCallback {
     /**
-     * Called upon successful completion of a switch in radio stations.
+     * Called when the current program info has changed.
      *
-     * @param station A {@link RadioStation} object that contains the data for the now current radio
-     *                station.
-     */
-    void onRadioStationChanged(in RadioStation station);
-
-    /**
-     * Called when only the metadata for the current station has changed.
+     * This might happen either as a result of tune operation or just metadata change.
      *
-     * @param radioRds A {@link RadioRds} object that contains the updated metadata.
+     * @param info The current program info.
      */
-    void onRadioMetadataChanged(in RadioRds radioRds);
+    void onCurrentProgramInfoChanged(in RadioManager.ProgramInfo info);
 
     /**
      * Called when the current radio band has changed.
