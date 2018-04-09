@@ -135,7 +135,7 @@ public class ProgramSelectorExt {
         return frequencyKhz > 60000 && frequencyKhz < 110000;
     }
 
-    static @Nullable String formatAmFmFrequency(long frequencyKhz, @NameFlag int flags) {
+    public static @Nullable String formatAmFmFrequency(long frequencyKhz, @NameFlag int flags) {
         String channel;
         String modulation;
 
