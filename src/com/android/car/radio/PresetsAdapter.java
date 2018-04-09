@@ -102,7 +102,7 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsViewHolder>
      * this adapter. This will cause that station to be highlighted in the list. If the station
      * passed to this method does not match any of the presets, then none will be highlighted.
      */
-    public void setActiveRadioStation(Program program) {
+    public void setActiveProgram(Program program) {
         mActiveProgram = program;
         notifyDataSetChanged();
     }
