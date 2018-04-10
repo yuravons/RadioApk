@@ -16,13 +16,14 @@
 package com.android.car.radio;
 
 import android.content.Context;
+import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
 import android.support.annotation.NonNull;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.android.car.radio.service.RadioStation;
+import com.android.car.radio.platform.ProgramSelectorExt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -109,7 +110,7 @@ public class ManualTunerController {
          * Called when the done button has been clicked with the given station that the user has
          * selected.
          */
-        void onDone(RadioStation station);
+        void onDone(ProgramSelector sel);
     }
 
     ManualTunerController(Context context, View container, int currentRadioBand) {
@@ -185,10 +186,8 @@ public class ManualTunerController {
             }
 
             int channelFrequency = mChannelValidator.convertToHz(mCurrentChannel.toString());
-            RadioStation station = new RadioStation(channelFrequency, 0 /* subChannelNumber */,
-                    mCurrentRadioBand, null /* rds */);
-
-            mManualTunerClickListener.onDone(station);
+            mManualTunerClickListener.onDone(
+                    ProgramSelectorExt.createAmFmSelector(channelFrequency));
         });
 
         if (mCurrentRadioBand == RadioManager.BAND_AM) {
