@@ -128,7 +128,7 @@ public class ProgramSelectorExt {
     }
 
     public static boolean isAmFrequency(long frequencyKhz) {
-        return frequencyKhz > 150 && frequencyKhz < 30000;
+        return frequencyKhz > 150 && frequencyKhz <= 30000;
     }
 
     public static boolean isFmFrequency(long frequencyKhz) {
