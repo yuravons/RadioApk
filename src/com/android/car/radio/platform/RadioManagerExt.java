@@ -51,13 +51,19 @@ public class RadioManagerExt {
     private final HandlerThread mCallbackHandlerThread = new HandlerThread("BcRadioApp.cbhandler");
 
     private final @NonNull RadioManager mRadioManager;
+    private final RadioTunerExt mRadioTunerExt;
     private List<RadioManager.ModuleProperties> mModules;
     private @Nullable List<BandDescriptor> mAmFmRegionConfig;
 
     public RadioManagerExt(@NonNull Context ctx) {
         mRadioManager = (RadioManager)ctx.getSystemService(Context.RADIO_SERVICE);
         Objects.requireNonNull(mRadioManager, "RadioManager could not be loaded");
+        mRadioTunerExt = new RadioTunerExt(ctx);
         mCallbackHandlerThread.start();
+    }
+
+    public RadioTunerExt getRadioTunerExt() {
+        return mRadioTunerExt;
     }
 
     /* Select only one region. HAL 2.x moves region selection responsibility from the app to the
