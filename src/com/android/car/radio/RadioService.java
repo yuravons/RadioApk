@@ -47,6 +47,7 @@ import com.android.car.radio.platform.ImageMemoryCache;
 import com.android.car.radio.platform.ProgramInfoExt;
 import com.android.car.radio.platform.ProgramSelectorExt;
 import com.android.car.radio.platform.RadioManagerExt;
+import com.android.car.radio.platform.RadioTunerExt;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -214,7 +215,8 @@ public class RadioService extends MediaBrowserServiceCompat
         if (status == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             mHasAudioFocus = true;
 
-            // Receiving audio focus means that the radio is un-muted.
+            mRadioManager.getRadioTunerExt().setMuted(false);
+
             for (IRadioCallback callback : mRadioTunerCallbacks) {
                 try {
                     callback.onRadioMuteChanged(false);
@@ -353,23 +355,13 @@ public class RadioService extends MediaBrowserServiceCompat
         }
 
         private boolean setMuted(boolean mute) {
-            if (mRadioTuner == null) {
-                Log.e(TAG, "RadioManager is null");
-                return false;
-            }
-
-            int result = mRadioTuner.setMute(mute);
-
-            if (result != RadioManager.STATUS_OK) {
-                Log.e(TAG, "setMute() failed: " + result);
-                return false;
-            }
+            mRadioManager.getRadioTunerExt().setMuted(mute);
 
             for (IRadioCallback callback : mRadioTunerCallbacks) {
                 try {
                     callback.onRadioMuteChanged(mute);
                 } catch (RemoteException e) {
-                    Log.e(TAG, "mute() notify failed: " + e.getMessage());
+                    Log.e(TAG, "onRadioMuteChanged callback failed", e);
                 }
             }
 
