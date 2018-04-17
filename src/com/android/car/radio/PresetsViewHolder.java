@@ -20,11 +20,12 @@ import android.annotation.NonNull;
 import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
 import android.hardware.radio.ProgramSelector;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.radio.media.Program;
 import com.android.car.radio.platform.ProgramSelectorExt;

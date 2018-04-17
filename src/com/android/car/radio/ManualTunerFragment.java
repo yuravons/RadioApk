@@ -19,10 +19,11 @@ import android.annotation.Nullable;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.fragment.app.Fragment;
 
 /**
  * A fragment that allows the user to manually input a radio station to tune to.

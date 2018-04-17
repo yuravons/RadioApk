@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <!-- This Layout is clickable so that clicks do not fall through to the underlying
      fragment. -->
-<android.support.constraint.ConstraintLayout
+<androidx.constraint.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_marginTop="@dimen/car_app_bar_height"
@@ -24,7 +24,7 @@ limitations under the License.
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <android.support.constraint.Guideline
+    <androidx.constraint.Guideline
         android:id="@+id/center_guideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -96,4 +96,4 @@ limitations under the License.
         app:layout_constraintStart_toEndOf="@+id/manual_tuner_done_button"
         app:layout_constraintBottom_toBottomOf="@+id/manual_tuner_done_button"
         android:src="@drawable/ic_backspace" />
-</android.support.constraint.ConstraintLayout>
+</androidx.constraint.ConstraintLayout>

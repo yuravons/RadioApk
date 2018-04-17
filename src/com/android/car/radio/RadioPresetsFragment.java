@@ -23,7 +23,6 @@ import android.annotation.NonNull;
 import android.content.Context;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,6 +30,7 @@ import android.view.ViewGroup;
 
 import androidx.car.widget.DayNightStyle;
 import androidx.car.widget.PagedListView;
+import androidx.fragment.app.Fragment;
 
 import com.android.car.radio.media.Program;
 

@@ -15,12 +15,13 @@
  */
 package com.android.car.radio;
 
-import android.annotation.ColorInt;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.widget.Button;
+
+import androidx.annotation.ColorInt;
 
 /**
  * A button that represents a band the user can select in manual tuning. When this button is
@@ -30,8 +31,10 @@ public class RadioBandButton extends Button {
     private Drawable mSelectedBackground;
     private Drawable mNormalBackground;
 
-    @ColorInt private int mSelectedColor;
-    @ColorInt private int mNormalColor;
+    @ColorInt
+    private int mSelectedColor;
+    @ColorInt
+    private int mNormalColor;
 
     public RadioBandButton(Context context) {
         super(context);

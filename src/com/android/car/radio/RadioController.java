@@ -18,9 +18,7 @@ package com.android.car.radio;
 
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
-import android.annotation.ColorInt;
 import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -37,6 +35,9 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.Nullable;
 
 import com.android.car.radio.media.Program;
 import com.android.car.radio.platform.ProgramInfoExt;
@@ -89,7 +90,8 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     private View mRadioErrorDisplay;
 
     private final RadioChannelColorMapper mColorMapper;
-    @ColorInt private int mCurrentBackgroundColor = INVALID_BACKGROUND_COLOR;
+    @ColorInt
+    private int mCurrentBackgroundColor = INVALID_BACKGROUND_COLOR;
 
     private final RadioDisplayController mRadioDisplayController;
 

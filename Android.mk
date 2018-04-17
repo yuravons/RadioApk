@@ -35,7 +35,7 @@ LOCAL_PRIVILEGED_MODULE := true
 LOCAL_USE_AAPT2 := true
 
 LOCAL_STATIC_ANDROID_LIBRARIES += \
-    android-support-car \
+    androidx.car_car \
     android-support-constraint-layout \
     car-stream-ui-lib \
     car-apps-common
