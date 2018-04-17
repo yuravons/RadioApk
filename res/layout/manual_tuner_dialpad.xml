@@ -21,8 +21,6 @@ limitations under the License.
     <Button
         android:id="@+id/manual_tuner_1"
         android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
         android:text="@string/manual_tuner_1"
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
@@ -30,8 +28,6 @@ limitations under the License.
     <Button
         android:id="@+id/manual_tuner_2"
         android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
         android:text="@string/manual_tuner_2"
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
@@ -39,8 +35,6 @@ limitations under the License.
     <Button
         android:id="@+id/manual_tuner_3"
         android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
         android:text="@string/manual_tuner_3"
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
@@ -50,8 +44,6 @@ limitations under the License.
     <Button
         android:id="@+id/manual_tuner_4"
         android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
         android:text="@string/manual_tuner_4"
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
@@ -59,8 +51,6 @@ limitations under the License.
     <Button
         android:id="@+id/manual_tuner_5"
         android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
         android:text="@string/manual_tuner_5"
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
@@ -68,8 +58,6 @@ limitations under the License.
     <Button
         android:id="@+id/manual_tuner_6"
         android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
         android:text="@string/manual_tuner_6"
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
@@ -79,8 +67,6 @@ limitations under the License.
     <Button
         android:id="@+id/manual_tuner_7"
         android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
         android:text="@string/manual_tuner_7"
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
@@ -88,8 +74,6 @@ limitations under the License.
     <Button
         android:id="@+id/manual_tuner_8"
         android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
         android:text="@string/manual_tuner_8"
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
@@ -97,8 +81,6 @@ limitations under the License.
     <Button
         android:id="@+id/manual_tuner_9"
         android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
         android:text="@string/manual_tuner_9"
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
@@ -113,8 +95,6 @@ limitations under the License.
     <Button
         android:id="@+id/manual_tuner_0"
         android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
         android:text="@string/manual_tuner_0"
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
