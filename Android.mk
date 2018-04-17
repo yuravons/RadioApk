@@ -36,8 +36,9 @@ LOCAL_USE_AAPT2 := true
 
 LOCAL_STATIC_ANDROID_LIBRARIES += \
     android-support-car \
+    android-support-constraint-layout \
     car-stream-ui-lib \
-    android-support-constraint-layout
+    car-apps-common
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-constraint-layout-solver
@@ -48,7 +49,6 @@ LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_DEX_PREOPT := false
 
-include packages/apps/Car/libs/car-apps-common/car-apps-common.mk
 include packages/services/Car/car-support-lib/car-support.mk
 
 include $(BUILD_PACKAGE)
