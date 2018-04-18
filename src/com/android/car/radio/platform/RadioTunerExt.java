@@ -16,8 +16,20 @@
 
 package com.android.car.radio.platform;
 
+import android.annotation.NonNull;
+import android.annotation.Nullable;
+import android.car.Car;
+import android.car.CarNotConnectedException;
+import android.car.media.CarAudioManager;
+import android.car.media.CarAudioPatchHandle;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.ServiceConnection;
+import android.media.AudioAttributes;
+import android.os.IBinder;
 import android.util.Log;
+
+import java.util.stream.Stream;
 
 /**
  * Proposed extensions to android.hardware.radio.RadioTuner.
@@ -27,21 +39,94 @@ import android.util.Log;
 public class RadioTunerExt {
     private static final String TAG = "BcRadioApp.tunerext";
 
+    // for now, we only support a single tuner with hardcoded address
+    private static final String HARDCODED_TUNER_ADDRESS = "tuner0";
+
     private final Object mLock = new Object();
+    private final Car mCar;
+    @Nullable private CarAudioManager mCarAudioManager;
+
+    @Nullable private CarAudioPatchHandle mAudioPatch;
+    @Nullable private Boolean mPendingMuteOperation;
 
     RadioTunerExt(Context context) {
-        // TODO(b/77863406): initialize AudioManager here
+        mCar = Car.createCar(context, mCarServiceConnection);
+        mCar.connect();
     }
 
-    public void setMuted(boolean muted) {
-        synchronized (mLock) {
-            if (muted) {
-                // TODO(b/77863406): audio patch should be removed here or gain set to 0
-                Log.e(TAG, "mute not implemented yet");
-            } else {
-                // TODO(b/77863406): create audio patch here
-                Log.e(TAG, "createAudioPatch should happen here, it's just not implemented yet");
+    private final ServiceConnection mCarServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            synchronized (mLock) {
+                try {
+                    mCarAudioManager = (CarAudioManager)mCar.getCarManager(Car.AUDIO_SERVICE);
+                    if (mPendingMuteOperation != null) {
+                        boolean mute = mPendingMuteOperation;
+                        mPendingMuteOperation = null;
+                        setMuted(mute);
+                    }
+                } catch (CarNotConnectedException e) {
+                    Log.e(TAG, "Car is not connected", e);
+                }
             }
         }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            synchronized (mLock) {
+                mCarAudioManager = null;
+                mAudioPatch = null;
+            }
+        }
+    };
+
+    private boolean isSourceAvailableLocked(@NonNull String address)
+            throws CarNotConnectedException {
+        String[] sources = mCarAudioManager.getExternalSources();
+        return Stream.of(sources).anyMatch(source -> address.equals(source));
+    }
+
+    public boolean setMuted(boolean muted) {
+        synchronized (mLock) {
+            if (mCarAudioManager == null) {
+                Log.w(TAG, "Car not connected yet, postponing mute operation");
+                mPendingMuteOperation = muted;
+                return false;
+            }
+
+            // if it's already (not) muted - no need to (un)mute again
+            if ((mAudioPatch == null) == muted) return true;
+
+            try {
+                if (!muted) {
+                    if (!isSourceAvailableLocked(HARDCODED_TUNER_ADDRESS)) {
+                        Log.e(TAG, "Tuner source \"" + HARDCODED_TUNER_ADDRESS
+                                + "\" is not available");
+                        return false;
+                    }
+                    Log.d(TAG, "Creating audio patch for " + HARDCODED_TUNER_ADDRESS);
+                    mAudioPatch = mCarAudioManager.createAudioPatch(HARDCODED_TUNER_ADDRESS,
+                            AudioAttributes.USAGE_MEDIA, 0);
+                } else {
+                    Log.d(TAG, "Releasing audio patch");
+                    mCarAudioManager.releaseAudioPatch(mAudioPatch);
+                }
+                return true;
+            } catch (CarNotConnectedException e) {
+                Log.e(TAG, "Can't (un)mute - car is not connected", e);
+                return false;
+            }
+        }
+    }
+
+    public boolean isMuted() {
+        synchronized (mLock) {
+            if (mPendingMuteOperation != null) return mPendingMuteOperation;
+            return mAudioPatch == null;
+        }
+    }
+
+    public void close() {
+        mCar.disconnect();
     }
 }
