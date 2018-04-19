@@ -17,7 +17,6 @@
 package com.android.car.radio;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.media.session.PlaybackState;
 import android.text.TextUtils;
 import android.view.View;

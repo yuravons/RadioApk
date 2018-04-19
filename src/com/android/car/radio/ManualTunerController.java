@@ -15,10 +15,10 @@
  */
 package com.android.car.radio;
 
+import android.annotation.NonNull;
 import android.content.Context;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
-import android.support.annotation.NonNull;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
