@@ -22,6 +22,7 @@
         android:targetSdkVersion="25" />
 
     <!-- This permission is required to allow the radio to be muted. -->
+    <uses-permission android:name="android.car.permission.CAR_CONTROL_AUDIO_SETTINGS" />
     <uses-permission android:name="android.car.permission.CAR_CONTROL_AUDIO_VOLUME" />
     <uses-permission android:name="android.car.permission.CAR_RADIO" />
     <uses-permission android:name="android.permission.ACCESS_BROADCAST_RADIO" />

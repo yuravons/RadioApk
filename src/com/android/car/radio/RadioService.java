@@ -160,6 +160,7 @@ public class RadioService extends MediaBrowserServiceCompat
 
         mRadioStorage.removePresetsChangeListener(mPresetsListener);
         mMediaSession.release();
+        mRadioManager.getRadioTunerExt().close();
         close();
 
         super.onDestroy();
@@ -355,7 +356,7 @@ public class RadioService extends MediaBrowserServiceCompat
         }
 
         private boolean setMuted(boolean mute) {
-            mRadioManager.getRadioTunerExt().setMuted(mute);
+            if (!mRadioManager.getRadioTunerExt().setMuted(mute)) return false;
 
             for (IRadioCallback callback : mRadioTunerCallbacks) {
                 try {
@@ -395,12 +396,7 @@ public class RadioService extends MediaBrowserServiceCompat
          */
         @Override
         public boolean isMuted() {
-            if (mRadioTuner == null) {
-                Log.e(TAG, "RadioManager is null");
-                return true;
-            }
-
-            return mRadioTuner.getMute();
+            return mRadioManager.getRadioTunerExt().isMuted();
         }
 
         @Override
