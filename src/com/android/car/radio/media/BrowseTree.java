@@ -22,15 +22,14 @@ import android.annotation.StringRes;
 import android.graphics.Bitmap;
 import android.hardware.radio.ProgramList;
 import android.hardware.radio.ProgramSelector;
-import android.hardware.radio.RadioManager.BandDescriptor;
 import android.hardware.radio.RadioManager;
+import android.hardware.radio.RadioManager.BandDescriptor;
 import android.hardware.radio.RadioMetadata;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
+import android.support.v4.media.MediaBrowserServiceCompat;
 import android.support.v4.media.MediaBrowserServiceCompat.BrowserRoot;
 import android.support.v4.media.MediaBrowserServiceCompat.Result;
-import android.support.v4.media.MediaBrowserServiceCompat;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.util.Log;
 
