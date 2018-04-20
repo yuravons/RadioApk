@@ -220,7 +220,8 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
             mRadioDisplayController.setPlayPauseButtonState(mRadioManager.isMuted());
 
             // TODO(b/73950974): use callback only
-            mCallback.onCurrentProgramInfoChanged(mRadioManager.getCurrentProgramInfo());
+            ProgramInfo current = mRadioManager.getCurrentProgramInfo();
+            if (current != null) mCallback.onCurrentProgramInfoChanged(current);
         } catch (RemoteException e) {
             Log.e(TAG, "updateRadioDisplay(); remote exception: " + e.getMessage());
         }
