@@ -45,6 +45,7 @@ import com.android.car.radio.service.IRadioManager;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A persistent {@link Service} that is responsible for opening and closing a {@link RadioTuner}.
@@ -485,7 +486,7 @@ public class RadioService extends MediaBrowserServiceCompat
                 Log.d(TAG, "Program info changed: " + info);
             }
 
-            mCurrentProgram = info;
+            mCurrentProgram = Objects.requireNonNull(info);
             mMediaSession.notifyProgramInfoChanged(info);
 
             for (IRadioCallback callback : mRadioTunerCallbacks) {
