@@ -16,10 +16,10 @@
 
 package com.android.car.radio;
 
+import android.annotation.ColorInt;
+import android.annotation.NonNull;
 import android.content.Context;
 import android.hardware.radio.ProgramSelector;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
 
 import com.android.car.radio.platform.ProgramSelectorExt;
 
