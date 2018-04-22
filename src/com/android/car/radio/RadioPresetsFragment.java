@@ -21,7 +21,6 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.NonNull;
 import android.content.Context;
-import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -30,12 +29,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.car.widget.DayNightStyle;
+import androidx.car.widget.PagedListView;
+
 import com.android.car.radio.media.Program;
 
 import java.util.List;
-
-import androidx.car.widget.DayNightStyle;
-import androidx.car.widget.PagedListView;
 
 /**
  * A fragment that is responsible for displaying a list of the user's saved radio stations.

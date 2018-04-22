@@ -15,9 +15,9 @@
  */
 package com.android.car.radio.service;
 
+import android.annotation.Nullable;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.Nullable;
 
 import java.util.Objects;
 
