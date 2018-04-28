@@ -45,6 +45,8 @@ import com.android.car.radio.service.IRadioCallback;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.storage.RadioStorage;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -78,6 +80,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
     private View mRadioBackground;
     private boolean mShouldColorStatusBar;
+    private boolean mShouldColorBackground;
 
     /**
      * An additional layer on top of the background that should match the color of
@@ -111,7 +114,9 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     private final String mAmBandString;
     private final String mFmBandString;
 
-    private ProgramInfoChangeListener mProgramInfoChangeListener;
+    private List<ProgramInfoChangeListener> mProgramInfoChangeListeners = new ArrayList<>();
+    private List<RadioServiceConnectionListener> mRadioServiceConnectionListeners =
+            new ArrayList<>();
 
     /**
      * Interface for a class that will be notified when the current radio station has been changed.
@@ -125,6 +130,17 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
         void onProgramInfoChanged(@NonNull ProgramInfo info);
     }
 
+    /**
+     * Interface for a class that will be notified when RadioService is successfuly bound
+     */
+    public interface RadioServiceConnectionListener {
+
+        /**
+         * Called when the RadioService is successfully connected
+         */
+        void onRadioServiceConnected();
+    }
+
     public RadioController(Activity activity) {
         mActivity = activity;
 
@@ -136,6 +152,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
         mRadioStorage = RadioStorage.getInstance(mActivity);
         mRadioStorage.addPresetsChangeListener(this);
+        mShouldColorBackground = true;
     }
 
     /**
@@ -177,10 +194,39 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     }
 
     /**
-     * Sets the listener that will be notified whenever the radio station changes.
+     * Set whether this controller should update the background color.
+     * This behavior is enabled by defaullt
      */
-    public void setProgramInfoChangeListener(ProgramInfoChangeListener listener) {
-        mProgramInfoChangeListener = listener;
+    public void setShouldColorBackground(boolean shouldColorBackground) {
+        mShouldColorBackground = shouldColorBackground;
+    }
+
+    /**
+     * Adds a listener that will be notified whenever the radio station changes.
+     */
+    public void addProgramInfoChangeListener(ProgramInfoChangeListener listener) {
+        mProgramInfoChangeListeners.add(listener);
+    }
+
+    /**
+     * Removes a listener that will be notified whenever the radio station changes.
+     */
+    public void removeProgramInfoChangeListener(ProgramInfoChangeListener listener) {
+        mProgramInfoChangeListeners.remove(listener);
+    }
+
+    /**
+     * Sets the listeners that will be notified when the radio service is connected.
+     */
+    public void addRadioServiceConnectionListener(RadioServiceConnectionListener listener) {
+        mRadioServiceConnectionListeners.add(listener);
+    }
+
+    /**
+     * Removes a listener that will be notified when the radio service is connected.
+     */
+    public void removeRadioServiceConnectionListener(RadioServiceConnectionListener listener) {
+        mRadioServiceConnectionListeners.remove(listener);
     }
 
     /**
@@ -386,7 +432,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
      * color change.
      */
     private void maybeUpdateBackgroundColor(int channel) {
-        if (mRadioBackground == null) {
+        if (mRadioBackground == null || !mShouldColorBackground) {
             return;
         }
 
@@ -496,6 +542,20 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
         mRadioDisplayController.setChannelIsPreset(isPreset);
     }
 
+    /**
+     * Gets a list of programs from the radio tuner's background scan
+     */
+    public List<ProgramInfo> getProgramList() {
+        if (mRadioManager != null) {
+            try {
+                return mRadioManager.getProgramList();
+            } catch (RemoteException e) {
+                Log.e(TAG, "getProgramList(); remote exception: " + e.getMessage());
+            }
+        }
+        return null;
+    }
+
     private final IRadioCallback.Stub mCallback = new IRadioCallback.Stub() {
         @Override
         public void onCurrentProgramInfoChanged(ProgramInfo info) {
@@ -516,8 +576,10 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
             mRadioStorage.storeRadioChannel(mCurrentRadioBand, info.getChannel());
 
             // Notify that the current radio station has changed.
-            if (mProgramInfoChangeListener != null) {
-                mProgramInfoChangeListener.onProgramInfoChanged(info);
+            if (mProgramInfoChangeListeners != null) {
+                for (ProgramInfoChangeListener listener : mProgramInfoChangeListeners) {
+                    listener.onProgramInfoChanged(info);
+                }
             }
         }
 
@@ -616,8 +678,8 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
             if (info == null) return;
 
             ProgramSelector sel = mCurrentProgram.getSelector();
-
             boolean isPreset = mRadioStorage.isPreset(sel);
+
             if (isPreset) {
                 mRadioStorage.removePreset(sel);
             } else {
@@ -661,6 +723,11 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
                 // Upon successful connection, open the radio.
                 openRadioBand(radioBand);
                 maybeTuneToStoredRadioChannel();
+
+                // Notify listeners
+                for (RadioServiceConnectionListener listener : mRadioServiceConnectionListeners) {
+                    listener.onRadioServiceConnected();
+                }
             } catch (RemoteException e) {
                 Log.e(TAG, "onServiceConnected(); remote exception: " + e.getMessage());
             }
