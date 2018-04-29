@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.android.car.radio;
+package com.android.car.radio.storage;
 
 import android.annotation.NonNull;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.hardware.radio.ProgramSelector;
@@ -25,14 +27,12 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.android.car.radio.media.Program;
-import com.android.car.radio.service.RadioStation;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Class that manages persistent storage of various radio options.
@@ -58,15 +58,16 @@ public class RadioStorage {
      */
     public interface PresetsChangeListener {
         /**
-         * Called when {@link #refreshPresets()} has completed.
+         * Called when favorite list has changed.
          */
         void onPresetsRefreshed();
     }
 
-    private Set<PresetsChangeListener> mPresetListeners = new HashSet<>();
+    private final LiveData<List<Program>> mFavorites;
 
-    // TODO(b/73950974): use Set, not List
-    @NonNull private List<Program> mPresets = new ArrayList<>();
+    // TODO(b/73950974): use Observer<> directly
+    private final Map<PresetsChangeListener, Observer<List<Program>>> mPresetListeners =
+            new HashMap<>();
 
     private RadioStorage(Context context) {
         if (sSharedPref == null) {
@@ -74,16 +75,18 @@ public class RadioStorage {
         }
 
         if (sRadioDatabase == null) {
-            sRadioDatabase = new RadioDatabase(context);
+            sRadioDatabase = RadioDatabase.buildInstance(context);
         }
+
+        mFavorites = sRadioDatabase.getAllFavorites();
     }
 
+    /**
+     * Returns singleton instance of {@link RadioStorage}.
+     */
     public static RadioStorage getInstance(Context context) {
         if (sInstance == null) {
             sInstance = new RadioStorage(context.getApplicationContext());
-
-            // When the RadioStorage is first created, load the list of radio presets.
-            sInstance.refreshPresets();
         }
 
         return sInstance;
@@ -94,23 +97,22 @@ public class RadioStorage {
      * has changed.
      */
     public void addPresetsChangeListener(PresetsChangeListener listener) {
-        mPresetListeners.add(listener);
+        Observer<List<Program>> observer = list -> listener.onPresetsRefreshed();
+        synchronized (mPresetListeners) {
+            mFavorites.observeForever(observer);
+            mPresetListeners.put(listener, observer);
+        }
     }
 
     /**
      * Unregisters the given {@link PresetsChangeListener}.
      */
     public void removePresetsChangeListener(PresetsChangeListener listener) {
-        mPresetListeners.remove(listener);
-    }
-
-    /**
-     * Requests a load of all currently stored presets. This operation runs asynchronously. When
-     * the presets have been loaded, any registered {@link PresetsChangeListener}s are
-     * notified via the {@link PresetsChangeListener#onPresetsRefreshed()} method.
-     */
-    private void refreshPresets() {
-        new GetAllPresetsAsyncTask().execute();
+        Observer<List<Program>> observer;
+        synchronized (mPresetListeners) {
+            observer = mPresetListeners.remove(listener);
+            mFavorites.removeObserver(observer);
+        }
     }
 
     /**
@@ -121,14 +123,19 @@ public class RadioStorage {
      * preset list.
      */
     public @NonNull List<Program> getPresets() {
-        return Objects.requireNonNull(mPresets);
+        List<Program> favorites = mFavorites.getValue();
+        if (favorites != null) return favorites;
+
+        // It won't be a problem when we use Observer<> directly.
+        Log.w(TAG, "Database is not ready yet");
+        return new ArrayList<>();
     }
 
     /**
      * Returns {@code true} if the given {@link ProgramSelector} is a user saved favorite.
      */
     public boolean isPreset(@NonNull ProgramSelector selector) {
-        return mPresets.contains(new Program(selector, ""));
+        return mFavorites.getValue().contains(new Program(selector, ""));
     }
 
     /**
@@ -231,43 +238,6 @@ public class RadioStorage {
     }
 
     /**
-     * Calls {@link PresetsChangeListener#onPresetsRefreshed()} for all registered
-     * {@link PresetsChangeListener}s.
-     */
-    private void notifyPresetsListeners() {
-        for (PresetsChangeListener listener : mPresetListeners) {
-            listener.onPresetsRefreshed();
-        }
-    }
-
-    private void loadPresetsInternal() {
-        mPresets = sRadioDatabase.getAllPresets().stream().map(RadioStation::toProgram).collect(Collectors.toList());
-    }
-
-    /**
-     * {@link AsyncTask} that will fetch all stored radio presets.
-     */
-    private class GetAllPresetsAsyncTask extends AsyncTask<Void, Void, Void> {
-        private static final String TAG = "Em.GetAllPresetsAT";
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            loadPresetsInternal();
-
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Loaded presets: " + mPresets);
-            }
-
-            return null;
-        }
-
-        @Override
-        public void onPostExecute(Void result) {
-            notifyPresetsListeners();
-        }
-    }
-
-    /**
      * {@link AsyncTask} that will store a single {@link Program} that is passed to its
      * {@link AsyncTask#execute(Object[])}.
      */
@@ -276,24 +246,8 @@ public class RadioStorage {
 
         @Override
         protected Boolean doInBackground(Program... programs) {
-            boolean result = sRadioDatabase.insertPreset(new RadioStation(programs[0]));
-
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Store preset success: " + result);
-            }
-
-            if (result) {
-                loadPresetsInternal();
-            }
-
-            return result;
-        }
-
-        @Override
-        public void onPostExecute(Boolean result) {
-            if (result) {
-                notifyPresetsListeners();
-            }
+            sRadioDatabase.insertFavorite(programs[0]);
+            return true;
         }
     }
 
@@ -306,24 +260,8 @@ public class RadioStorage {
 
         @Override
         protected Boolean doInBackground(ProgramSelector... selectors) {
-            boolean result = sRadioDatabase.deletePreset(new RadioStation(selectors[0], null));
-
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Remove preset success: " + result);
-            }
-
-            if (result) {
-                loadPresetsInternal();
-            }
-
-            return result;
-        }
-
-        @Override
-        public void onPostExecute(Boolean result) {
-            if (result) {
-                notifyPresetsListeners();
-            }
+            sRadioDatabase.removeFavorite(selectors[0]);
+            return true;
         }
     }
 }
