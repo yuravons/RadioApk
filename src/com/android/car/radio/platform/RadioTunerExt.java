@@ -63,6 +63,8 @@ public class RadioTunerExt {
                     if (mPendingMuteOperation != null) {
                         boolean mute = mPendingMuteOperation;
                         mPendingMuteOperation = null;
+                        Log.i(TAG, "Car connected, executing postponed operation: "
+                                + (mute ? "mute" : "unmute"));
                         setMuted(mute);
                     }
                 } catch (CarNotConnectedException e) {
@@ -89,7 +91,8 @@ public class RadioTunerExt {
     public boolean setMuted(boolean muted) {
         synchronized (mLock) {
             if (mCarAudioManager == null) {
-                Log.w(TAG, "Car not connected yet, postponing mute operation");
+                Log.i(TAG, "Car not connected yet, postponing operation: "
+                        + (muted ? "mute" : "unmute"));
                 mPendingMuteOperation = muted;
                 return false;
             }
@@ -110,6 +113,7 @@ public class RadioTunerExt {
                 } else {
                     Log.d(TAG, "Releasing audio patch");
                     mCarAudioManager.releaseAudioPatch(mAudioPatch);
+                    mAudioPatch = null;
                 }
                 return true;
             } catch (CarNotConnectedException e) {
