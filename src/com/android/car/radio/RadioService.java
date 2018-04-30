@@ -201,6 +201,19 @@ public class RadioService extends MediaBrowserServiceCompat
         return RadioManager.STATUS_OK;
     }
 
+    private void notifyMuteChanged(boolean muted) {
+        synchronized (mLock) {
+            mMediaSession.notifyMuteChanged(muted);
+            for (IRadioCallback callback : mRadioTunerCallbacks) {
+                try {
+                    callback.onRadioMuteChanged(muted);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "Mute state change callback failed", e);
+                }
+            }
+        }
+    }
+
     private int requestAudioFocus() {
         int status = mAudioManager.requestAudioFocus(this, mRadioAudioAttributes,
                     AudioManager.AUDIOFOCUS_GAIN, 0);
@@ -213,15 +226,7 @@ public class RadioService extends MediaBrowserServiceCompat
             mHasAudioFocus = true;
 
             mRadioManager.getRadioTunerExt().setMuted(false);
-
-            for (IRadioCallback callback : mRadioTunerCallbacks) {
-                try {
-                    callback.onRadioMuteChanged(false);
-                } catch (RemoteException e) {
-                    Log.e(TAG, "requestAudioFocus(); onRadioMuteChanged() notify failed: "
-                            + e.getMessage());
-                }
-            }
+            notifyMuteChanged(false);
         }
 
         return status;
@@ -234,15 +239,7 @@ public class RadioService extends MediaBrowserServiceCompat
 
         mAudioManager.abandonAudioFocus(this, mRadioAudioAttributes);
         mHasAudioFocus = false;
-
-        for (IRadioCallback callback : mRadioTunerCallbacks) {
-            try {
-                callback.onRadioMuteChanged(true);
-            } catch (RemoteException e) {
-                Log.e(TAG, "abandonAudioFocus(); onRadioMutechanged() notify failed: "
-                        + e.getMessage());
-            }
-        }
+        notifyMuteChanged(true);
     }
 
     /**
@@ -353,15 +350,7 @@ public class RadioService extends MediaBrowserServiceCompat
 
         private boolean setMuted(boolean mute) {
             if (!mRadioManager.getRadioTunerExt().setMuted(mute)) return false;
-
-            for (IRadioCallback callback : mRadioTunerCallbacks) {
-                try {
-                    callback.onRadioMuteChanged(mute);
-                } catch (RemoteException e) {
-                    Log.e(TAG, "onRadioMuteChanged callback failed", e);
-                }
-            }
-
+            notifyMuteChanged(mute);
             return true;
         }
 
