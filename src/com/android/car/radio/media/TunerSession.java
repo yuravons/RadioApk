@@ -58,18 +58,18 @@ public class TunerSession extends MediaSessionCompat {
         mImageResolver = imageResolver;
         mUiSession = Objects.requireNonNull(uiSession);
 
-        // TODO(b/75970985): implement ACTION_STOP, ACTION_PAUSE, ACTION_PLAY
+        // ACTION_PAUSE is reserved for time-shifted playback
         mPlaybackStateBuilder.setActions(
-                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
-                PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
-                PlaybackStateCompat.ACTION_SET_RATING |
-                PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID |
-                PlaybackStateCompat.ACTION_PLAY_FROM_URI);
+                PlaybackStateCompat.ACTION_STOP
+                | PlaybackStateCompat.ACTION_PLAY
+                | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                | PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                | PlaybackStateCompat.ACTION_SET_RATING
+                | PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
+                | PlaybackStateCompat.ACTION_PLAY_FROM_URI);
         setRatingType(RatingCompat.RATING_HEART);
+        setPlaybackState(PlaybackStateCompat.STATE_NONE);
         setCallback(new TunerSessionCallback());
-
-        // TODO(b/75970985): track playback state, don't hardcode it
-        setPlaybackState(PlaybackStateCompat.STATE_PLAYING);
 
         setActive(true);
     }
@@ -98,6 +98,16 @@ public class TunerSession extends MediaSessionCompat {
         }
     }
 
+    /**
+     * Notifies MediaSession about changed mute state.
+     *
+     * @param muted current mute state
+     */
+    public void notifyMuteChanged(boolean muted) {
+        setPlaybackState(muted
+                ? PlaybackStateCompat.STATE_STOPPED : PlaybackStateCompat.STATE_PLAYING);
+    }
+
     public void notifyFavoritesChanged() {
         updateMetadata();
     }
@@ -111,6 +121,16 @@ public class TunerSession extends MediaSessionCompat {
     }
 
     private class TunerSessionCallback extends MediaSessionCompat.Callback {
+        @Override
+        public void onStop() {
+            exec(() -> mUiSession.mute());
+        }
+
+        @Override
+        public void onPlay() {
+            exec(() -> mUiSession.unMute());
+        }
+
         @Override
         public void onSkipToNext() {
             exec(() -> mUiSession.seekForward());
