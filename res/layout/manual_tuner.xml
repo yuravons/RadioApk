@@ -90,8 +90,8 @@ limitations under the License.
     <ImageView
         android:id="@+id/manual_tuner_backspace"
         android:background="@drawable/radio_control_background"
-        android:layout_width="@dimen/car_radio_fab_size"
-        android:layout_height="@dimen/car_radio_fab_size"
+        android:layout_width="@dimen/manual_tuner_fab_size"
+        android:layout_height="@dimen/manual_tuner_fab_size"
         android:scaleType="center"
         app:layout_constraintStart_toEndOf="@+id/manual_tuner_done_button"
         app:layout_constraintBottom_toBottomOf="@+id/manual_tuner_done_button"

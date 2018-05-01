@@ -105,8 +105,8 @@ limitations under the License.
             <com.android.car.radio.PlayPauseButton
                 android:id="@+id/preset_radio_play_button"
                 android:layout_centerInParent="true"
-                android:layout_width="@dimen/stream_fab_size"
-                android:layout_height="@dimen/stream_fab_size"
+                android:layout_width="@dimen/car_radio_controls_fab_size"
+                android:layout_height="@dimen/car_radio_controls_fab_size"
                 android:padding="@dimen/car_presets_play_button_padding"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_play_pause_stop"

@@ -95,7 +95,7 @@ public class RadioAnimationManager {
         mCornerRadius = res.getDimensionPixelSize(R.dimen.car_preset_item_radius);
         mActionPanelHeight = res.getDimensionPixelSize(R.dimen.car_action_bar_height);
         mPresetFinalHeight = res.getDimensionPixelSize(R.dimen.car_preset_item_height);
-        mFabSize = res.getDimensionPixelSize(R.dimen.stream_fab_size);
+        mFabSize = res.getDimensionPixelSize(R.dimen.car_radio_controls_fab_size);
         mPresetFabSize = res.getDimensionPixelSize(R.dimen.car_presets_play_button_size);
         mPresetContainerHeight = res.getDimensionPixelSize(R.dimen.car_preset_container_height);
 
