@@ -305,6 +305,11 @@ public class RadioService extends MediaBrowserServiceCompat
             mRadioTuner.tune(sel);
         }
 
+        @Override
+        public List<ProgramInfo> getProgramList() {
+            return mRadioTuner.getDynamicProgramList(null).toList();
+        }
+
         /**
          * Seeks the radio forward. To be notified of a successful tune, register as a
          * {@link android.hardware.radio.RadioTuner.Callback}.
