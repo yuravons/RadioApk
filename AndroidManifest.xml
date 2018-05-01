@@ -34,7 +34,6 @@
         <activity android:name=".CarRadioActivity"
             android:theme="@style/CarRadioAppTheme"
             android:launchMode="singleTask"
-            android:label="@string/app_name"
             android:resizeableActivity="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

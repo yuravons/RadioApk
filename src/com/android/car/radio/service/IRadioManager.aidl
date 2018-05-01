@@ -108,4 +108,9 @@ interface IRadioManager {
      * is supplying music.
      */
     boolean hasFocus();
+
+    /**
+     * Returns a list of programs found with the tuner's background scan
+     */
+    List<RadioManager.ProgramInfo> getProgramList();
 }

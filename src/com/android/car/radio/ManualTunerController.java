@@ -114,7 +114,7 @@ public class ManualTunerController {
         void onDone(ProgramSelector sel);
     }
 
-    ManualTunerController(Context context, View container, int currentRadioBand) {
+    public ManualTunerController(Context context, View container, int currentRadioBand) {
         mChannelView = container.findViewById(R.id.manual_tuner_channel);
 
         // Default to FM band.
@@ -159,27 +159,13 @@ public class ManualTunerController {
         mDoneButton = container.findViewById(R.id.manual_tuner_done_button);
 
         View backButton = container.findViewById(R.id.exit_manual_tuner_button);
-        backButton.setOnClickListener(v -> {
-            if (mManualTunerClickListener != null) {
-                mManualTunerClickListener.onBack();
-            }
-        });
-
-        amBandButton.setOnClickListener(v -> {
-            mCurrentRadioBand = RadioManager.BAND_AM;
-            mChannelValidator = mAmChannelValidator;
-            amBandButton.setIsBandSelected(true);
-            fmBandButton.setIsBandSelected(false);
-            resetChannel();
-        });
-
-        fmBandButton.setOnClickListener(v -> {
-            mCurrentRadioBand = RadioManager.BAND_FM;
-            mChannelValidator = mFmChannelValidator;
-            amBandButton.setIsBandSelected(false);
-            fmBandButton.setIsBandSelected(true);
-            resetChannel();
-        });
+        if (backButton != null) {
+            backButton.setOnClickListener(v -> {
+                if (mManualTunerClickListener != null) {
+                    mManualTunerClickListener.onBack();
+                }
+            });
+        }
 
         mDoneButton.setOnClickListener(v -> {
             if (mManualTunerClickListener == null) {
@@ -191,11 +177,42 @@ public class ManualTunerController {
                     ProgramSelectorExt.createAmFmSelector(channelFrequency));
         });
 
-        if (mCurrentRadioBand == RadioManager.BAND_AM) {
+        if (amBandButton != null) {
+            amBandButton.setOnClickListener(v -> {
+                mCurrentRadioBand = RadioManager.BAND_AM;
+                mChannelValidator = mAmChannelValidator;
+                amBandButton.setIsBandSelected(true);
+                fmBandButton.setIsBandSelected(false);
+                resetChannel();
+            });
+        }
+        if (fmBandButton != null) {
+            fmBandButton.setOnClickListener(v -> {
+                mCurrentRadioBand = RadioManager.BAND_FM;
+                mChannelValidator = mFmChannelValidator;
+                amBandButton.setIsBandSelected(false);
+                fmBandButton.setIsBandSelected(true);
+                resetChannel();
+            });
+        }
+        if (mCurrentRadioBand == RadioManager.BAND_AM && amBandButton != null) {
             amBandButton.setIsBandSelected(true);
-        } else {
+        } else if (fmBandButton != null) {
             fmBandButton.setIsBandSelected(true);
         }
+    }
+
+    /**
+     * Refreshes tuner key state with new radio band, if changed without using AM/FM band buttons
+     */
+    public void updateCurrentRadioBand(int band) {
+        mCurrentRadioBand = band;
+        if (band == RadioManager.BAND_FM) {
+            mChannelValidator = mFmChannelValidator;
+        } else {
+            mChannelValidator = mAmChannelValidator;
+        }
+        resetChannel();
     }
 
     /**
@@ -260,7 +277,7 @@ public class ManualTunerController {
      * Sets the given {@link ManualTunerClickListener} to be notified when the done button of the manual
      * tuner has been clicked.
      */
-    void setDoneButtonListener(ManualTunerClickListener listener) {
+    public void setDoneButtonListener(ManualTunerClickListener listener) {
         mManualTunerClickListener = listener;
     }
 
