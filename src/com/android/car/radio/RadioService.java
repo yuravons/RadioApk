@@ -32,10 +32,10 @@ import android.support.v4.media.MediaBrowserServiceCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
+import com.android.car.broadcastradio.support.Program;
+import com.android.car.broadcastradio.support.media.BrowseTree;
 import com.android.car.radio.audio.AudioStreamController;
 import com.android.car.radio.audio.IPlaybackStateListener;
-import com.android.car.radio.media.BrowseTree;
-import com.android.car.radio.media.Program;
 import com.android.car.radio.media.TunerSession;
 import com.android.car.radio.platform.ImageMemoryCache;
 import com.android.car.radio.platform.RadioManagerExt;

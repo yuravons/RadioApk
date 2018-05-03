@@ -58,10 +58,4 @@ limitations under the License.
     <string name="manual_tuner_8">8</string>
     <string name="manual_tuner_9">9</string>
     <string name="manual_tuner_period">.</string>
-
-    <!-- Text to denote the list of programs (stations). -->
-    <string name="program_list_text">Stations</string>
-
-    <!-- Text to denote the list of favorite programs (stations). -->
-    <string name="favorites_list_text">Favorites</string>
 </resources>

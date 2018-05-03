@@ -21,7 +21,7 @@ import android.annotation.NonNull;
 import android.content.Context;
 import android.hardware.radio.ProgramSelector;
 
-import com.android.car.radio.platform.ProgramSelectorExt;
+import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 
 /**
  * A class that will take a {@link Program} and return its corresponding color. The colors

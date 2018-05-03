@@ -20,6 +20,8 @@ import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.graphics.Bitmap;
 
+import com.android.car.broadcastradio.support.platform.ImageResolver;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;

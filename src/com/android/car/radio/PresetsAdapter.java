@@ -26,7 +26,7 @@ import android.view.ViewGroup;
 
 import androidx.car.widget.PagedListView;
 
-import com.android.car.radio.media.Program;
+import com.android.car.broadcastradio.support.Program;
 
 import java.util.List;
 import java.util.Objects;
