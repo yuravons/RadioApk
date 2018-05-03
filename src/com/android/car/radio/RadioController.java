@@ -18,7 +18,9 @@ package com.android.car.radio;
 
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
+import android.annotation.ColorInt;
 import android.annotation.NonNull;
+import android.annotation.Nullable;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -36,12 +38,9 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
 
-import androidx.annotation.ColorInt;
-import androidx.annotation.Nullable;
-
-import com.android.car.radio.media.Program;
-import com.android.car.radio.platform.ProgramInfoExt;
-import com.android.car.radio.platform.ProgramSelectorExt;
+import com.android.car.broadcastradio.support.Program;
+import com.android.car.broadcastradio.support.platform.ProgramInfoExt;
+import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.service.IRadioCallback;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.storage.RadioStorage;

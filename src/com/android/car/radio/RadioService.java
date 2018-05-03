@@ -33,10 +33,10 @@ import android.util.Log;
 
 import androidx.media.MediaBrowserServiceCompat;
 
+import com.android.car.broadcastradio.support.Program;
+import com.android.car.broadcastradio.support.media.BrowseTree;
 import com.android.car.radio.audio.AudioStreamController;
 import com.android.car.radio.audio.IPlaybackStateListener;
-import com.android.car.radio.media.BrowseTree;
-import com.android.car.radio.media.Program;
 import com.android.car.radio.media.TunerSession;
 import com.android.car.radio.platform.ImageMemoryCache;
 import com.android.car.radio.platform.RadioManagerExt;
