@@ -94,7 +94,7 @@ public class RadioTunerExt {
                 Log.i(TAG, "Car not connected yet, postponing operation: "
                         + (muted ? "mute" : "unmute"));
                 mPendingMuteOperation = muted;
-                return false;
+                return true;
             }
 
             // if it's already (not) muted - no need to (un)mute again
