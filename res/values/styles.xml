@@ -76,8 +76,8 @@ limitations under the License.
 
     <!-- The default style for FAB icons in the radio. -->
     <style name="RadioFab">
-        <item name="android:layout_width">@dimen/car_radio_fab_size</item>
-        <item name="android:layout_height">@dimen/car_radio_fab_size</item>
+        <item name="android:layout_width">@dimen/manual_tuner_fab_size</item>
+        <item name="android:layout_height">@dimen/manual_tuner_fab_size</item>
         <item name="android:padding">@dimen/car_radio_fab_padding</item>
         <item name="android:scaleType">centerCrop</item>
         <item name="android:elevation">@dimen/car_radio_fab_elevation</item>
