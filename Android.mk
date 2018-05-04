@@ -34,11 +34,13 @@ LOCAL_PRIVILEGED_MODULE := true
 
 LOCAL_USE_AAPT2 := true
 
+LOCAL_JAVA_LIBRARIES += android.car
+
 LOCAL_STATIC_ANDROID_LIBRARIES += \
     android-support-car \
     android-support-constraint-layout \
-    car-stream-ui-lib \
-    car-apps-common
+    car-apps-common \
+    car-stream-ui-lib
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-arch-lifecycle-livedata \
@@ -70,8 +72,6 @@ LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_DEX_PREOPT := false
-
-include packages/services/Car/car-support-lib/car-support.mk
 
 include $(BUILD_PACKAGE)
 
