@@ -26,7 +26,7 @@ import android.hardware.radio.RadioManager;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.android.car.radio.media.Program;
+import com.android.car.broadcastradio.support.Program;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -31,7 +31,7 @@ import android.content.Context;
 import android.hardware.radio.ProgramSelector;
 import android.support.annotation.NonNull;
 
-import com.android.car.radio.media.Program;
+import com.android.car.broadcastradio.support.Program;
 
 import java.util.List;
 import java.util.stream.Collectors;

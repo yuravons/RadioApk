@@ -23,7 +23,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.android.car.radio.platform.ProgramSelectorExt;
+import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 
 import java.util.ArrayList;
 import java.util.List;

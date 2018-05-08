@@ -16,12 +16,15 @@
 
 ifneq ($(TARGET_BUILD_PDK), true)
 
-LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH := $(call my-dir)
+CAR_BROADCASTRADIO_SUPPORTLIB_PATH := packages/apps/Car/libs/car-broadcastradio-support
 
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-Iaidl-files-under, src)
-LOCAL_AIDL_INCLUDES := $(call all-Iaidl-files-under, src)
+LOCAL_AIDL_INCLUDES := \
+    $(LOCAL_PATH)/src \
+    $(CAR_BROADCASTRADIO_SUPPORTLIB_PATH)/src
 
 LOCAL_PACKAGE_NAME := CarRadioApp
 LOCAL_PRIVATE_PLATFORM_APIS := true
@@ -40,6 +43,7 @@ LOCAL_STATIC_ANDROID_LIBRARIES += \
     android-support-car \
     android-support-constraint-layout \
     car-apps-common \
+    car-broadcastradio-support \
     car-stream-ui-lib
 
 LOCAL_STATIC_JAVA_LIBRARIES := \

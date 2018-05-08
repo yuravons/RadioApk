@@ -21,7 +21,7 @@ import android.hardware.radio.ProgramSelector;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
-import com.android.car.radio.platform.ProgramSelectorExt;
+import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 
 import java.util.Objects;
 

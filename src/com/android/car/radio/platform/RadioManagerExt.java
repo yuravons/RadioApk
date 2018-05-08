@@ -27,6 +27,8 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
+import com.android.car.broadcastradio.support.platform.RadioMetadataExt;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
