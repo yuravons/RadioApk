@@ -26,8 +26,8 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import com.android.car.radio.media.Program;
-import com.android.car.radio.platform.ProgramSelectorExt;
+import com.android.car.broadcastradio.support.Program;
+import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.view.CardListBackgroundResolver;
 
 import java.util.Objects;

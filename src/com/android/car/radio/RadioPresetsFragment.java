@@ -32,7 +32,7 @@ import android.view.ViewGroup;
 import androidx.car.widget.DayNightStyle;
 import androidx.car.widget.PagedListView;
 
-import com.android.car.radio.media.Program;
+import com.android.car.broadcastradio.support.Program;
 import com.android.car.radio.storage.RadioStorage;
 
 import java.util.List;
