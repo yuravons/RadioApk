@@ -21,10 +21,20 @@ limitations under the License.
         <item name="android:scaleType">center</item>
     </style>
 
-   <!-- The radio button style in presets display. -->
+    <!-- The radio button style in presets display. -->
     <style name="RadioButtonPreset" parent="@android:style/Widget.Material.Button.Borderless">
         <item name="android:background">@drawable/radio_control_background</item>
         <item name="android:scaleType">center</item>
+    </style>
+
+    <!-- The radio button style in presets display. -->
+    <style name="RadioButtonFab" parent="@android:style/Widget.Material.Button.Borderless">
+        <item name="android:background">@drawable/radio_control_background</item>
+        <item name="android:padding">@dimen/car_radio_controls_button_padding</item>
+        <item name="android:scaleType">center</item>
+        <item name="android:transitionName">@string/radio_play_button_transition_name</item>
+        <item name="android:elevation">@dimen/car_radio_fab_elevation</item>
+        <item name="android:stateListAnimator">@anim/car_fab_state_list_animator</item>
     </style>
 
     <!-- The text style for the radio channel in the main display. -->
