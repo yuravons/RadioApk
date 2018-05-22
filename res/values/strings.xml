@@ -17,9 +17,6 @@ limitations under the License.
     <!-- The main application name for the radio. -->
     <string name="app_name">Radio</string>
 
-    <!-- The name for the service that is responsible for connecting to the radio API. -->
-    <string name="service_name">RadioService</string>
-
     <!-- Text to denote the AM radio band. -->
     <string name="radio_am_text">AM</string>
 
