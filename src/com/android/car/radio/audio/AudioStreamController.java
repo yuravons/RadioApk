@@ -31,6 +31,7 @@ import com.android.car.radio.platform.RadioTunerExt;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Manages radio's audio stream.
@@ -50,6 +51,8 @@ public class AudioStreamController {
      * It may be ducked, transiently lost or delayed.
      */
     private boolean mHasSomeFocus = false;
+
+    private boolean mIsTuning = false;
 
     private int mCurrentPlaybackState = PlaybackStateCompat.STATE_NONE;
     private final List<IPlaybackStateListener> mPlaybackStateListeners = new ArrayList<>();
@@ -111,6 +114,7 @@ public class AudioStreamController {
     }
 
     private boolean requestAudioFocusLocked() {
+        if (mHasSomeFocus) return true;
         int res = mAudioManager.requestAudioFocus(mGainFocusReq);
         if (res == AudioManager.AUDIOFOCUS_REQUEST_DELAYED) {
             Log.i(TAG, "Audio focus request is delayed");
@@ -127,14 +131,13 @@ public class AudioStreamController {
 
         // we assume that audio focus was requested only when we mean to unmute
         if (!mRadioTunerExt.setMuted(false)) return false;
-        notifyPlaybackStateChangedLocked(PlaybackStateCompat.STATE_PLAYING);
 
         return true;
     }
 
     private boolean abandonAudioFocusLocked() {
+        if (!mHasSomeFocus) return true;
         if (!mRadioTunerExt.setMuted(true)) return false;
-        notifyPlaybackStateChangedLocked(PlaybackStateCompat.STATE_STOPPED);
 
         int res = mAudioManager.abandonAudioFocusRequest(mGainFocusReq);
         if (res != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
@@ -149,6 +152,44 @@ public class AudioStreamController {
     }
 
     /**
+     * Prepare playback for ongoing tune/scan operation.
+     *
+     * @param skipDirectionNext true if it's skipping to next station;
+     *                          false if skipping to previous;
+     *                          empty if tuning to arbitrary selector.
+     */
+    public boolean preparePlayback(Optional<Boolean> skipDirectionNext) {
+        synchronized (mLock) {
+            if (!requestAudioFocusLocked()) return false;
+
+            int state = PlaybackStateCompat.STATE_CONNECTING;
+            if (skipDirectionNext.isPresent()) {
+                state = skipDirectionNext.get() ? PlaybackStateCompat.STATE_SKIPPING_TO_NEXT
+                        : PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS;
+            }
+            notifyPlaybackStateChangedLocked(state);
+
+            mIsTuning = true;
+            return true;
+        }
+    }
+
+    /**
+     * Notifies AudioStreamController that radio hardware is done with tune/scan operation.
+     *
+     * TODO(b/73950974): use callbacks, don't hardcode
+     *
+     * @see #preparePlayback
+     */
+    public void notifyProgramInfoChanged() {
+        synchronized (mLock) {
+            if (!mIsTuning) return;
+            mIsTuning = false;
+            notifyPlaybackStateChangedLocked(PlaybackStateCompat.STATE_PLAYING);
+        }
+    }
+
+    /**
      * Request audio stream muted or unmuted.
      *
      * @param muted true, if audio stream should be muted, false if unmuted
@@ -156,10 +197,14 @@ public class AudioStreamController {
      */
     public boolean requestMuted(boolean muted) {
         synchronized (mLock) {
-            if (muted == !mHasSomeFocus) return true;
-
-            if (muted) return abandonAudioFocusLocked();
-            else return requestAudioFocusLocked();
+            if (muted) {
+                notifyPlaybackStateChangedLocked(PlaybackStateCompat.STATE_STOPPED);
+                return abandonAudioFocusLocked();
+            } else {
+                if (!requestAudioFocusLocked()) return false;
+                notifyPlaybackStateChangedLocked(PlaybackStateCompat.STATE_PLAYING);
+                return true;
+            }
         }
     }
 
