@@ -39,6 +39,10 @@ limitations under the License.
     <!-- Text indicating to the user that there was an error loading the error. -->
     <string name="radio_problem_text">Radio not available</string>
 
+    <!-- Error message after invalid MediaSession API selection (mainly by other apps,
+         like assistant). -->
+    <string name="invalid_selection">Invalid selection</string>
+
     <!-- Default metadata text if a preset has no metadata. This text should indicate to the user
          that the station is favorited followed by the number of the favorite. -->
     <string name="radio_default_preset_metadata_text">Favorite <xliff:g>%1$s</xliff:g></string>

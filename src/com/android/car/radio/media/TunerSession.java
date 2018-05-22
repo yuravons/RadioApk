@@ -36,6 +36,7 @@ import com.android.car.broadcastradio.support.media.BrowseTree;
 import com.android.car.broadcastradio.support.platform.ImageResolver;
 import com.android.car.broadcastradio.support.platform.ProgramInfoExt;
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
+import com.android.car.radio.R;
 import com.android.car.radio.audio.IPlaybackStateListener;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.utils.ThrowingRunnable;
@@ -50,6 +51,7 @@ public class TunerSession extends MediaSessionCompat implements IPlaybackStateLi
 
     private final Object mLock = new Object();
 
+    private final Context mContext;
     private final BrowseTree mBrowseTree;
     @Nullable private final ImageResolver mImageResolver;
     private final IRadioManager mUiSession;
@@ -61,6 +63,7 @@ public class TunerSession extends MediaSessionCompat implements IPlaybackStateLi
             @NonNull IRadioManager uiSession, @Nullable ImageResolver imageResolver) {
         super(context, TAG);
 
+        mContext = Objects.requireNonNull(context);
         mBrowseTree = Objects.requireNonNull(browseTree);
         mImageResolver = imageResolver;
         mUiSession = Objects.requireNonNull(uiSession);
@@ -108,6 +111,13 @@ public class TunerSession extends MediaSessionCompat implements IPlaybackStateLi
 
     public void notifyFavoritesChanged() {
         updateMetadata();
+    }
+
+    private void selectionError() {
+        exec(() -> mUiSession.mute());
+        mPlaybackStateBuilder.setErrorMessage(mContext.getString(R.string.invalid_selection));
+        onPlaybackStateChanged(PlaybackStateCompat.STATE_ERROR);
+        mPlaybackStateBuilder.setErrorMessage(null);
     }
 
     private void exec(ThrowingRunnable<RemoteException> func) {
@@ -159,7 +169,8 @@ public class TunerSession extends MediaSessionCompat implements IPlaybackStateLi
             if (selector != null) {
                 exec(() -> mUiSession.tune(selector));
             } else {
-                Log.e(TAG, "Invalid media ID: " + mediaId);
+                Log.w(TAG, "Invalid media ID: " + mediaId);
+                selectionError();
             }
         }
 
@@ -169,7 +180,8 @@ public class TunerSession extends MediaSessionCompat implements IPlaybackStateLi
             if (selector != null) {
                 exec(() -> mUiSession.tune(selector));
             } else {
-                Log.e(TAG, "Invalid URI: " + uri);
+                Log.w(TAG, "Invalid URI: " + uri);
+                selectionError();
             }
         }
     }
