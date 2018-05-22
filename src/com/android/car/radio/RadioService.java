@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * A persistent {@link Service} that is responsible for opening and closing a {@link RadioTuner}.
@@ -238,7 +239,7 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
          */
         @Override
         public void tune(ProgramSelector sel) {
-            if (!unMute()) return;
+            if (!mAudioStreamController.preparePlayback(Optional.empty())) return;
             mRadioTuner.tune(sel);
         }
 
@@ -253,7 +254,7 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
          */
         @Override
         public void seekForward() {
-            if (!unMute()) return;
+            if (!mAudioStreamController.preparePlayback(Optional.of(true))) return;
 
             if (mRadioTuner == null) {
                 int radioStatus = openRadioBandInternal(mCurrentRadioBand);
@@ -271,7 +272,7 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
          */
         @Override
         public void seekBackward() {
-            if (!unMute()) return;
+            if (!mAudioStreamController.preparePlayback(Optional.of(false))) return;
 
             if (mRadioTuner == null) {
                 int radioStatus = openRadioBandInternal(mCurrentRadioBand);
@@ -406,6 +407,7 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
 
             mCurrentProgram = Objects.requireNonNull(info);
             mMediaSession.notifyProgramInfoChanged(info);
+            mAudioStreamController.notifyProgramInfoChanged();
 
             for (IRadioCallback callback : mRadioTunerCallbacks) {
                 try {
