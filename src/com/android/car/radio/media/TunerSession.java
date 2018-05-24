@@ -165,6 +165,12 @@ public class TunerSession extends MediaSessionCompat implements IPlaybackStateLi
 
         @Override
         public void onPlayFromMediaId(String mediaId, Bundle extras) {
+            if (mBrowseTree.getRoot().getRootId().equals(mediaId)) {
+                // general play command
+                onPlay();
+                return;
+            }
+
             ProgramSelector selector = mBrowseTree.parseMediaId(mediaId);
             if (selector != null) {
                 exec(() -> mUiSession.tune(selector));
