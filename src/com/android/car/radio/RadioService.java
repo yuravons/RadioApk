@@ -490,13 +490,27 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
 
     @Override
     public BrowserRoot onGetRoot(String clientPackageName, int clientUid, Bundle rootHints) {
-        // TODO(b/75970985): check permissions, if necessary
+        /* Radio application may restrict who can read its MediaBrowser tree.
+         * Our implementation doesn't.
+         */
         return mBrowseTree.getRoot();
     }
 
     @Override
     public void onLoadChildren(final String parentMediaId, final Result<List<MediaItem>> result) {
         mBrowseTree.loadChildren(parentMediaId, result);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (BrowseTree.ACTION_PLAY_BROADCASTRADIO.equals(intent.getAction())) {
+            Log.i(TAG, "Executing general play radio intent");
+            mMediaSession.getController().getTransportControls().playFromMediaId(
+                    mBrowseTree.getRoot().getRootId(), null);
+            return START_NOT_STICKY;
+        }
+
+        return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
