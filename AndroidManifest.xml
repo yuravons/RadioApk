@@ -47,6 +47,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
+                <action android:name="android.car.intent.action.PLAY_BROADCASTRADIO" />
             </intent-filter>
         </service>
     </application>
