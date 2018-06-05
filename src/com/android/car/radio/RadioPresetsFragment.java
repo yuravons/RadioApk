@@ -103,7 +103,7 @@ public class RadioPresetsFragment extends Fragment implements
                 v -> mAnimManager.playExitAnimation(RadioPresetsFragment.this /* listener */));
 
         mPresetsList = view.findViewById(R.id.presets_list);
-        mPresetsList.setDayNightStyle(DayNightStyle.FORCE_NIGHT);
+        mPresetsList.setDayNightStyle(DayNightStyle.ALWAYS_LIGHT);
         mPresetsList.setAdapter(mPresetsAdapter);
         mPresetsList.getRecyclerView().addOnScrollListener(new PresetListScrollListener(
                 context, view, mCurrentRadioCard, mPresetsList));
