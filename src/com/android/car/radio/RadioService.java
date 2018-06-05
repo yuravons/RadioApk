@@ -34,6 +34,7 @@ import android.util.Log;
 
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.broadcastradio.support.media.BrowseTree;
+import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.audio.AudioStreamController;
 import com.android.car.radio.audio.IPlaybackStateListener;
 import com.android.car.radio.media.TunerSession;
@@ -80,7 +81,6 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
     private boolean mRadioSuccessfullyInitialized;
 
     private ProgramInfo mCurrentProgram;
-    private int mCurrentRadioBand = RadioManager.BAND_FM;
 
     private RadioManagerExt mRadioManager;
     private ImageMemoryCache mImageCache;
@@ -139,7 +139,7 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
 
         mAudioStreamController.addPlaybackStateListener(this);
 
-        openRadioBandInternal(mCurrentRadioBand);
+        openRadioBandInternal(mRadioStorage.getStoredRadioBand());
 
         mRadioSuccessfullyInitialized = true;
     }
@@ -176,7 +176,6 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
     private int openRadioBandInternal(int radioBand) {
         if (!mAudioStreamController.requestMuted(false)) return RadioManager.STATUS_ERROR;
 
-        mCurrentRadioBand = radioBand;
         if (mRadioTuner == null) {
             mRadioTuner = mRadioManager.openSession(mInternalRadioTunerCallback, null);
             mProgramList = mRadioTuner.getDynamicProgramList(null);
@@ -191,7 +190,29 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
         // opened.
         mReOpenRadioTunerCount = 0;
 
+        tuneToDefault(radioBand);
+
         return RadioManager.STATUS_OK;
+    }
+
+    private void tuneToDefault(int band) {
+        if (!mAudioStreamController.preparePlayback(Optional.empty())) return;
+
+        long storedChannel = mRadioStorage.getStoredRadioChannel(band);
+        if (storedChannel != RadioStorage.INVALID_RADIO_CHANNEL) {
+            Log.i(TAG, "Restoring stored program: " + storedChannel);
+            mRadioTuner.tune(ProgramSelectorExt.createAmFmSelector(storedChannel));
+        } else {
+            Log.i(TAG, "No stored program, seeking forward to not play static");
+
+            // TODO(b/80500464): don't hardcode, pull from tuner config
+            long lastChannel;
+            if (band == RadioManager.BAND_AM) lastChannel = 1620;
+            else lastChannel = 108000;
+            mRadioTuner.tune(ProgramSelectorExt.createAmFmSelector(lastChannel));
+
+            mRadioTuner.scan(RadioTuner.DIRECTION_UP, true);
+        }
     }
 
     /* TODO(b/73950974): remove onRadioMuteChanged from IRadioCallback,
@@ -256,7 +277,7 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
             if (!mAudioStreamController.preparePlayback(Optional.of(true))) return;
 
             if (mRadioTuner == null) {
-                int radioStatus = openRadioBandInternal(mCurrentRadioBand);
+                int radioStatus = openRadioBandInternal(mRadioStorage.getStoredRadioBand());
                 if (radioStatus == RadioManager.STATUS_ERROR) {
                     return;
                 }
@@ -274,7 +295,7 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
             if (!mAudioStreamController.preparePlayback(Optional.of(false))) return;
 
             if (mRadioTuner == null) {
-                int radioStatus = openRadioBandInternal(mCurrentRadioBand);
+                int radioStatus = openRadioBandInternal(mRadioStorage.getStoredRadioBand());
                 if (radioStatus == RadioManager.STATUS_ERROR) {
                     return;
                 }
@@ -321,25 +342,9 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
             mRadioStorage.removePreset(sel);
         }
 
-        /**
-         * Opens the radio for the given band.
-         *
-         * @param radioBand One of {@link RadioManager#BAND_FM}, {@link RadioManager#BAND_AM},
-         *                  {@link RadioManager#BAND_FM_HD} or {@link RadioManager#BAND_AM_HD}.
-         * @return {@link RadioManager#STATUS_OK} if successful; otherwise,
-         * {@link RadioManager#STATUS_ERROR}.
-         */
         @Override
-        public int openRadioBand(int radioBand) {
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "openRadioBand() for band: " + radioBand);
-            }
-
-            if (mRadioManager == null) {
-                return RadioManager.STATUS_ERROR;
-            }
-
-            return openRadioBandInternal(radioBand);
+        public void switchBand(int radioBand) {
+            tuneToDefault(radioBand);
         }
 
         /**
@@ -407,6 +412,7 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
             mCurrentProgram = Objects.requireNonNull(info);
             mMediaSession.notifyProgramInfoChanged(info);
             mAudioStreamController.notifyProgramInfoChanged();
+            mRadioStorage.storeRadioChannel(info.getSelector());
 
             for (IRadioCallback callback : mRadioTunerCallbacks) {
                 try {
@@ -414,31 +420,6 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
                 } catch (RemoteException e) {
                     Log.e(TAG, "Failed to notify about changed radio station", e);
                 }
-            }
-        }
-
-        @Override
-        public void onConfigurationChanged(RadioManager.BandConfig config) {
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "onConfigurationChanged(): config: " + config);
-            }
-
-            if (config != null) {
-                mCurrentRadioBand = config.getType();
-
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "onConfigurationChanged(): config type: " + mCurrentRadioBand);
-                }
-
-            }
-
-            try {
-                for (IRadioCallback callback : mRadioTunerCallbacks) {
-                    callback.onRadioBandChanged(mCurrentRadioBand);
-                }
-            } catch (RemoteException e) {
-                Log.e(TAG, "onConfigurationChanged(); "
-                        + "Failed to notify IRadioCallbacks: " + e.getMessage());
             }
         }
 
@@ -480,12 +461,13 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
             }
 
             if (mRadioTuner == null) {
-                openRadioBandInternal(mCurrentRadioBand);
+                openRadioBandInternal(mRadioStorage.getStoredRadioBand());
             }
         }
     }
 
-    private final Runnable mOpenRadioTunerRunnable = () -> openRadioBandInternal(mCurrentRadioBand);
+    private final Runnable mOpenRadioTunerRunnable =
+            () -> openRadioBandInternal(mRadioStorage.getStoredRadioBand());
 
     @Override
     public BrowserRoot onGetRoot(String clientPackageName, int clientUid, Bundle rootHints) {
