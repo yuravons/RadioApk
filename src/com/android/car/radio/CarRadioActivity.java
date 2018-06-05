@@ -21,14 +21,14 @@ import android.content.Intent;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.util.Log;
 import android.util.Pair;
 
 import androidx.car.drawer.CarDrawerActivity;
 import androidx.car.drawer.CarDrawerAdapter;
 import androidx.car.drawer.DrawerItemViewHolder;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +61,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
 
     /**
      * Whether or not it is safe to make transactions on the
-     * {@link android.support.v4.app.FragmentManager}. This variable prevents a possible exception
+     * {@link androidx.fragment.app.FragmentManager}. This variable prevents a possible exception
      * when calling commit() on the FragmentManager.
      *
      * <p>The default value is {@code true} because it is only after
