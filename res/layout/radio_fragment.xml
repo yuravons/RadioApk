@@ -95,7 +95,7 @@ limitations under the License.
                 android:visibility="invisible" />
         </LinearLayout>
 
-        <android.support.v7.widget.CardView
+        <androidx.cardview.widget.CardView
             android:id="@+id/radio_layout_container"
             android:layout_gravity="center_horizontal"
             android:transitionName="@string/radio_controls_transition_name"
@@ -104,6 +104,6 @@ limitations under the License.
             app:cardBackgroundColor="@color/car_card" >
 
             <include layout="@layout/radio_controls" />
-        </android.support.v7.widget.CardView>
+        </androidx.cardview.widget.CardView>
     </LinearLayout>
 </FrameLayout>
