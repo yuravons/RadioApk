@@ -31,13 +31,6 @@ oneway interface IRadioCallback {
     void onCurrentProgramInfoChanged(in RadioManager.ProgramInfo info);
 
     /**
-     * Called when the current radio band has changed.
-     *
-     * @param radioBand A radio band value from {@link RadioManager}.
-     */
-    void onRadioBandChanged(int radioBand);
-
-    /**
      * Called when the mute state of the radio has changed.
      *
      * @param isMuted {@code true} if the radio is muted.
