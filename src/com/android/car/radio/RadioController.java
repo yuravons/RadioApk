@@ -44,6 +44,7 @@ import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.service.IRadioCallback;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.storage.RadioStorage;
+import com.android.car.radio.utils.ProgramSelectorUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,11 +108,6 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
     private final RadioStorage mRadioStorage;
 
-    /**
-     * The current radio band. This value is one of the BAND_* values from {@link RadioManager}.
-     * For example, {@link RadioManager#BAND_FM}.
-     */
-    private int mCurrentRadioBand = RadioStorage.INVALID_RADIO_BAND;
     private final String mAmBandString;
     private final String mFmBandString;
 
@@ -286,9 +282,11 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
     /**
      * Returns the band this radio is currently tuned to.
+     *
+     * TODO(b/73950974): don't be AM/FM exclusive
      */
     public int getCurrentRadioBand() {
-        return mCurrentRadioBand;
+        return ProgramSelectorUtils.getRadioBand(mCurrentProgram.getSelector());
     }
 
     /**
@@ -304,71 +302,23 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     }
 
     /**
-     * Opens the given current radio band. Currently, this only supports FM and AM bands.
+     * Switch radio band. Currently, this only supports FM and AM bands.
      *
-     * @param radioBand One of {@link RadioManager#BAND_FM}, {@link RadioManager#BAND_AM},
-     *                  {@link RadioManager#BAND_FM_HD} or {@link RadioManager#BAND_AM_HD}.
+     * @param radioBand One of {@link RadioManager#BAND_FM}, {@link RadioManager#BAND_AM}.
      */
-    public void openRadioBand(int radioBand) {
-        if (mRadioManager == null || radioBand == mCurrentRadioBand) {
-            return;
-        }
-
-        setCurrentRadioBand(radioBand);
-        mRadioStorage.storeRadioBand(mCurrentRadioBand);
-
+    public void switchBand(int radioBand) {
         try {
-            mRadioManager.openRadioBand(radioBand);
-
-            updateAmFmDisplayState();
-
-            // Sets the initial mute state. This will resolve the mute state should be if an
-            // {@link AudioManager#AUDIOFOCUS_LOSS_TRANSIENT} event is received followed by an
-            // {@link AudioManager#AUDIOFOCUS_GAIN} event. In this case, the radio will un-mute itself
-            // if the user has not muted beforehand.
-            if (mUserHasMuted) {
-                mRadioManager.mute();
-            }
-
-            // Ensure the play button properly reflects the current mute state.
-            mRadioDisplayController.setPlayPauseButtonState(mRadioManager.isMuted());
-
-            maybeTuneToStoredRadioChannel();
+            mRadioManager.switchBand(radioBand);
         } catch (RemoteException e) {
-            Log.e(TAG, "openRadioBand(); remote exception: " + e.getMessage());
+            Log.e(TAG, "Couldn't switch band", e);
         }
     }
 
     /**
-     * Attempts to tune to the last played radio channel for a particular band. For example, if
-     * the user switches to the AM band from FM, this method will attempt to tune to the last
-     * AM band that the user was on.
-     *
-     * <p>If a stored radio station cannot be found, then this method will initiate a seek so that
-     * the radio is always on a valid radio station.
+     * Delegates to the {@link RadioDisplayController} to highlight the radio band.
      */
-    private void maybeTuneToStoredRadioChannel() {
-        int storedChannel = mRadioStorage.getStoredRadioChannel(mCurrentRadioBand);
-
-        if (storedChannel != RadioStorage.INVALID_RADIO_CHANNEL) {
-            Log.i(TAG, "Restoring stored program: " + storedChannel);
-            tune(ProgramSelectorExt.createAmFmSelector(storedChannel));
-        } else {
-            Log.i(TAG, "No stored program, seeking forward to not play static");
-            try {
-                mRadioManager.seekForward();
-            } catch (RemoteException e) {
-                Log.e(TAG, "Couldn't seek forward", e);
-            }
-        }
-    }
-
-    /**
-     * Delegates to the {@link RadioDisplayController} to highlight the radio band that matches
-     * up to {@link #mCurrentRadioBand}.
-     */
-    private void updateAmFmDisplayState() {
-        switch (mCurrentRadioBand) {
+    private void updateAmFmDisplayState(int band) {
+        switch (band) {
             case RadioManager.BAND_FM:
                 mRadioDisplayController.setChannelBand(mFmBandString);
                 break;
@@ -396,8 +346,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
             mCurrentlyDisplayedChannel = 0;
             mRadioDisplayController.setChannelNumber("");
 
-            mCurrentRadioBand = RadioStorage.INVALID_RADIO_BAND;
-            updateAmFmDisplayState();
+            updateAmFmDisplayState(RadioStorage.INVALID_RADIO_BAND);
             return;
         }
 
@@ -408,8 +357,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
         boolean isAm = ProgramSelectorExt.isAmFrequency(freq);
         int band = isAm ? RadioManager.BAND_AM : RadioManager.BAND_FM;
 
-        mCurrentRadioBand = band;
-        updateAmFmDisplayState();
+        updateAmFmDisplayState(band);
 
         if (isAm && wasAm || !isAm && wasFm) {
             mAnimator.setIntValues((int)mCurrentlyDisplayedChannel, (int)freq);
@@ -495,13 +443,6 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     }
 
     /**
-     * Sets the internal {@link #mCurrentRadioBand} to be the given radio band.
-     */
-    private void setCurrentRadioBand(int radioBand) {
-        mCurrentRadioBand = radioBand;
-    }
-
-    /**
      * Closes any active {@link RadioTuner}s and releases audio focus.
      */
     private void close() {
@@ -574,24 +515,12 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
             mRadioDisplayController.setChannelIsPreset(mRadioStorage.isPreset(sel));
 
-            mRadioStorage.storeRadioChannel(mCurrentRadioBand, info.getChannel());
-
             // Notify that the current radio station has changed.
             if (mProgramInfoChangeListeners != null) {
                 for (ProgramInfoChangeListener listener : mProgramInfoChangeListeners) {
                     listener.onProgramInfoChanged(info);
                 }
             }
-        }
-
-        @Override
-        public void onRadioBandChanged(int radioBand) {
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "onRadioBandChanged: " + radioBand);
-            }
-
-            setCurrentRadioBand(radioBand);
-            updateAmFmDisplayState();
         }
 
         @Override
@@ -718,12 +647,6 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
                 mRadioDisplayController.setSingleChannelDisplay(mRadioBackground);
 
                 mRadioManager.addRadioTunerCallback(mCallback);
-
-                int radioBand = mRadioStorage.getStoredRadioBand();
-
-                // Upon successful connection, open the radio.
-                openRadioBand(radioBand);
-                maybeTuneToStoredRadioChannel();
 
                 // Notify listeners
                 for (RadioServiceConnectionListener listener : mRadioServiceConnectionListeners) {

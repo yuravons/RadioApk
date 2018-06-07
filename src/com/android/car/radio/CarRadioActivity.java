@@ -255,7 +255,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
         public void onItemClick(int position) {
             getDrawerController().closeDrawer();
             if (position < SUPPORTED_RADIO_BANDS.size()) {
-                mRadioController.openRadioBand(SUPPORTED_RADIO_BANDS.get(position).first);
+                mRadioController.switchBand(SUPPORTED_RADIO_BANDS.get(position).first);
             } else if (position == SUPPORTED_RADIO_BANDS.size()) {
                 startManualTuner();
             } else {
