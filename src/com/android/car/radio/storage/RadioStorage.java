@@ -27,6 +27,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.android.car.broadcastradio.support.Program;
+import com.android.car.radio.utils.ProgramSelectorUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -164,28 +165,13 @@ public class RadioStorage {
     }
 
     /**
-     * Returns the stored radio band that was set in {@link #storeRadioBand(int)}. If a radio band
+     * Returns the stored radio band that was set in {@link #storeRadioChannel}. If a radio band
      * has not previously been stored, then {@link RadioManager#BAND_FM} is returned.
      *
-     * @return One of {@link RadioManager#BAND_FM}, {@link RadioManager#BAND_AM},
-     * {@link RadioManager#BAND_FM_HD} or {@link RadioManager#BAND_AM_HD}.
+     * @return One of {@link RadioManager#BAND_FM} or {@link RadioManager#BAND_AM}.
      */
     public int getStoredRadioBand() {
-        // No need to verify that the returned value is one of AM_BAND or FM_BAND because this is
-        // done in storeRadioBand(int).
         return sSharedPref.getInt(PREF_KEY_RADIO_BAND, RadioManager.BAND_FM);
-    }
-
-    /**
-     * Stores a radio band for later retrieval via {@link #getStoredRadioBand()}.
-     */
-    public void storeRadioBand(int radioBand) {
-        // Ensure that an incorrect radio band is not stored. Currently only FM and AM supported.
-        if (radioBand != RadioManager.BAND_FM && radioBand != RadioManager.BAND_AM) {
-            return;
-        }
-
-        sSharedPref.edit().putInt(PREF_KEY_RADIO_BAND, radioBand).apply();
     }
 
     /**
@@ -196,13 +182,13 @@ public class RadioStorage {
      * @param band One of the BAND_* values from {@link RadioManager}. For example,
      *             {@link RadioManager#BAND_AM}.
      */
-    public int getStoredRadioChannel(int band) {
+    public long getStoredRadioChannel(int band) {
         switch (band) {
             case RadioManager.BAND_AM:
-                return sSharedPref.getInt(PREF_KEY_RADIO_CHANNEL_AM, INVALID_RADIO_CHANNEL);
+                return sSharedPref.getLong(PREF_KEY_RADIO_CHANNEL_AM, INVALID_RADIO_CHANNEL);
 
             case RadioManager.BAND_FM:
-                return sSharedPref.getInt(PREF_KEY_RADIO_CHANNEL_FM, INVALID_RADIO_CHANNEL);
+                return sSharedPref.getLong(PREF_KEY_RADIO_CHANNEL_FM, INVALID_RADIO_CHANNEL);
 
             default:
                 return INVALID_RADIO_CHANNEL;
@@ -213,28 +199,28 @@ public class RadioStorage {
      * Stores a radio channel (i.e. the radio frequency) for a particular band so it can be later
      * retrieved via {@link #getStoredRadioChannel(int band)}.
      */
-    public void storeRadioChannel(int band, int channel) {
+    public void storeRadioChannel(@NonNull ProgramSelector sel) {
         if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, String.format("storeRadioChannel(); band: %s, channel %s", band, channel));
-        }
-
-        if (channel <= 0) {
-            return;
+            Log.d(TAG, "storeRadioChannel(" + sel + ")");
         }
 
         // TODO(b/73950974): don't store if it's already the same
-        switch (band) {
-            case RadioManager.BAND_AM:
-                sSharedPref.edit().putInt(PREF_KEY_RADIO_CHANNEL_AM, channel).apply();
-                break;
 
-            case RadioManager.BAND_FM:
-                sSharedPref.edit().putInt(PREF_KEY_RADIO_CHANNEL_FM, channel).apply();
-                break;
+        int band = ProgramSelectorUtils.getRadioBand(sel);
+        if (band != RadioManager.BAND_AM && band != RadioManager.BAND_FM) return;
 
-            default:
-                Log.w(TAG, "Attempting to store channel for invalid band: " + band);
+        SharedPreferences.Editor editor = sSharedPref.edit();
+        editor.putInt(PREF_KEY_RADIO_BAND, band);
+
+        long freq = sel.getFirstId(ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY);
+        if (band == RadioManager.BAND_AM) {
+            editor.putLong(PREF_KEY_RADIO_CHANNEL_AM, freq);
         }
+        if (band == RadioManager.BAND_FM) {
+            editor.putLong(PREF_KEY_RADIO_CHANNEL_FM, freq);
+        }
+
+        editor.apply();
     }
 
     /**

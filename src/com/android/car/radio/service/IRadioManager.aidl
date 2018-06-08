@@ -74,14 +74,13 @@ interface IRadioManager {
     void removeFavorite(in ProgramSelector sel);
 
     /**
-     * Opens the radio for the given band.
+     * Switches radio band.
      *
-     * @param radioBand One of {@link RadioManager#BAND_FM}, {@link RadioManager#BAND_AM},
-     *                  {@link RadioManager#BAND_FM_HD} or {@link RadioManager#BAND_AM_HD}.
-     * @return {@link RadioManager#STATUS_OK} if successful; otherwise,
-     * {@link RadioManager#STATUS_ERROR}.
+     * Usually, this means tuning to the recently listened program on a given band.
+     *
+     * @param radioBand One of {@link RadioManager#BAND_FM}, {@link RadioManager#BAND_AM}.
      */
-    int openRadioBand(int radioBand);
+    void switchBand(int radioBand);
 
     /**
      * Adds the given {@link IRadioCallback} to be notified of any radio metadata changes.
