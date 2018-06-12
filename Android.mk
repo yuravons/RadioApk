@@ -41,7 +41,7 @@ LOCAL_JAVA_LIBRARIES += android.car
 
 LOCAL_STATIC_ANDROID_LIBRARIES += \
     androidx.car_car \
-    android-support-constraint-layout \
+    androidx-constraintlayout_constraintlayout \
     car-apps-common \
     car-broadcastradio-support \
     car-stream-ui-lib
