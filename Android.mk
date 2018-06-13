@@ -40,11 +40,15 @@ LOCAL_USE_AAPT2 := true
 LOCAL_JAVA_LIBRARIES += android.car
 
 LOCAL_STATIC_ANDROID_LIBRARIES += \
-    android-support-car \
-    android-support-constraint-layout \
+    androidx.car_car \
+    androidx-constraintlayout_constraintlayout \
     car-apps-common \
     car-broadcastradio-support \
     car-stream-ui-lib
+
+# Dependency for bcradio-android-arch-room-runtime-nodeps
+LOCAL_STATIC_ANDROID_LIBRARIES += \
+    android-support-v4
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-arch-lifecycle-livedata \

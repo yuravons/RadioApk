@@ -28,9 +28,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
-import android.support.v4.media.MediaBrowserServiceCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
+
+import androidx.media.MediaBrowserServiceCompat;
 
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.broadcastradio.support.media.BrowseTree;
