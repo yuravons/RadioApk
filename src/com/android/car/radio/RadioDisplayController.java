@@ -17,17 +17,20 @@
 package com.android.car.radio;
 
 import android.content.Context;
-import android.media.session.PlaybackState;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewStub;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.android.car.radio.audio.IPlaybackStateListener;
+import com.android.car.radio.utils.LocalInterface;
+
 /**
  * Controller that controls the appearance state of various UI elements in the radio.
  */
-public class RadioDisplayController {
+public class RadioDisplayController implements IPlaybackStateListener, LocalInterface {
     private final Context mContext;
 
     private TextView mChannelBand;
@@ -225,21 +228,15 @@ public class RadioDisplayController {
         }
     }
 
-    /**
-     * Sets the current state of the play button. If the given {@code muted} value is {@code true},
-     * then the button display a play icon. If {@code false}, then the button will display a
-     * pause icon.
-     */
-    public void setPlayPauseButtonState(boolean muted) {
+    @Override
+    public void onPlaybackStateChanged(@PlaybackStateCompat.State int state) {
         if (mPlayButton != null) {
-            mPlayButton.setPlayState(muted
-                    ? PlaybackState.STATE_PAUSED : PlaybackState.STATE_PLAYING);
+            mPlayButton.setPlayState(state);
             mPlayButton.refreshDrawableState();
         }
 
         if (mPresetPlayButton != null) {
-            mPresetPlayButton.setPlayState(muted
-                    ? PlaybackState.STATE_PAUSED : PlaybackState.STATE_PLAYING);
+            mPresetPlayButton.setPlayState(state);
             mPresetPlayButton.refreshDrawableState();
         }
     }

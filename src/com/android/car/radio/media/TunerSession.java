@@ -23,7 +23,6 @@ import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.RatingCompat;
@@ -39,6 +38,7 @@ import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.R;
 import com.android.car.radio.audio.IPlaybackStateListener;
 import com.android.car.radio.service.IRadioManager;
+import com.android.car.radio.utils.LocalInterface;
 import com.android.car.radio.utils.ThrowingRunnable;
 
 import java.util.Objects;
@@ -46,7 +46,8 @@ import java.util.Objects;
 /**
  * Implementation of tuner's MediaSession.
  */
-public class TunerSession extends MediaSessionCompat implements IPlaybackStateListener {
+public class TunerSession extends MediaSessionCompat
+        implements IPlaybackStateListener, LocalInterface {
     private static final String TAG = "BcRadioApp.msess";
 
     private final Object mLock = new Object();
@@ -190,10 +191,5 @@ public class TunerSession extends MediaSessionCompat implements IPlaybackStateLi
                 selectionError();
             }
         }
-    }
-
-    @Override
-    public IBinder asBinder() {
-        throw new UnsupportedOperationException("Not a binder");
     }
 }
