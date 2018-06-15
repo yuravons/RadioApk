@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <resources>
     <!-- The default style for a radio button. -->
-    <style name="RadioButton" parent="@android:style/Widget.Material.Button.Borderless">
+    <style name="RadioButton">
         <item name="android:background">@drawable/radio_control_background</item>
         <item name="android:padding">@dimen/car_radio_controls_button_padding</item>
         <item name="android:scaleType">center</item>
@@ -118,5 +118,18 @@ limitations under the License.
         <item name="android:textAllCaps">true</item>
         <item name="android:textColor">@color/car_headline1</item>
         <item name="android:textSize">@dimen/manual_tuner_channel_text_size</item>
+    </style>
+
+    <style name="DialpadKeyButtonStyle" parent="@style/TextAppearance.Car.Body1">
+        <item name="android:clickable">true</item>
+        <item name="android:layout_width">@dimen/radio_dialpad_button_size</item>
+        <item name="android:layout_height">@dimen/radio_dialpad_button_size</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:minWidth">@dimen/car_touch_target_size</item>
+        <item name="android:minHeight">@dimen/car_touch_target_size</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+        <item name="android:focusable">true</item>
+        <item name="android:textColor">@color/manual_tuner_button_text</item>
     </style>
 </resources>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,128 +16,113 @@
 
 package com.android.car.radio;
 
-import android.annotation.Nullable;
 import android.content.Intent;
-import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
+import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.Pair;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
-import androidx.car.drawer.CarDrawerActivity;
-import androidx.car.drawer.CarDrawerAdapter;
-import androidx.car.drawer.DrawerItemViewHolder;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentActivity;
+import androidx.viewpager.widget.ViewPager;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.android.car.radio.utils.ProgramSelectorUtils;
+
+import com.google.android.material.tabs.TabLayout;
 
 /**
  * The main activity for the radio. This activity initializes the radio controls and listener for
  * radio changes.
  */
-public class CarRadioActivity extends CarDrawerActivity implements
-        RadioPresetsFragment.PresetListExitListener,
-        MainRadioFragment.RadioPresetListClickListener,
-        ManualTunerFragment.ManualTunerCompletionListener {
+public class CarRadioActivity extends FragmentActivity implements
+        RadioController.ProgramInfoChangeListener {
     private static final String TAG = "Em.RadioActivity";
-    private static final String MANUAL_TUNER_BACKSTACK = "MANUAL_TUNER_BACKSTACK";
-    private static final String CONTENT_FRAGMENT_TAG = "CONTENT_FRAGMENT_TAG";
-
-    private static final List<Pair<Integer, String>> SUPPORTED_RADIO_BANDS = new ArrayList<>();
 
     /**
      * Intent action for notifying that the radio state has changed.
      */
-    private static final String ACTION_RADIO_APP_STATE_CHANGE
-            = "android.intent.action.RADIO_APP_STATE_CHANGE";
+    private static final String ACTION_RADIO_APP_STATE_CHANGE =
+            "android.intent.action.RADIO_APP_STATE_CHANGE";
 
     /**
      * Boolean Intent extra indicating if the radio is the currently in the foreground.
      */
-    private static final String EXTRA_RADIO_APP_FOREGROUND
-            = "android.intent.action.RADIO_APP_STATE";
-
-    /**
-     * Whether or not it is safe to make transactions on the
-     * {@link androidx.fragment.app.FragmentManager}. This variable prevents a possible exception
-     * when calling commit() on the FragmentManager.
-     *
-     * <p>The default value is {@code true} because it is only after
-     * {@link #onSaveInstanceState(Bundle)} has been called that fragment commits are not allowed.
-     */
-    private boolean mAllowFragmentCommits = true;
+    private static final String EXTRA_RADIO_APP_FOREGROUND =
+            "android.intent.action.RADIO_APP_STATE";
 
     private RadioController mRadioController;
+    private View mRootView;
+    private ImageButton mBandToggleButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        SUPPORTED_RADIO_BANDS.add(
-                new Pair<>(RadioManager.BAND_AM, getString(R.string.radio_am_text)));
-        SUPPORTED_RADIO_BANDS.add(
-                new Pair<>(RadioManager.BAND_FM, getString(R.string.radio_fm_text)));
-
         super.onCreate(savedInstanceState);
-        setToolbarElevation(0f);
 
         mRadioController = new RadioController(this);
-        setContentFragment(
-                MainRadioFragment.newInstance(mRadioController, this /* clickListener */));
+        mRadioController.addProgramInfoChangeListener(this);
+        setContentView(R.layout.radio_activity);
+        mRootView = findViewById(R.id.main_radio_display);
+        RadioFragmentPagerAdapter adapter =
+                new RadioFragmentPagerAdapter(this, getSupportFragmentManager(), mRadioController);
+        ViewPager viewPager = findViewById(R.id.viewpager);
+        viewPager.setAdapter(adapter);
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.radio_tabs);
+        tabLayout.setupWithViewPager(viewPager);
 
-    }
+        for (int i = 0; i < adapter.getCount(); i++) {
+            LinearLayout tab = (LinearLayout) getLayoutInflater().inflate(R.layout.tab_item, null);
+            TextView tabLabel = tab.findViewById(R.id.tab_label);
+            ImageView tabIcon = tab.findViewById(R.id.tab_icon);
 
-    @Override
-    protected CarDrawerAdapter getRootAdapter() {
-        return new RadioDrawerAdapter();
-    }
-
-    @Override
-    public void onPresetListClicked() {
-        setContentFragment(
-                RadioPresetsFragment.newInstance(mRadioController, this /* existListener */));
-    }
-
-    @Override
-    public void OnPresetListExit() {
-        setContentFragment(
-                MainRadioFragment.newInstance(mRadioController, this /* clickListener */));
-    }
-
-    private void startManualTuner() {
-        if (!mAllowFragmentCommits || getSupportFragmentManager().getBackStackEntryCount() > 0) {
-            return;
+            tabLabel.setText(adapter.getPageTitle(i));
+            tabLabel.setTextColor(getColor(R.color.car_radio_control_button_disabled));
+            tabIcon.setImageResource(adapter.getImageResource(i));
+            tabIcon.setColorFilter(getColor(R.color.car_radio_control_button_disabled));
+            if (i == 0) {
+                tabLabel.setTextColor(getColor(R.color.car_radio_control_button));
+                tabIcon.setColorFilter(getColor(R.color.car_radio_control_button));
+            }
+            tabLayout.getTabAt(i).setCustomView(tab);
         }
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
 
-        Fragment currentFragment = getCurrentFragment();
-        if (currentFragment instanceof FragmentWithFade) {
-            ((FragmentWithFade) currentFragment).fadeOutContent();
-        }
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                View tabView = tab.getCustomView();
+                TextView tabLabel = tabView.findViewById(R.id.tab_label);
+                ImageView tabIcon = tabView.findViewById(R.id.tab_icon);
 
-        ManualTunerFragment tunerFragment =
-                ManualTunerFragment.newInstance(mRadioController.getCurrentRadioBand());
-        tunerFragment.setManualTunerCompletionListener(this);
+                tabLabel.setTextColor(getColor(R.color.car_radio_control_button));
+                tabIcon.setColorFilter(getColor(R.color.car_radio_control_button));
+            }
 
-        getSupportFragmentManager().beginTransaction()
-                .setCustomAnimations(R.anim.slide_up, R.anim.slide_down,
-                        R.anim.slide_up, R.anim.slide_down)
-                .add(getContentContainerId(), tunerFragment)
-                .addToBackStack(MANUAL_TUNER_BACKSTACK)
-                .commit();
-    }
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                View tabView = tab.getCustomView();
+                TextView tabLabel = tabView.findViewById(R.id.tab_label);
+                ImageView tabIcon = tabView.findViewById(R.id.tab_icon);
+                tabLabel.setTextColor(getColor(R.color.car_radio_control_button_disabled));
+                tabIcon.setColorFilter(getColor(R.color.car_radio_control_button_disabled));
+            }
+        });
+        tabLayout.getTabAt(0).select();
 
-    @Override
-    public void onStationSelected(ProgramSelector sel) {
-        maybeDismissManualTuner();
+        mBandToggleButton = findViewById(R.id.band_toggle_button);
+        mBandToggleButton.setOnClickListener(v -> {
+            if (mRadioController.getCurrentRadioBand() == RadioManager.BAND_AM) {
+                mRadioController.switchBand(RadioManager.BAND_FM);
+            } else {
+                mRadioController.switchBand(RadioManager.BAND_AM);
+            }
+        });
 
-        Fragment fragment = getCurrentFragment();
-        if (fragment instanceof FragmentWithFade) {
-            ((FragmentWithFade) fragment).fadeInContent();
-        }
-
-        if (sel != null) {
-            mRadioController.tune(sel);
-        }
     }
 
     @Override
@@ -147,11 +132,7 @@ public class CarRadioActivity extends CarDrawerActivity implements
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "onStart");
         }
-
-        // Fragment commits are not allowed once the Activity's state has been saved. Once
-        // onStart() has been called, the FragmentManager should now allow commits.
-        mAllowFragmentCommits = true;
-
+        mRadioController.initialize(mRootView);
         mRadioController.start();
 
         Intent broadcast = new Intent(ACTION_RADIO_APP_STATE_CHANGE);
@@ -184,83 +165,12 @@ public class CarRadioActivity extends CarDrawerActivity implements
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        // A transaction can only be committed with this method prior to its containing activity
-        // saving its state.
-        mAllowFragmentCommits = false;
-        super.onSaveInstanceState(outState);
-    }
-
-    /**
-     * Checks if the manual tuner is currently being displayed. If it is, then dismiss it.
-     */
-    private void maybeDismissManualTuner() {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        if (fragmentManager.getBackStackEntryCount() > 0) {
-            // A station can only be selected if the manual tuner fragment has been shown; so, remove
-            // that here.
-            getSupportFragmentManager().popBackStack();
-        }
-    }
-
-    private void setContentFragment(Fragment fragment) {
-        if (!mAllowFragmentCommits) {
-            return;
-        }
-
-        getSupportFragmentManager().beginTransaction()
-                .replace(getContentContainerId(), fragment, CONTENT_FRAGMENT_TAG)
-                .commitNow();
-    }
-
-    /**
-     * Returns the fragment that is currently being displayed as the content view. Note that this
-     * is not necessarily the fragment that is visible. The manual tuner fragment can be displayed
-     * on top of this content fragment.
-     */
-    @Nullable
-    private Fragment getCurrentFragment() {
-        return getSupportFragmentManager().findFragmentByTag(CONTENT_FRAGMENT_TAG);
-    }
-
-    /**
-     * An adapter that is responsible for populating the Radio drawer with the available bands to
-     * select, as well as the option for opening the manual tuner.
-     */
-    private class RadioDrawerAdapter extends CarDrawerAdapter {
-        private final List<String> mDrawerOptions =
-                new ArrayList<>(SUPPORTED_RADIO_BANDS.size() + 1);
-
-        RadioDrawerAdapter() {
-            super(CarRadioActivity.this, false /* showDisabledListOnEmpty */);
-            setTitle(getString(R.string.app_name));
-            // The ordering of options is hardcoded. The click handler below depends on it.
-            for (Pair<Integer, String> band : SUPPORTED_RADIO_BANDS) {
-                mDrawerOptions.add(band.second);
-            }
-            mDrawerOptions.add(getString(R.string.manual_tuner_drawer_entry));
-        }
-
-        @Override
-        protected int getActualItemCount() {
-            return mDrawerOptions.size();
-        }
-
-        @Override
-        public void populateViewHolder(DrawerItemViewHolder holder, int position) {
-            holder.getTitle().setText(mDrawerOptions.get(position));
-        }
-
-        @Override
-        public void onItemClick(int position) {
-            getDrawerController().closeDrawer();
-            if (position < SUPPORTED_RADIO_BANDS.size()) {
-                mRadioController.switchBand(SUPPORTED_RADIO_BANDS.get(position).first);
-            } else if (position == SUPPORTED_RADIO_BANDS.size()) {
-                startManualTuner();
-            } else {
-                Log.w(TAG, "Unexpected position: " + position);
-            }
+    public void onProgramInfoChanged(ProgramInfo info) {
+        int radioBand = ProgramSelectorUtils.getRadioBand(info.getSelector());
+        if (radioBand == RadioManager.BAND_FM) {
+            mBandToggleButton.setImageResource(R.drawable.ic_radio_fm);
+        } else if (radioBand == RadioManager.BAND_AM) {
+            mBandToggleButton.setImageResource(R.drawable.ic_radio_am);
         }
     }
 }

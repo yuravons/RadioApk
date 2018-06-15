@@ -153,19 +153,7 @@ public class ManualTunerController {
      * tuner.
      */
     private void initializeChannelButtons(View container) {
-        RadioBandButton amBandButton = container.findViewById(R.id.manual_tuner_am_band);
-        RadioBandButton fmBandButton = container.findViewById(R.id.manual_tuner_fm_band);
         mDoneButton = container.findViewById(R.id.manual_tuner_done_button);
-
-        View backButton = container.findViewById(R.id.exit_manual_tuner_button);
-        if (backButton != null) {
-            backButton.setOnClickListener(v -> {
-                if (mManualTunerClickListener != null) {
-                    mManualTunerClickListener.onBack();
-                }
-            });
-        }
-
         mDoneButton.setOnClickListener(v -> {
             if (mManualTunerClickListener == null) {
                 return;
@@ -175,30 +163,6 @@ public class ManualTunerController {
             mManualTunerClickListener.onDone(
                     ProgramSelectorExt.createAmFmSelector(channelFrequency));
         });
-
-        if (amBandButton != null) {
-            amBandButton.setOnClickListener(v -> {
-                mCurrentRadioBand = RadioManager.BAND_AM;
-                mChannelValidator = mAmChannelValidator;
-                amBandButton.setIsBandSelected(true);
-                fmBandButton.setIsBandSelected(false);
-                resetChannel();
-            });
-        }
-        if (fmBandButton != null) {
-            fmBandButton.setOnClickListener(v -> {
-                mCurrentRadioBand = RadioManager.BAND_FM;
-                mChannelValidator = mFmChannelValidator;
-                amBandButton.setIsBandSelected(false);
-                fmBandButton.setIsBandSelected(true);
-                resetChannel();
-            });
-        }
-        if (mCurrentRadioBand == RadioManager.BAND_AM && amBandButton != null) {
-            amBandButton.setIsBandSelected(true);
-        } else if (fmBandButton != null) {
-            fmBandButton.setIsBandSelected(true);
-        }
     }
 
     /**

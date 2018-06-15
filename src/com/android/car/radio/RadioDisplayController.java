@@ -20,7 +20,6 @@ import android.content.Context;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.TextUtils;
 import android.view.View;
-import android.view.ViewStub;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -43,9 +42,7 @@ public class RadioDisplayController implements IPlaybackStateListener, LocalInte
     private ImageView mForwardSeekButton;
 
     private PlayPauseButton mPlayButton;
-    private PlayPauseButton mPresetPlayButton;
 
-    private ImageView mPresetsListButton;
     private ImageView mAddPresetsButton;
 
     public RadioDisplayController(Context context) {
@@ -53,38 +50,17 @@ public class RadioDisplayController implements IPlaybackStateListener, LocalInte
     }
 
     public void initialize(View container) {
-        // Note that the band and channel number can exist without the stub
-        // single_channel_view_stub. Refer to setSingleChannelDisplay() for more information.
         mChannelBand = container.findViewById(R.id.radio_station_band);
         mChannelNumber = container.findViewById(R.id.radio_station_channel);
 
-        mCurrentSongTitleAndArtist = container.findViewById(R.id.radio_station_song_artist);
+        mCurrentSongTitleAndArtist = container.findViewById(R.id.radio_station_details);
         mCurrentStation = container.findViewById(R.id.radio_station_name);
 
         mBackwardSeekButton = container.findViewById(R.id.radio_back_button);
         mForwardSeekButton = container.findViewById(R.id.radio_forward_button);
 
         mPlayButton = container.findViewById(R.id.radio_play_button);
-        mPresetPlayButton = container.findViewById(R.id.preset_radio_play_button);
-
-        mPresetsListButton = container.findViewById(R.id.radio_presets_list);
         mAddPresetsButton = container.findViewById(R.id.radio_add_presets_button);
-    }
-
-    /**
-     * Sets this radio controller to display with a single box representing the current radio
-     * station.
-     */
-    public void setSingleChannelDisplay(View container) {
-        ViewStub stub = container.findViewById(R.id.single_channel_view_stub);
-
-        if (stub != null) {
-            container = stub.inflate();
-        }
-
-        // Update references to the band and channel number.
-        mChannelBand = container.findViewById(R.id.radio_station_band);
-        mChannelNumber = container.findViewById(R.id.radio_station_channel);
     }
 
     /**
@@ -105,12 +81,6 @@ public class RadioDisplayController implements IPlaybackStateListener, LocalInte
             mPlayButton.setEnabled(enabled);
         }
 
-        if (mPresetPlayButton != null) {
-            // No need to tint the play button because its drawable already contains a disabled
-            // state.
-            mPresetPlayButton.setEnabled(enabled);
-        }
-
         if (mForwardSeekButton != null) {
             mForwardSeekButton.setEnabled(enabled);
             mForwardSeekButton.setColorFilter(tint);
@@ -119,11 +89,6 @@ public class RadioDisplayController implements IPlaybackStateListener, LocalInte
         if (mBackwardSeekButton != null) {
             mBackwardSeekButton.setEnabled(enabled);
             mBackwardSeekButton.setColorFilter(tint);
-        }
-
-        if (mPresetsListButton != null) {
-            mPresetsListButton.setEnabled(enabled);
-            mPresetsListButton.setColorFilter(tint);
         }
 
         if (mAddPresetsButton != null) {
@@ -157,10 +122,6 @@ public class RadioDisplayController implements IPlaybackStateListener, LocalInte
     public void setPlayButtonListener(View.OnClickListener listener) {
         if (mPlayButton != null) {
             mPlayButton.setOnClickListener(listener);
-        }
-
-        if (mPresetPlayButton != null) {
-            mPresetPlayButton.setOnClickListener(listener);
         }
     }
 
@@ -234,16 +195,11 @@ public class RadioDisplayController implements IPlaybackStateListener, LocalInte
             mPlayButton.setPlayState(state);
             mPlayButton.refreshDrawableState();
         }
-
-        if (mPresetPlayButton != null) {
-            mPresetPlayButton.setPlayState(state);
-            mPresetPlayButton.refreshDrawableState();
-        }
     }
 
     /**
      * Sets whether or not the current channel that is playing is a preset. If it is, then the
-     * icon in {@link #mPresetsListButton} will be updatd to reflect this state.
+     * icon will be updatd to reflect this state.
      */
     public void setChannelIsPreset(boolean isPreset) {
         if (mAddPresetsButton != null) {
