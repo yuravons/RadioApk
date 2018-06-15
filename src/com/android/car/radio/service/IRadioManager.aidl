@@ -19,6 +19,7 @@ import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
 
 import com.android.car.broadcastradio.support.Program;
+import com.android.car.radio.audio.IPlaybackStateListener;
 import com.android.car.radio.service.IRadioCallback;
 
 /**
@@ -94,6 +95,16 @@ interface IRadioManager {
 
     // TODO(b/73950974): use callback only (and make sure it's always called for new listeners)
     RadioManager.ProgramInfo getCurrentProgramInfo();
+
+    /**
+     * Adds {@link IPlaybackStateListener} listener for play/pause notifications.
+     */
+    void addPlaybackStateListener(in IPlaybackStateListener callback);
+
+    /**
+     * Removes {@link IPlaybackStateListener} listener.
+     */
+    void removePlaybackStateListener(in IPlaybackStateListener callback);
 
     /**
      * Returns {@code true} if the radio was able to successfully initialize. A value of

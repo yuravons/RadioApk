@@ -28,8 +28,8 @@ import android.widget.ImageView;
 public class PlayPauseButton extends ImageView {
     private static final String TAG = "Em.PlayPauseButton";
 
-    private final int[] STATE_PLAYING = {R.attr.state_playing};
-    private final int[] STATE_PAUSED = {R.attr.state_paused};
+    private static final int[] STATE_PLAYING = {R.attr.state_playing};
+    private static final int[] STATE_PAUSED = {R.attr.state_paused};
 
     private int mPlaybackState = -1;
 
@@ -40,16 +40,9 @@ public class PlayPauseButton extends ImageView {
     /**
      * Set the current play state of the button.
      *
-     * @param playState One of the values from {@link PlaybackState}. Only
-     *                  {@link PlaybackState#STATE_PAUSED} and {@link PlaybackState#STATE_PLAYING}
-     *                  are valid.
+     * @param playState One of the values from {@link PlaybackState}.
      */
     public void setPlayState(int playState) {
-        if (playState != PlaybackState.STATE_PAUSED && playState != PlaybackState.STATE_PLAYING) {
-            throw new IllegalArgumentException("Playback state should be either "
-                    + "PlaybackState.STATE_PAUSED or PlaybackState.STATE_PLAYING");
-        }
-
         mPlaybackState = playState;
     }
 
@@ -62,11 +55,14 @@ public class PlayPauseButton extends ImageView {
             case PlaybackState.STATE_PLAYING:
                 mergeDrawableStates(drawableState, STATE_PLAYING);
                 break;
+            case PlaybackState.STATE_NONE:
             case PlaybackState.STATE_PAUSED:
+            case PlaybackState.STATE_STOPPED:
+            case PlaybackState.STATE_CONNECTING:
                 mergeDrawableStates(drawableState, STATE_PAUSED);
                 break;
             default:
-                Log.e(TAG, "Unknown PlaybackState: " + mPlaybackState);
+                Log.e(TAG, "Unsupported PlaybackState: " + mPlaybackState);
         }
         if (getBackground() != null) {
             getBackground().setState(drawableState);
