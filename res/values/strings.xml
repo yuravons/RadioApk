@@ -59,4 +59,12 @@ limitations under the License.
     <string name="manual_tuner_8">8</string>
     <string name="manual_tuner_9">9</string>
     <string name="manual_tuner_period">.</string>
+
+    <!-- Tab header text. -->
+    <string name="home_tab">Home</string>
+    <string name="favorites_tab">Favorites</string>
+    <string name="tune_tab">Tune</string>
+
+    <!-- Text to confirm manual tuner selection. -->
+    <string name="enter_text">Enter</string>
 </resources>

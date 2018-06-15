@@ -20,23 +20,13 @@ limitations under the License.
     <!-- The default background color of the radio. -->
     <color name="car_radio_bg_color">#283593</color>    <!-- Indigo 800 -->
 
-    <!-- Background colors for different AM frequencies. -->
-    <color name="am_range_1_bg_color">#455a64</color>   <!-- Blue Grey 700 -->
-    <color name="am_range_2_bg_color">#37474f</color>   <!-- Blue Grey 800 -->
-    <color name="am_range_3_bg_color">#263238</color>   <!-- Blue Grey 900 -->
-
-    <!-- Background colors for different FM frequencies. -->
-    <color name="fm_range_1_bg_color">#283593</color>   <!-- Indigo 800 -->
-    <color name="fm_range_2_bg_color">#2a56c6</color>   <!-- Blue 800 -->
-    <color name="fm_range_3_bg_color">#00838f</color>   <!-- Cyan 800 -->
-
     <!-- The color of the radio control buttons. -->
-    <color name="car_radio_control_button">@android:color/black</color>
+    <color name="car_radio_control_button">@color/car_grey_100</color>
     <!-- The color of the radio control buttons. -->
     <color name="car_radio_equalizer">@android:color/white</color>
 
     <!-- The color of the radio control buttons when they are disabled. -->
-    <color name="car_radio_control_button_disabled">@color/car_grey_400</color>
+    <color name="car_radio_control_button_disabled">@color/car_grey_650</color>
 
     <!-- The color of the FAB when it is diabled. -->
     <color name="car_radio_control_fab_button_disabled">@color/car_grey_400</color>
@@ -51,11 +41,21 @@ limitations under the License.
     <color name="radio_current_station_text">@color/car_radio_control_button</color>
 
     <!-- The text color of the buttons in the manual tuner. -->
-    <color name="manual_tuner_button_text">#0B73B7</color>
+    <color name="manual_tuner_button_text">@color/car_title2_light</color>
 
     <!-- The text color displaying the currently entered channel in the manual tuner. -->
     <color name="manual_tuner_channel_text">@color/car_grey_800</color>
 
     <!-- The color of the icon within the manaul tuner's done button when it is disabled. -->
     <color name="manual_tuner_done_disabled">@color/car_grey_700</color>
+
+    <!-- The background ripple color for buttons in the manual tuner -->
+    <color name="manual_tuner_button_ripple_background">#66ffffff</color>
+
+    <!-- The default background color of radio cards -->
+    <color name="radio_card_color">#ff131315</color>
+
+    <!-- The highlight color used for BigDog. -->
+    <color name="bigdog_accent_color">#ff356fe5</color>
+
 </resources>

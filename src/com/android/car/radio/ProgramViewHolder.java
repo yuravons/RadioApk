@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
-import com.android.car.view.CardListBackgroundResolver;
 
 import java.util.Objects;
 
@@ -37,10 +36,8 @@ import java.util.Objects;
  * A {@link RecyclerView.ViewHolder} that can bind a {@link Program} to the layout
  * {@code R.layout.radio_preset_item}.
  */
-public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+public class ProgramViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
     private static final String TAG = "Em.PresetVH";
-
-    private final RadioChannelColorMapper mColorMapper;
 
     private final OnPresetClickListener mPresetClickListener;
     private final OnPresetFavoriteListener mPresetFavoriteListener;
@@ -82,16 +79,15 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
     /**
      * @param presetsView A view that contains the layout {@code R.layout.radio_preset_item}.
      */
-    public PresetsViewHolder(@NonNull View presetsView, @NonNull OnPresetClickListener listener,
+    public ProgramViewHolder(@NonNull View presetsView, @NonNull OnPresetClickListener listener,
             @NonNull OnPresetFavoriteListener favoriteListener) {
         super(presetsView);
 
         mContext = presetsView.getContext();
 
-        mPresetsCard = presetsView.findViewById(R.id.preset_card);;
+        mPresetsCard = presetsView.findViewById(R.id.preset_card);
         mPresetsCard.setOnClickListener(this);
 
-        mColorMapper = RadioChannelColorMapper.getInstance(mContext);
         mPresetClickListener = Objects.requireNonNull(listener);
         mPresetFavoriteListener = Objects.requireNonNull(favoriteListener);
 
@@ -121,24 +117,19 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
         if (program == null) {
             mPresetItemChannel.setText(null);
             mPresetItemMetadata.setText(null);
-            mPresetItemChannelBg.setColor(mColorMapper.getDefaultColor());
             return;
         }
 
         ProgramSelector sel = program.getSelector();
-
-        CardListBackgroundResolver.setBackground(mPresetsCard, getAdapterPosition(), itemCount);
-
         mPresetItemChannel.setText(ProgramSelectorExt.getDisplayName(
                 sel, ProgramSelectorExt.NAME_NO_MODULATION));
-        if (isActiveStation) {
-            mPresetItemChannel.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                    R.drawable.ic_equalizer, 0, 0, 0);
-        } else {
-            mPresetItemChannel.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0);
-        }
 
-        mPresetItemChannelBg.setColor(mColorMapper.getColorForProgram(sel));
+        mPresetItemChannelBg.setColor(mContext.getResources().getColor(isActiveStation
+                ? R.color.bigdog_accent_color
+                : R.color.car_card_dark, null));
+        mPresetItemChannel.setCompoundDrawablesRelativeWithIntrinsicBounds(isActiveStation
+                ? R.drawable.ic_equalizer
+                : 0, 0, 0, 0);
 
         String programName = program.getName();
         if (programName.isEmpty()) {
@@ -159,12 +150,14 @@ public class PresetsViewHolder extends RecyclerView.ViewHolder implements View.O
     }
 
     private void setFavoriteButtonFilled(boolean favoriteToggleOn) {
-        if (favoriteToggleOn) {
-            mPresetButton.setImageResource(R.drawable.ic_star_filled);
-            mPresetButton.setTag(R.drawable.ic_star_filled);
-        } else {
-            mPresetButton.setImageResource(R.drawable.ic_star_empty);
-            mPresetButton.setTag(R.drawable.ic_star_empty);
-        }
+        mPresetButton.setImageResource(favoriteToggleOn
+                ? R.drawable.ic_star_filled
+                : R.drawable.ic_star_empty);
+        mPresetButton.setTag(favoriteToggleOn
+                ? R.drawable.ic_star_filled
+                : R.drawable.ic_star_empty);
+        mPresetButton.setColorFilter(mContext.getColor(favoriteToggleOn
+                ? R.color.bigdog_accent_color
+                : R.color.car_radio_control_button));
     }
 }
