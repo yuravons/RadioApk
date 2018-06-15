@@ -29,19 +29,4 @@ oneway interface IRadioCallback {
      * @param info The current program info.
      */
     void onCurrentProgramInfoChanged(in RadioManager.ProgramInfo info);
-
-    /**
-     * Called when the mute state of the radio has changed.
-     *
-     * @param isMuted {@code true} if the radio is muted.
-     */
-    void onRadioMuteChanged(boolean isMuted);
-
-    /**
-     * Called when the radio has encountered an error.
-     *
-     * @param status One of the error states in {@link RadioManager}. For example,
-     *               {@link RadioManager#ERROR_HARDWARE_FAILURE}.
-     */
-    void onError(int status);
 }
