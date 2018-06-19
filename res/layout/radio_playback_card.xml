@@ -21,7 +21,7 @@ limitations under the License.
     android:layout_height="wrap_content"
     android:layout_marginLeft="@dimen/car_margin"
     android:layout_marginRight="@dimen/car_margin"
-    android:layout_marginBottom="@dimen/car_padding_5"
+    android:layout_marginBottom="@dimen/playback_card_bottom_margin"
     android:paddingTop="@dimen/car_padding_4"
     android:paddingLeft="@dimen/car_keyline_1"
     android:paddingRight="@dimen/car_keyline_1"
