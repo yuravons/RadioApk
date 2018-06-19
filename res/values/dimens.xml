@@ -59,7 +59,7 @@ limitations under the License.
     <dimen name="car_radio_controls_button_padding">16dp</dimen>
 
     <!-- The height of each card that displays a user preset. -->
-    <dimen name="car_preset_item_height">128dp</dimen>
+    <dimen name="car_preset_item_height">116dp</dimen>
 
     <!-- The radius of a rounded card in the preset activity. This value should be half the value of
          car_preset_item_height. -->
@@ -136,7 +136,7 @@ limitations under the License.
 
     <!-- Playback card -->
     <dimen name="radio_action_bar_height">106dp</dimen>
-    <dimen name="radio_playback_height">96dp</dimen>
+    <dimen name="radio_playback_height">192dp</dimen>
     <dimen name="radio_art_size">96dp</dimen>
     <dimen name="radio_control_button_size">64dp</dimen>
     <dimen name="playback_card_bottom_margin">@dimen/car_padding_5</dimen>

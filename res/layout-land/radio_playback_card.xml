@@ -22,7 +22,6 @@ limitations under the License.
     android:layout_marginLeft="@dimen/car_margin"
     android:layout_marginRight="@dimen/car_margin"
     android:layout_marginBottom="@dimen/playback_card_bottom_margin"
-    android:paddingTop="@dimen/car_padding_4"
     android:paddingLeft="@dimen/car_keyline_1"
     android:paddingRight="@dimen/car_keyline_1"
     android:background="@drawable/playback_background">
@@ -52,8 +51,7 @@ limitations under the License.
         android:layout_marginRight="@dimen/car_padding_5"
         android:maxLines="1"
         android:fontFamily="sans-serif-medium"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/controls"
+        app:layout_constraintBaseline_toBaselineOf="@+id/radio_station_name"
         app:layout_constraintStart_toEndOf="@+id/radio_station_name"
         app:layout_constraintEnd_toStartOf="@+id/radio_station_channel"
         android:visibility="gone"
@@ -80,6 +78,10 @@ limitations under the License.
     <include
         layout="@layout/radio_playback_controls"
         android:id="@+id/controls"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/radio_station_details"
         app:layout_constraintBottom_toBottomOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

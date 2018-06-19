@@ -15,8 +15,7 @@ limitations under the License.
 -->
 <resources>
     <dimen name="radio_dialpad_button_size">64dp</dimen>
-    <dimen name="car_preset_item_height">96dp</dimen>
-    <dimen name="car_preset_number_bg_width">144dp</dimen>
-    <dimen name="car_preset_number_bg_height">64dp</dimen>
-    <dimen name="playback_card_bottom_margin">@dimen/car_padding_4</dimen>
+    <dimen name="car_preset_number_bg_width">160dp</dimen>
+    <dimen name="car_preset_number_bg_height">76dp</dimen>
+    <dimen name="playback_card_bottom_margin">@dimen/car_padding_1</dimen>
 </resources>
