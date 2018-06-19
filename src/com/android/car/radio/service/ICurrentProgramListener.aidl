@@ -1,11 +1,11 @@
 /**
- * Copyright (c) 2016, The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.android.car.radio.service;
 
 import android.hardware.radio.RadioManager;
 
 /**
- * Interface for applications to listen for changes in the current radio state.
+ * Watches current program changes.
  */
-oneway interface IRadioCallback {
+oneway interface ICurrentProgramListener {
     /**
-     * Called when the current program info has changed.
+     * Called whether current program details changed.
      *
-     * This might happen either as a result of tune operation or just metadata change.
+     * This might happen as a result of tuning to a different program or just metadata change.
      *
-     * @param info The current program info.
+     * @param info Current program info
      */
-    void onCurrentProgramInfoChanged(in RadioManager.ProgramInfo info);
+    void onCurrentProgramChanged(in RadioManager.ProgramInfo info);
 }

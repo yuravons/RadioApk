@@ -39,7 +39,8 @@ import android.view.View;
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.broadcastradio.support.platform.ProgramInfoExt;
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
-import com.android.car.radio.service.IRadioCallback;
+import com.android.car.radio.service.CurrentProgramListenerAdapter;
+import com.android.car.radio.service.ICurrentProgramListener;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.storage.RadioStorage;
 import com.android.car.radio.utils.ProgramSelectorUtils;
@@ -93,8 +94,13 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     private final List<RadioServiceConnectionListener> mRadioServiceConnectionListeners =
             new ArrayList<>();
 
+    private final ICurrentProgramListener mCurrentProgramListener =
+            new CurrentProgramListenerAdapter(this::onCurrentProgramChanged);
+
     /**
      * Interface for a class that will be notified when the current radio station has been changed.
+     *
+     * TODO(b/73950974): replace with ICurrentProgramListener
      */
     public interface ProgramInfoChangeListener {
         /**
@@ -142,8 +148,6 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
         mRadioDisplayController.setAddPresetButtonListener(mPresetButtonClickListener);
 
         mRadioBackground = container;
-
-        updateRadioDisplay();
     }
 
     /**
@@ -204,26 +208,6 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
                 mActivity, RadioService.class);
         if (!mActivity.bindService(bindIntent, mServiceConnection, Context.BIND_AUTO_CREATE)) {
             Log.e(TAG, "Failed to connect to RadioService.");
-        }
-
-        updateRadioDisplay();
-    }
-
-    /**
-     * Retrieves information about the current radio station from {@link #mRadioManager} and updates
-     * the display of that information accordingly.
-     */
-    private void updateRadioDisplay() {
-        if (mRadioManager == null) {
-            return;
-        }
-
-        try {
-            // TODO(b/73950974): use callback only
-            ProgramInfo current = mRadioManager.getCurrentProgramInfo();
-            if (current != null) mCallback.onCurrentProgramInfoChanged(current);
-        } catch (RemoteException e) {
-            Log.e(TAG, "updateRadioDisplay(); remote exception: " + e.getMessage());
         }
     }
 
@@ -376,7 +360,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
         if (mRadioManager != null) {
             try {
-                mRadioManager.removeRadioTunerCallback(mCallback);
+                mRadioManager.removeCurrentProgramListener(mCurrentProgramListener);
             } catch (RemoteException e) {
                 Log.e(TAG, "tuneToRadioChannel(); remote exception: " + e.getMessage());
             }
@@ -405,29 +389,25 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
         return null;
     }
 
-    private final IRadioCallback.Stub mCallback = new IRadioCallback.Stub() {
-        @Override
-        public void onCurrentProgramInfoChanged(ProgramInfo info) {
-            mCurrentProgram = Objects.requireNonNull(info);
-            ProgramSelector sel = info.getSelector();
+    private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
+        mCurrentProgram = Objects.requireNonNull(info);
+        ProgramSelector sel = info.getSelector();
 
-            updateRadioChannelDisplay(sel);
+        updateRadioChannelDisplay(sel);
 
-            mRadioDisplayController.setCurrentStation(
-                    ProgramInfoExt.getProgramName(info, ProgramInfoExt.NAME_NO_CHANNEL_FALLBACK));
-            RadioMetadata meta = ProgramInfoExt.getMetadata(mCurrentProgram);
-            mRadioDisplayController.setCurrentSongTitleAndArtist(
-                    meta.getString(RadioMetadata.METADATA_KEY_TITLE),
-                    meta.getString(RadioMetadata.METADATA_KEY_ARTIST));
+        mRadioDisplayController.setCurrentStation(
+                ProgramInfoExt.getProgramName(info, ProgramInfoExt.NAME_NO_CHANNEL_FALLBACK));
+        RadioMetadata meta = ProgramInfoExt.getMetadata(mCurrentProgram);
+        mRadioDisplayController.setCurrentSongTitleAndArtist(
+                meta.getString(RadioMetadata.METADATA_KEY_TITLE),
+                meta.getString(RadioMetadata.METADATA_KEY_ARTIST));
+        mRadioDisplayController.setChannelIsPreset(mRadioStorage.isPreset(sel));
 
-            mRadioDisplayController.setChannelIsPreset(mRadioStorage.isPreset(sel));
-
-            // Notify that the current radio station has changed.
-            for (ProgramInfoChangeListener listener : mProgramInfoChangeListeners) {
-                listener.onProgramInfoChanged(info);
-            }
+        // Notify that the current radio station has changed.
+        for (ProgramInfoChangeListener listener : mProgramInfoChangeListeners) {
+            listener.onProgramInfoChanged(info);
         }
-    };
+    }
 
     private final View.OnClickListener mBackwardSeekClickListener = new View.OnClickListener() {
         @Override
@@ -524,7 +504,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
                 mRadioDisplayController.setEnabled(true);
                 mRadioManager.addPlaybackStateListener(mRadioDisplayController);
 
-                mRadioManager.addRadioTunerCallback(mCallback);
+                mRadioManager.addCurrentProgramListener(mCurrentProgramListener);
 
                 // Notify listeners
                 for (RadioServiceConnectionListener listener : mRadioServiceConnectionListeners) {

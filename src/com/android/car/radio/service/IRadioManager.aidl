@@ -20,7 +20,7 @@ import android.hardware.radio.RadioManager;
 
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.radio.audio.IPlaybackStateListener;
-import com.android.car.radio.service.IRadioCallback;
+import com.android.car.radio.service.ICurrentProgramListener;
 
 /**
  * Interface for apps to communicate with the radio.
@@ -83,28 +83,32 @@ interface IRadioManager {
      */
     void switchBand(int radioBand);
 
-    /**
-     * Adds the given {@link IRadioCallback} to be notified of any radio metadata changes.
-     */
-    void addRadioTunerCallback(in IRadioCallback callback);
-
-    /**
-     * Removes the given {@link IRadioCallback} from receiving any radio metadata chagnes.
-     */
-    void removeRadioTunerCallback(in IRadioCallback callback);
-
     // TODO(b/73950974): use callback only (and make sure it's always called for new listeners)
     RadioManager.ProgramInfo getCurrentProgramInfo();
 
     /**
-     * Adds {@link IPlaybackStateListener} listener for play/pause notifications.
+     * Adds {@link ICurrentProgramListener} listener for current program info updates.
+     *
+     * Notifies newly added listener about current program.
      */
-    void addPlaybackStateListener(in IPlaybackStateListener callback);
+    void addCurrentProgramListener(in ICurrentProgramListener listener);
+
+    /**
+     * Removes {@link ICurrentProgramListener} listener.
+     */
+    void removeCurrentProgramListener(in ICurrentProgramListener listener);
+
+    /**
+     * Adds {@link IPlaybackStateListener} listener for play/pause notifications.
+     *
+     * Notifies newly added listener about current state.
+     */
+    void addPlaybackStateListener(in IPlaybackStateListener listener);
 
     /**
      * Removes {@link IPlaybackStateListener} listener.
      */
-    void removePlaybackStateListener(in IPlaybackStateListener callback);
+    void removePlaybackStateListener(in IPlaybackStateListener listener);
 
     /**
      * Returns {@code true} if the radio was able to successfully initialize. A value of
