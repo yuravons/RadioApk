@@ -16,6 +16,7 @@
 
 package com.android.car.radio;
 
+import android.annotation.NonNull;
 import android.content.Context;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.TextUtils;
@@ -23,13 +24,14 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.android.car.radio.audio.IPlaybackStateListener;
-import com.android.car.radio.utils.LocalInterface;
+import com.android.car.radio.audio.PlaybackStateListenerAdapter;
+
+import java.util.Objects;
 
 /**
  * Controller that controls the appearance state of various UI elements in the radio.
  */
-public class RadioDisplayController implements IPlaybackStateListener, LocalInterface {
+public class RadioDisplayController {
     private final Context mContext;
 
     private TextView mChannelBand;
@@ -45,8 +47,13 @@ public class RadioDisplayController implements IPlaybackStateListener, LocalInte
 
     private ImageView mAddPresetsButton;
 
-    public RadioDisplayController(Context context) {
-        mContext = context;
+    public RadioDisplayController(@NonNull Context context,
+            @NonNull RadioController radioController) {
+        mContext = Objects.requireNonNull(context);
+
+        radioController.addRadioServiceConnectionListener(() ->
+                radioController.addPlaybackStateListener(new PlaybackStateListenerAdapter(
+                        this::onPlaybackStateChanged)));
     }
 
     public void initialize(View container) {
@@ -189,8 +196,7 @@ public class RadioDisplayController implements IPlaybackStateListener, LocalInte
         }
     }
 
-    @Override
-    public void onPlaybackStateChanged(@PlaybackStateCompat.State int state) {
+    private void onPlaybackStateChanged(@PlaybackStateCompat.State int state) {
         if (mPlayButton != null) {
             mPlayButton.setPlayState(state);
             mPlayButton.refreshDrawableState();

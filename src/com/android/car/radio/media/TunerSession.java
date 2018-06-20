@@ -16,6 +16,9 @@
 
 package com.android.car.radio.media;
 
+import static com.android.car.radio.utils.Remote.exec;
+import static com.android.car.radio.utils.Remote.tryExec;
+
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Context;
@@ -23,7 +26,6 @@ import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.RatingCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -36,18 +38,16 @@ import com.android.car.broadcastradio.support.platform.ImageResolver;
 import com.android.car.broadcastradio.support.platform.ProgramInfoExt;
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.R;
-import com.android.car.radio.audio.IPlaybackStateListener;
+import com.android.car.radio.audio.PlaybackStateListenerAdapter;
+import com.android.car.radio.service.CurrentProgramListenerAdapter;
 import com.android.car.radio.service.IRadioManager;
-import com.android.car.radio.utils.LocalInterface;
-import com.android.car.radio.utils.ThrowingRunnable;
 
 import java.util.Objects;
 
 /**
  * Implementation of tuner's MediaSession.
  */
-public class TunerSession extends MediaSessionCompat
-        implements IPlaybackStateListener, LocalInterface {
+public class TunerSession extends MediaSessionCompat {
     private static final String TAG = "BcRadioApp.msess";
 
     private final Object mLock = new Object();
@@ -82,6 +82,11 @@ public class TunerSession extends MediaSessionCompat
         onPlaybackStateChanged(PlaybackStateCompat.STATE_NONE);
         setCallback(new TunerSessionCallback());
 
+        exec(() -> uiSession.addCurrentProgramListener(
+                new CurrentProgramListenerAdapter(this::onCurrentProgramChanged)));
+        exec(() -> uiSession.addPlaybackStateListener(
+                new PlaybackStateListenerAdapter(this::onPlaybackStateChanged)));
+
         setActive(true);
     }
 
@@ -94,15 +99,14 @@ public class TunerSession extends MediaSessionCompat
         }
     }
 
-    public void notifyProgramInfoChanged(@NonNull ProgramInfo info) {
+    private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
         synchronized (mLock) {
             mCurrentProgram = info;
             updateMetadata();
         }
     }
 
-    @Override
-    public void onPlaybackStateChanged(@PlaybackStateCompat.State int state) {
+    private void onPlaybackStateChanged(@PlaybackStateCompat.State int state) {
         synchronized (mPlaybackStateBuilder) {
             mPlaybackStateBuilder.setState(state,
                     PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f);
@@ -115,39 +119,31 @@ public class TunerSession extends MediaSessionCompat
     }
 
     private void selectionError() {
-        exec(() -> mUiSession.mute());
+        tryExec(() -> mUiSession.mute());
         mPlaybackStateBuilder.setErrorMessage(mContext.getString(R.string.invalid_selection));
         onPlaybackStateChanged(PlaybackStateCompat.STATE_ERROR);
         mPlaybackStateBuilder.setErrorMessage(null);
     }
 
-    private void exec(ThrowingRunnable<RemoteException> func) {
-        try {
-            func.run();
-        } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to execute MediaSession callback", ex);
-        }
-    }
-
     private class TunerSessionCallback extends MediaSessionCompat.Callback {
         @Override
         public void onStop() {
-            exec(() -> mUiSession.mute());
+            tryExec(() -> mUiSession.mute());
         }
 
         @Override
         public void onPlay() {
-            exec(() -> mUiSession.unMute());
+            tryExec(() -> mUiSession.unMute());
         }
 
         @Override
         public void onSkipToNext() {
-            exec(() -> mUiSession.seekForward());
+            tryExec(() -> mUiSession.seekForward());
         }
 
         @Override
         public void onSkipToPrevious() {
-            exec(() -> mUiSession.seekBackward());
+            tryExec(() -> mUiSession.seekBackward());
         }
 
         @Override
@@ -156,10 +152,10 @@ public class TunerSession extends MediaSessionCompat
                 if (mCurrentProgram == null) return;
                 if (rating.hasHeart()) {
                     Program fav = Program.fromProgramInfo(mCurrentProgram);
-                    exec(() -> mUiSession.addFavorite(fav));
+                    tryExec(() -> mUiSession.addFavorite(fav));
                 } else {
                     ProgramSelector fav = mCurrentProgram.getSelector();
-                    exec(() -> mUiSession.removeFavorite(fav));
+                    tryExec(() -> mUiSession.removeFavorite(fav));
                 }
             }
         }
@@ -174,7 +170,7 @@ public class TunerSession extends MediaSessionCompat
 
             ProgramSelector selector = mBrowseTree.parseMediaId(mediaId);
             if (selector != null) {
-                exec(() -> mUiSession.tune(selector));
+                tryExec(() -> mUiSession.tune(selector));
             } else {
                 Log.w(TAG, "Invalid media ID: " + mediaId);
                 selectionError();
@@ -185,7 +181,7 @@ public class TunerSession extends MediaSessionCompat
         public void onPlayFromUri(Uri uri, Bundle extras) {
             ProgramSelector selector = ProgramSelectorExt.fromUri(uri);
             if (selector != null) {
-                exec(() -> mUiSession.tune(selector));
+                tryExec(() -> mUiSession.tune(selector));
             } else {
                 Log.w(TAG, "Invalid URI: " + uri);
                 selectionError();

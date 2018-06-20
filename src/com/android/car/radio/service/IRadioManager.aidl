@@ -83,9 +83,6 @@ interface IRadioManager {
      */
     void switchBand(int radioBand);
 
-    // TODO(b/73950974): use callback only (and make sure it's always called for new listeners)
-    RadioManager.ProgramInfo getCurrentProgramInfo();
-
     /**
      * Adds {@link ICurrentProgramListener} listener for current program info updates.
      *
