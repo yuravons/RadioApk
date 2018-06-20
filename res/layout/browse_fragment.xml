@@ -26,7 +26,6 @@ limitations under the License.
         android:layout_height="match_parent"
         app:dayNightStyle="always_light"
         app:showPagedListViewDivider="true"
-        app:listContentTopOffset="@dimen/car_padding_4"
         app:listDividerColor="@color/car_list_divider_light"
         app:alignDividerEndTo="@id/preset_card"
         app:alignDividerStartTo="@id/preset_card"

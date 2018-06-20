@@ -60,10 +60,10 @@ limitations under the License.
     <include layout="@layout/radio_playback_card"
         android:id="@+id/main_radio_display"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/radio_playback_height"
         android:layout_marginLeft="@dimen/car_margin"
         android:layout_marginRight="@dimen/car_margin"
-        android:layout_marginBottom="@dimen/car_padding_5"
+        android:layout_marginBottom="@dimen/playback_card_bottom_margin"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
