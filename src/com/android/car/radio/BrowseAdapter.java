@@ -44,6 +44,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
     private static final int PRESETS_VIEW_TYPE = 0;
 
     private Program mActiveProgram;
+    private boolean mHasFavorites;
 
     private @NonNull List<FavoritableProgram> mPrograms = new ArrayList<>();
     private OnItemClickListener mItemClickListener;
@@ -122,6 +123,14 @@ public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
         for (Program p : newPrograms) {
             mPrograms.add(new FavoritableProgram(p, true));
         }
+
+        if (favorites.size() == 0) {
+            mHasFavorites = false;
+            mPrograms.clear();
+            mPrograms.add(new FavoritableProgram(mActiveProgram, false));
+        } else {
+            mHasFavorites = true;
+        }
         notifyDataSetChanged();
     }
 
@@ -132,7 +141,8 @@ public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
      */
     public void setActiveProgram(Program program) {
         mActiveProgram = program;
-        if (mPrograms.size() == 0) {
+        if (!mHasFavorites) {
+            mPrograms.clear();
             mPrograms.add(new FavoritableProgram(mActiveProgram, false));
         }
         notifyDataSetChanged();
