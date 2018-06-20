@@ -16,6 +16,7 @@
 
 package com.android.car.radio;
 
+import android.annotation.NonNull;
 import android.content.Context;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.Bundle;
@@ -29,20 +30,22 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.broadcastradio.support.Program;
+import com.android.car.radio.service.CurrentProgramListenerAdapter;
+import com.android.car.radio.service.ICurrentProgramListener;
 import com.android.car.radio.storage.RadioStorage;
 
 /**
  * Fragment that shows a list of all the current favorite radio stations
  */
-public class RadioFavoritesFragment extends Fragment implements
-        RadioController.ProgramInfoChangeListener,
-        RadioController.RadioServiceConnectionListener,
-        RadioStorage.PresetsChangeListener {
+public class RadioFavoritesFragment extends Fragment {
 
     private RadioController mRadioController;
     private BrowseAdapter mBrowseAdapter = new BrowseAdapter();
     private RadioStorage mRadioStorage;
     private PagedListView mBrowseList;
+
+    private final ICurrentProgramListener mCurrentProgramListener =
+            new CurrentProgramListenerAdapter(this::onCurrentProgramChanged);
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -55,7 +58,7 @@ public class RadioFavoritesFragment extends Fragment implements
     public void onViewCreated(View view, Bundle savedInstanceState) {
         Context context = getContext();
 
-        mRadioController.addRadioServiceConnectionListener(this);
+        mRadioController.addRadioServiceConnectionListener(this::onRadioServiceConnected);
         mBrowseAdapter.setOnItemClickListener(mRadioController::tune);
         mBrowseAdapter.setOnItemFavoriteListener(this::handlePresetItemFavoriteChanged);
 
@@ -68,36 +71,25 @@ public class RadioFavoritesFragment extends Fragment implements
                 .getDimensionPixelSize(R.dimen.car_padding_4));
 
         mRadioStorage = RadioStorage.getInstance(context);
-        mRadioStorage.addPresetsChangeListener(this);
+        mRadioStorage.addPresetsChangeListener(this::onPresetsRefreshed);
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        ProgramInfo info = mRadioController.getCurrentProgramInfo();
-        mRadioController.addProgramInfoChangeListener(this);
-        if (info != null) {
-            mBrowseAdapter.setActiveProgram(Program.fromProgramInfo(info));
-        }
-        mBrowseAdapter.setBrowseList(mRadioStorage.getPresets());
+    public void onDestroyView() {
+        mRadioController.removeCurrentProgramListener(mCurrentProgramListener);
+        super.onDestroyView();
     }
 
-    @Override
-    public void onProgramInfoChanged(ProgramInfo info) {
+    private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
         mBrowseAdapter.setActiveProgram(Program.fromProgramInfo(info));
     }
 
-    @Override
-    public void onPresetsRefreshed() {
+    private void onPresetsRefreshed() {
         mBrowseAdapter.updateFavorites(mRadioStorage.getPresets());
     }
 
-    @Override
-    public void onRadioServiceConnected() {
-        ProgramInfo info = mRadioController.getCurrentProgramInfo();
-        if (info != null) {
-            mBrowseAdapter.setActiveProgram(Program.fromProgramInfo(info));
-        }
+    private void onRadioServiceConnected() {
+        mRadioController.addCurrentProgramListener(mCurrentProgramListener);
         mBrowseAdapter.setBrowseList(mRadioStorage.getPresets());
     }
 
@@ -114,5 +106,4 @@ public class RadioFavoritesFragment extends Fragment implements
         fragment.mRadioController = radioController;
         return fragment;
     }
-
 }

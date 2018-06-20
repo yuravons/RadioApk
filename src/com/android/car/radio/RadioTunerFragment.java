@@ -16,6 +16,7 @@
 
 package com.android.car.radio;
 
+import android.annotation.NonNull;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
 import android.hardware.radio.RadioManager.ProgramInfo;
@@ -27,51 +28,56 @@ import android.widget.ImageButton;
 
 import androidx.fragment.app.Fragment;
 
+import com.android.car.radio.service.CurrentProgramListenerAdapter;
+import com.android.car.radio.service.ICurrentProgramListener;
+import com.android.car.radio.utils.ProgramSelectorUtils;
+
 /**
  * Fragment that allows tuning to a specific frequency using a keypad
  */
-public class RadioTunerFragment extends Fragment implements
-        RadioController.ProgramInfoChangeListener,
-        ManualTunerController.ManualTunerClickListener {
+public class RadioTunerFragment extends Fragment {
 
     private ManualTunerController mController;
     private RadioController mRadioController;
     private ImageButton mBandToggleButton;
+
+    private final ICurrentProgramListener mCurrentProgramListener =
+            new CurrentProgramListenerAdapter(this::onCurrentProgramChanged);
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.tuner_fragment, container, false);
         mController = new ManualTunerController(getContext(), view, RadioManager.BAND_FM);
-        mController.setDoneButtonListener(this);
+        mController.setDoneButtonListener(this::onManualTunerDone);
         mBandToggleButton = view.findViewById(R.id.manual_tuner_band_toggle);
         mBandToggleButton.setOnClickListener(v -> mRadioController.switchBand(
                 mRadioController.getCurrentRadioBand() == RadioManager.BAND_FM
                         ? RadioManager.BAND_AM
                         : RadioManager.BAND_FM));
-        mRadioController.addProgramInfoChangeListener(this);
+        mRadioController.addRadioServiceConnectionListener(() ->
+                mRadioController.addCurrentProgramListener(mCurrentProgramListener));
         return view;
     }
 
     @Override
-    public void onBack() {
-        // No-op, manual tuner won't be an overlay
+    public void onDestroyView() {
+        mRadioController.removeCurrentProgramListener(mCurrentProgramListener);
+        super.onDestroyView();
     }
 
-    @Override
-    public void onDone(ProgramSelector sel) {
+    private void onManualTunerDone(ProgramSelector sel) {
         if (sel != null) {
             mRadioController.tune(sel);
         }
     }
 
-    @Override
-    public void onProgramInfoChanged(ProgramInfo info) {
-        int currentRadioBand = mRadioController.getCurrentRadioBand();
-        mBandToggleButton.setImageResource(currentRadioBand == RadioManager.BAND_FM
+    private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
+        int radioBand = ProgramSelectorUtils.getRadioBand(info.getSelector());
+        mBandToggleButton.setImageResource(radioBand == RadioManager.BAND_FM
                 ? R.drawable.ic_radio_fm
                 : R.drawable.ic_radio_am);
-        mController.updateCurrentRadioBand(currentRadioBand);
+        mController.updateCurrentRadioBand(radioBand);
     }
 
     static RadioTunerFragment newInstance(RadioController radioController) {

@@ -42,7 +42,6 @@ import com.android.car.radio.platform.RadioManagerExt;
 import com.android.car.radio.service.ICurrentProgramListener;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.storage.RadioStorage;
-import com.android.car.radio.utils.LocalInterface;
 import com.android.car.radio.utils.ObserverList;
 
 import java.util.HashSet;
@@ -57,7 +56,7 @@ import java.util.Optional;
  *
  * <p>Utilize the {@link RadioBinder} to perform radio operations.
  */
-public class RadioService extends MediaBrowserServiceCompat implements LocalInterface {
+public class RadioService extends MediaBrowserServiceCompat {
 
     private static String TAG = "BcRadioApp.uisrv";
 
@@ -79,8 +78,6 @@ public class RadioService extends MediaBrowserServiceCompat implements LocalInte
     private RadioTuner mRadioTuner;
 
     private boolean mRadioSuccessfullyInitialized;
-
-    private ProgramInfo mCurrentProgram;
 
     private RadioManagerExt mRadioManager;
     private ImageMemoryCache mImageCache;
@@ -133,7 +130,6 @@ public class RadioService extends MediaBrowserServiceCompat implements LocalInte
         mBrowseTree = new BrowseTree(this, mImageCache);
         mMediaSession = new TunerSession(this, mBrowseTree, mBinder, mImageCache);
         setSessionToken(mMediaSession.getSessionToken());
-        mAudioStreamController.addPlaybackStateListener(mMediaSession);
         mBrowseTree.setAmFmRegionConfig(mRadioManager.getAmFmRegionConfig());
 
         mRadioStorage.addPresetsChangeListener(mPresetsListener);
@@ -341,11 +337,6 @@ public class RadioService extends MediaBrowserServiceCompat implements LocalInte
         }
 
         @Override
-        public ProgramInfo getCurrentProgramInfo() {
-            return mCurrentProgram;
-        }
-
-        @Override
         public void addPlaybackStateListener(IPlaybackStateListener callback) {
             mAudioStreamController.addPlaybackStateListener(callback);
         }
@@ -382,12 +373,12 @@ public class RadioService extends MediaBrowserServiceCompat implements LocalInte
     private class InternalRadioCallback extends RadioTuner.Callback {
         @Override
         public void onProgramInfoChanged(ProgramInfo info) {
+            Objects.requireNonNull(info);
+
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "Program info changed: " + info);
             }
 
-            mCurrentProgram = Objects.requireNonNull(info);
-            mMediaSession.notifyProgramInfoChanged(info);
             mAudioStreamController.notifyProgramInfoChanged();
             mRadioStorage.storeRadioChannel(info.getSelector());
 
