@@ -31,7 +31,6 @@ import android.util.Log;
 
 import androidx.media.MediaBrowserServiceCompat;
 
-import com.android.car.broadcastradio.support.Program;
 import com.android.car.broadcastradio.support.media.BrowseTree;
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.audio.AudioStreamController;
@@ -60,22 +59,14 @@ public class RadioAppService extends MediaBrowserServiceCompat {
 
     public static String ACTION_APP_SERVICE = "com.android.car.radio.ACTION_APP_SERVICE";
 
-    /**
-     * The amount of time to wait before re-trying to open the {@link #mRadioTuner}.
-     */
-    private static final int RADIO_TUNER_REOPEN_DELAY_MS = 5000;
-
     private final Object mLock = new Object();
 
-    private int mReOpenRadioTunerCount = 0;
     private final Handler mHandler = new Handler();
 
     private RadioStorage mRadioStorage;
     private final RadioStorage.PresetsChangeListener mPresetsListener = this::onPresetsChanged;
 
     private RadioTuner mRadioTuner;
-
-    private boolean mRadioSuccessfullyInitialized;
 
     private RadioManagerExt mRadioManager;
     private ImageMemoryCache mImageCache;
@@ -85,14 +76,6 @@ public class RadioAppService extends MediaBrowserServiceCompat {
     private BrowseTree mBrowseTree;
     private TunerSession mMediaSession;
     private ProgramList mProgramList;
-
-    /**
-     * Whether or not this {@link RadioAppService} currently has audio focus, meaning it is the
-     * primary driver of media. Usually, interaction with the radio will be prefaced with an
-     * explicit request for audio focus. However, this is not ideal when muting the radio, so this
-     * state needs to be tracked.
-     */
-    private boolean mHasAudioFocus;
 
     /**
      * An internal {@link android.hardware.radio.RadioTuner.Callback} that will listen for
@@ -134,8 +117,6 @@ public class RadioAppService extends MediaBrowserServiceCompat {
         onPresetsChanged();
 
         openRadioBandInternal(mRadioStorage.getStoredRadioBand());
-
-        mRadioSuccessfullyInitialized = true;
     }
 
     @Override
@@ -180,10 +161,6 @@ public class RadioAppService extends MediaBrowserServiceCompat {
             Log.d(TAG, "openRadioBandInternal() STATUS_OK");
         }
 
-        // Reset the counter for exponential backoff each time the radio tuner has been successfully
-        // opened.
-        mReOpenRadioTunerCount = 0;
-
         tuneToDefault(radioBand);
 
         return RadioManager.STATUS_OK;
@@ -210,7 +187,7 @@ public class RadioAppService extends MediaBrowserServiceCompat {
     }
 
     /**
-     * Closes any active {@link RadioTuner}s and releases audio focus.
+     * Closes {@link RadioTuner} and releases audio streams.
      */
     private void close() {
         if (Log.isLoggable(TAG, Log.DEBUG)) {
@@ -310,16 +287,6 @@ public class RadioAppService extends MediaBrowserServiceCompat {
         }
 
         @Override
-        public void addFavorite(Program program) {
-            mRadioStorage.storePreset(program);
-        }
-
-        @Override
-        public void removeFavorite(ProgramSelector sel) {
-            mRadioStorage.removePreset(sel);
-        }
-
-        @Override
         public void switchBand(int radioBand) {
             tuneToDefault(radioBand);
         }
@@ -342,25 +309,6 @@ public class RadioAppService extends MediaBrowserServiceCompat {
         @Override
         public void removePlaybackStateListener(IPlaybackStateListener callback) {
             mAudioStreamController.removePlaybackStateListener(callback);
-        }
-
-        /**
-         * Returns {@code true} if the radio was able to successfully initialize. A value of
-         * {@code false} here could mean that the {@code RadioAppService} was not able to connect to
-         * the {@link RadioManager} or there were no radio modules on the current device.
-         */
-        @Override
-        public boolean isInitialized() {
-            return mRadioSuccessfullyInitialized;
-        }
-
-        /**
-         * Returns {@code true} if the radio currently has focus and is therefore the application
-         * that is supplying music.
-         */
-        @Override
-        public boolean hasFocus() {
-            return mHasAudioFocus;
         }
     };
 
@@ -385,41 +333,19 @@ public class RadioAppService extends MediaBrowserServiceCompat {
 
         @Override
         public void onError(int status) {
-            Log.e(TAG, "onError(); status: " + status);
-
-            // If there is a hardware failure or the radio service died, then this requires a
-            // re-opening of the radio tuner.
-            if (status == RadioTuner.ERROR_HARDWARE_FAILURE
-                    || status == RadioTuner.ERROR_SERVER_DIED) {
-                close();
-
-                // Attempt to re-open the RadioTuner. Each time the radio tuner fails to open, the
-                // mReOpenRadioTunerCount will be incremented.
-                mHandler.removeCallbacks(mOpenRadioTunerRunnable);
-                mHandler.postDelayed(mOpenRadioTunerRunnable,
-                        mReOpenRadioTunerCount * RADIO_TUNER_REOPEN_DELAY_MS);
-
-                mReOpenRadioTunerCount++;
-            }
+            // this should be handled by RadioService, not an app
+            Log.e(TAG, "Hardware error: " + status);
+            close();
+            stopSelf();
         }
 
         @Override
         public void onControlChanged(boolean control) {
-            // If the radio loses control of the RadioTuner, then close it and allow it to be
-            // re-opened when control has been gained.
-            if (!control) {
-                close();
-                return;
-            }
-
-            if (mRadioTuner == null) {
-                openRadioBandInternal(mRadioStorage.getStoredRadioBand());
-            }
+            if (control) return;
+            close();
+            stopSelf();
         }
     }
-
-    private final Runnable mOpenRadioTunerRunnable =
-            () -> openRadioBandInternal(mRadioStorage.getStoredRadioBand());
 
     @Override
     public BrowserRoot onGetRoot(String clientPackageName, int clientUid, Bundle rootHints) {

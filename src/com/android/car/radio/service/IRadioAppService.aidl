@@ -62,20 +62,6 @@ interface IRadioAppService {
     boolean isMuted();
 
     /**
-     * Adds new program to favorites list.
-     *
-     * @param favorite A program to add to favorites list.
-     */
-    void addFavorite(in Program favorite);
-
-    /**
-     * Removes a program from favorites list.
-     *
-     * @param sel ProgramSelector of a favorite to remove.
-     */
-    void removeFavorite(in ProgramSelector sel);
-
-    /**
      * Switches radio band.
      *
      * Usually, this means tuning to the recently listened program on a given band.
@@ -107,19 +93,6 @@ interface IRadioAppService {
      * Removes {@link IPlaybackStateListener} listener.
      */
     void removePlaybackStateListener(in IPlaybackStateListener listener);
-
-    /**
-     * Returns {@code true} if the radio was able to successfully initialize. A value of
-     * {@code false} here could mean that the {@code RadioAppService} was not able to connect to
-     * the {@link RadioManager} or there were no radio modules on the current device.
-     */
-    boolean isInitialized();
-
-    /**
-     * Returns {@code true} if the radio currently has focus and is therefore the application that
-     * is supplying music.
-     */
-    boolean hasFocus();
 
     /**
      * Returns a list of programs found with the tuner's background scan

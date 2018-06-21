@@ -41,6 +41,7 @@ import com.android.car.radio.R;
 import com.android.car.radio.audio.PlaybackStateListenerAdapter;
 import com.android.car.radio.service.CurrentProgramListenerAdapter;
 import com.android.car.radio.service.IRadioAppService;
+import com.android.car.radio.storage.RadioStorage;
 
 import java.util.Objects;
 
@@ -56,6 +57,9 @@ public class TunerSession extends MediaSessionCompat {
     private final BrowseTree mBrowseTree;
     @Nullable private final ImageResolver mImageResolver;
     private final IRadioAppService mAppService;
+
+    private final RadioStorage mRadioStorage;
+
     private final PlaybackStateCompat.Builder mPlaybackStateBuilder =
             new PlaybackStateCompat.Builder();
     @Nullable private ProgramInfo mCurrentProgram;
@@ -68,6 +72,8 @@ public class TunerSession extends MediaSessionCompat {
         mBrowseTree = Objects.requireNonNull(browseTree);
         mImageResolver = imageResolver;
         mAppService = Objects.requireNonNull(uiSession);
+
+        mRadioStorage = RadioStorage.getInstance(context);
 
         // ACTION_PAUSE is reserved for time-shifted playback
         mPlaybackStateBuilder.setActions(
@@ -114,6 +120,7 @@ public class TunerSession extends MediaSessionCompat {
         }
     }
 
+    // TODO(b/73950974): replace with mRadioStorage.addPresetsChangeListener
     public void notifyFavoritesChanged() {
         updateMetadata();
     }
@@ -151,11 +158,9 @@ public class TunerSession extends MediaSessionCompat {
             synchronized (mLock) {
                 if (mCurrentProgram == null) return;
                 if (rating.hasHeart()) {
-                    Program fav = Program.fromProgramInfo(mCurrentProgram);
-                    tryExec(() -> mAppService.addFavorite(fav));
+                    mRadioStorage.storePreset(Program.fromProgramInfo(mCurrentProgram));
                 } else {
-                    ProgramSelector fav = mCurrentProgram.getSelector();
-                    tryExec(() -> mAppService.removeFavorite(fav));
+                    mRadioStorage.removePreset(mCurrentProgram.getSelector());
                 }
             }
         }
