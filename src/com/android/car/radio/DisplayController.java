@@ -31,7 +31,7 @@ import java.util.Objects;
 /**
  * Controller that controls the appearance state of various UI elements in the radio.
  */
-public class RadioDisplayController {
+public class DisplayController {
     private final Context mContext;
 
     private TextView mChannelBand;
@@ -47,7 +47,7 @@ public class RadioDisplayController {
 
     private ImageView mAddPresetsButton;
 
-    public RadioDisplayController(@NonNull Context context,
+    public DisplayController(@NonNull Context context,
             @NonNull RadioController radioController) {
         mContext = Objects.requireNonNull(context);
 
@@ -56,6 +56,9 @@ public class RadioDisplayController {
                         this::onPlaybackStateChanged)));
     }
 
+    /**
+     * Initializes this {@link DisplayController}.
+     */
     public void initialize(View container) {
         mChannelBand = container.findViewById(R.id.radio_station_band);
         mChannelNumber = container.findViewById(R.id.radio_station_channel);
@@ -180,7 +183,7 @@ public class RadioDisplayController {
             }
             mCurrentSongTitleAndArtist.setText(titleAndArtist);
             mCurrentSongTitleAndArtist.setVisibility(
-                    (isTitleEmpty && isArtistEmpty)? View.INVISIBLE : View.VISIBLE);
+                    (isTitleEmpty && isArtistEmpty) ? View.INVISIBLE : View.VISIBLE);
         }
     }
 

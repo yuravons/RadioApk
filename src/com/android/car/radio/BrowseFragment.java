@@ -40,7 +40,7 @@ import java.util.List;
 /**
  * Fragment that shows all browseable radio stations from background scan
  */
-public class RadioBrowseFragment extends Fragment {
+public class BrowseFragment extends Fragment {
 
     private RadioController mRadioController;
     private BrowseAdapter mBrowseAdapter = new BrowseAdapter();
@@ -107,8 +107,8 @@ public class RadioBrowseFragment extends Fragment {
         }
     }
 
-    static RadioBrowseFragment newInstance(RadioController radioController) {
-        RadioBrowseFragment fragment = new RadioBrowseFragment();
+    static BrowseFragment newInstance(RadioController radioController) {
+        BrowseFragment fragment = new BrowseFragment();
         fragment.mRadioController = radioController;
         return fragment;
     }

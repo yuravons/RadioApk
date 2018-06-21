@@ -29,11 +29,10 @@
 
     <application android:label="@string/app_name"
         android:icon="@drawable/logo_fm_radio"
-        android:theme="@style/CarRadioAppTheme">
+        android:theme="@style/RadioAppTheme">
 
         <activity
-            android:name=".CarRadioActivity"
-            android:theme="@style/CarRadioAppTheme"
+            android:name=".RadioActivity"
             android:resizeableActivity="true"
             android:exported="true">
             <intent-filter>

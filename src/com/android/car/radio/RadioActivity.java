@@ -38,11 +38,10 @@ import com.android.car.radio.utils.ProgramSelectorUtils;
 import com.google.android.material.tabs.TabLayout;
 
 /**
- * The main activity for the radio. This activity initializes the radio controls and listener for
- * radio changes.
+ * The main activity for the radio app.
  */
-public class CarRadioActivity extends FragmentActivity {
-    private static final String TAG = "BcRadioApp.CarRadioActivity";
+public class RadioActivity extends FragmentActivity {
+    private static final String TAG = "BcRadioApp.RadioActivity";
 
     /**
      * Intent action for notifying that the radio state has changed.
@@ -72,8 +71,8 @@ public class CarRadioActivity extends FragmentActivity {
                 mRadioController.addCurrentProgramListener(mCurrentProgramListener));
         setContentView(R.layout.radio_activity);
         mRootView = findViewById(R.id.main_radio_display);
-        RadioFragmentPagerAdapter adapter =
-                new RadioFragmentPagerAdapter(this, getSupportFragmentManager(), mRadioController);
+        RadioPagerAdapter adapter =
+                new RadioPagerAdapter(this, getSupportFragmentManager(), mRadioController);
         ViewPager viewPager = findViewById(R.id.viewpager);
         viewPager.setAdapter(adapter);
         TabLayout tabLayout = (TabLayout) findViewById(R.id.radio_tabs);

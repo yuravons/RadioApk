@@ -37,7 +37,7 @@ import com.android.car.radio.storage.RadioStorage;
 /**
  * Fragment that shows a list of all the current favorite radio stations
  */
-public class RadioFavoritesFragment extends Fragment {
+public class FavoritesFragment extends Fragment {
 
     private RadioController mRadioController;
     private BrowseAdapter mBrowseAdapter = new BrowseAdapter();
@@ -101,8 +101,8 @@ public class RadioFavoritesFragment extends Fragment {
         }
     }
 
-    static RadioFavoritesFragment newInstance(RadioController radioController) {
-        RadioFavoritesFragment fragment = new RadioFavoritesFragment();
+    static FavoritesFragment newInstance(RadioController radioController) {
+        FavoritesFragment fragment = new FavoritesFragment();
         fragment.mRadioController = radioController;
         return fragment;
     }
