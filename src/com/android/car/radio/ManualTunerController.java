@@ -102,11 +102,6 @@ public class ManualTunerController {
      */
     public interface ManualTunerClickListener {
         /**
-         * Called when the back button on the manual tuner has been clicked.
-         */
-        void onBack();
-
-        /**
          * Called when the done button has been clicked with the given station that the user has
          * selected.
          */
