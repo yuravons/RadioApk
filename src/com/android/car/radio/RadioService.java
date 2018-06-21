@@ -26,7 +26,6 @@ import android.hardware.radio.RadioTuner;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
 import android.util.Log;
 
@@ -40,12 +39,12 @@ import com.android.car.radio.audio.IPlaybackStateListener;
 import com.android.car.radio.media.TunerSession;
 import com.android.car.radio.platform.ImageMemoryCache;
 import com.android.car.radio.platform.RadioManagerExt;
-import com.android.car.radio.service.IRadioCallback;
+import com.android.car.radio.service.ICurrentProgramListener;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.storage.RadioStorage;
 import com.android.car.radio.utils.LocalInterface;
+import com.android.car.radio.utils.ObserverList;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -106,7 +105,9 @@ public class RadioService extends MediaBrowserServiceCompat implements LocalInte
      * {@link #mRadioTunerCallbacks}.
      */
     private RadioTuner.Callback mInternalRadioTunerCallback = new InternalRadioCallback();
-    private List<IRadioCallback> mRadioTunerCallbacks = new ArrayList<>();
+
+    private final ObserverList<ProgramInfo, ICurrentProgramListener> mCurrentProgramListeners =
+            new ObserverList<>(null, ICurrentProgramListener::onCurrentProgramChanged);
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -329,30 +330,14 @@ public class RadioService extends MediaBrowserServiceCompat implements LocalInte
             tuneToDefault(radioBand);
         }
 
-        /**
-         * Adds the given {@link android.hardware.radio.RadioTuner.Callback} to be notified
-         * of any radio metadata changes.
-         */
         @Override
-        public void addRadioTunerCallback(IRadioCallback callback) {
-            if (callback == null) {
-                return;
-            }
-
-            mRadioTunerCallbacks.add(callback);
+        public void addCurrentProgramListener(ICurrentProgramListener listener) {
+            mCurrentProgramListeners.add(listener);
         }
 
-        /**
-         * Removes the given {@link android.hardware.radio.RadioTuner.Callback} from receiving
-         * any radio metadata chagnes.
-         */
         @Override
-        public void removeRadioTunerCallback(IRadioCallback callback) {
-            if (callback == null) {
-                return;
-            }
-
-            mRadioTunerCallbacks.remove(callback);
+        public void removeCurrentProgramListener(ICurrentProgramListener listener) {
+            mCurrentProgramListeners.remove(listener);
         }
 
         @Override
@@ -406,13 +391,7 @@ public class RadioService extends MediaBrowserServiceCompat implements LocalInte
             mAudioStreamController.notifyProgramInfoChanged();
             mRadioStorage.storeRadioChannel(info.getSelector());
 
-            for (IRadioCallback callback : mRadioTunerCallbacks) {
-                try {
-                    callback.onCurrentProgramInfoChanged(info);
-                } catch (RemoteException e) {
-                    Log.e(TAG, "Failed to notify about changed radio station", e);
-                }
-            }
+            mCurrentProgramListeners.update(info);
         }
 
         @Override
