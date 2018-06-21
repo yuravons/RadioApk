@@ -35,7 +35,7 @@ import com.android.car.radio.utils.ProgramSelectorUtils;
 /**
  * Fragment that allows tuning to a specific frequency using a keypad
  */
-public class RadioTunerFragment extends Fragment {
+public class ManualTunerFragment extends Fragment {
 
     private ManualTunerController mController;
     private RadioController mRadioController;
@@ -80,8 +80,8 @@ public class RadioTunerFragment extends Fragment {
         mController.updateCurrentRadioBand(radioBand);
     }
 
-    static RadioTunerFragment newInstance(RadioController radioController) {
-        RadioTunerFragment fragment = new RadioTunerFragment();
+    static ManualTunerFragment newInstance(RadioController radioController) {
+        ManualTunerFragment fragment = new ManualTunerFragment();
         fragment.mRadioController = radioController;
         return fragment;
     }

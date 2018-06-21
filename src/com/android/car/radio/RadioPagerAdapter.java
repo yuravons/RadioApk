@@ -25,7 +25,7 @@ import androidx.fragment.app.FragmentPagerAdapter;
 /**
  * Adapter containing all fragments used in the view pager
  */
-public class RadioFragmentPagerAdapter extends FragmentPagerAdapter {
+public class RadioPagerAdapter extends FragmentPagerAdapter {
 
     private static final int PAGE_COUNT = 3;
     private static final int[] TAB_LABELS =
@@ -35,7 +35,7 @@ public class RadioFragmentPagerAdapter extends FragmentPagerAdapter {
     private RadioController mRadioController;
     private Context mContext;
 
-    public RadioFragmentPagerAdapter(Context context, FragmentManager fragmentManager,
+    public RadioPagerAdapter(Context context, FragmentManager fragmentManager,
             RadioController controller) {
         super(fragmentManager);
         mRadioController = controller;
@@ -46,11 +46,11 @@ public class RadioFragmentPagerAdapter extends FragmentPagerAdapter {
     public Fragment getItem(int i) {
         switch(i) {
             case 0:
-                return RadioBrowseFragment.newInstance(mRadioController);
+                return BrowseFragment.newInstance(mRadioController);
             case 1:
-                return RadioFavoritesFragment.newInstance(mRadioController);
+                return FavoritesFragment.newInstance(mRadioController);
             case 2:
-                return RadioTunerFragment.newInstance(mRadioController);
+                return ManualTunerFragment.newInstance(mRadioController);
         }
         return null;
     }

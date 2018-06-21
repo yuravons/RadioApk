@@ -88,7 +88,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
     @ColorInt private int mCurrentBackgroundColor = INVALID_BACKGROUND_COLOR;
 
-    private final RadioDisplayController mRadioDisplayController;
+    private final DisplayController mDisplayController;
 
     private final RadioStorage mRadioStorage;
 
@@ -115,7 +115,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     public RadioController(Activity activity) {
         mActivity = activity;
 
-        mRadioDisplayController = new RadioDisplayController(mActivity, this);
+        mDisplayController = new DisplayController(mActivity, this);
 
         mAmBandString = mActivity.getString(R.string.radio_am_text);
         mFmBandString = mActivity.getString(R.string.radio_fm_text);
@@ -130,12 +130,12 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     public void initialize(View container) {
         mCurrentBackgroundColor = INVALID_BACKGROUND_COLOR;
 
-        mRadioDisplayController.initialize(container);
+        mDisplayController.initialize(container);
 
-        mRadioDisplayController.setBackwardSeekButtonListener(mBackwardSeekClickListener);
-        mRadioDisplayController.setForwardSeekButtonListener(mForwardSeekClickListener);
-        mRadioDisplayController.setPlayButtonListener(mPlayPauseClickListener);
-        mRadioDisplayController.setAddPresetButtonListener(mPresetButtonClickListener);
+        mDisplayController.setBackwardSeekButtonListener(mBackwardSeekClickListener);
+        mDisplayController.setForwardSeekButtonListener(mForwardSeekClickListener);
+        mDisplayController.setPlayButtonListener(mPlayPauseClickListener);
+        mDisplayController.setAddPresetButtonListener(mPresetButtonClickListener);
 
         mRadioBackground = container;
     }
@@ -243,26 +243,26 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     }
 
     /**
-     * Delegates to the {@link RadioDisplayController} to highlight the radio band.
+     * Delegates to the {@link DisplayController} to highlight the radio band.
      */
     private void updateAmFmDisplayState(int band) {
         switch (band) {
             case RadioManager.BAND_FM:
-                mRadioDisplayController.setChannelBand(mFmBandString);
+                mDisplayController.setChannelBand(mFmBandString);
                 break;
 
             case RadioManager.BAND_AM:
-                mRadioDisplayController.setChannelBand(mAmBandString);
+                mDisplayController.setChannelBand(mAmBandString);
                 break;
 
             // TODO: Support BAND_FM_HD and BAND_AM_HD.
 
             default:
-                mRadioDisplayController.setChannelBand(null);
+                mDisplayController.setChannelBand(null);
         }
     }
 
-    // TODO(b/73950974): move channel animation to RadioDisplayController
+    // TODO(b/73950974): move channel animation to DisplayController
     private void updateRadioChannelDisplay(@NonNull ProgramSelector sel) {
         int priType = sel.getPrimaryId().getType();
 
@@ -272,7 +272,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
                 || !ProgramSelectorExt.hasId(sel, ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY)) {
             // channel animation is implemented for AM/FM only
             mCurrentlyDisplayedChannel = 0;
-            mRadioDisplayController.setChannelNumber("");
+            mDisplayController.setChannelNumber("");
 
             updateAmFmDisplayState(RadioStorage.INVALID_RADIO_BAND);
             return;
@@ -290,13 +290,13 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
         if (isAm && wasAm || !isAm && wasFm) {
             mAnimator.setIntValues((int)mCurrentlyDisplayedChannel, (int)freq);
             mAnimator.setDuration(CHANNEL_CHANGE_DURATION_MS);
-            mAnimator.addUpdateListener(animation -> mRadioDisplayController.setChannelNumber(
+            mAnimator.addUpdateListener(animation -> mDisplayController.setChannelNumber(
                     ProgramSelectorExt.formatAmFmFrequency((int)animation.getAnimatedValue(),
                             ProgramSelectorExt.NAME_NO_MODULATION)));
             mAnimator.start();
         } else {
             // it's a different band - don't animate
-            mRadioDisplayController.setChannelNumber(
+            mDisplayController.setChannelNumber(
                     ProgramSelectorExt.getDisplayName(sel, ProgramSelectorExt.NAME_NO_MODULATION));
         }
         mCurrentlyDisplayedChannel = freq;
@@ -327,8 +327,8 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
      * Clears all metadata including song title, artist and station information.
      */
     private void clearMetadataDisplay() {
-        mRadioDisplayController.setCurrentStation(null);
-        mRadioDisplayController.setCurrentSongTitleAndArtist(null, null);
+        mDisplayController.setCurrentStation(null);
+        mDisplayController.setCurrentSongTitleAndArtist(null, null);
     }
 
     /**
@@ -352,7 +352,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
         // Check if the current channel's preset status has changed.
         ProgramInfo info = mCurrentProgram;
         boolean isPreset = (info != null) && mRadioStorage.isPreset(info.getSelector());
-        mRadioDisplayController.setChannelIsPreset(isPreset);
+        mDisplayController.setChannelIsPreset(isPreset);
     }
 
     /**
@@ -371,13 +371,13 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
         updateRadioChannelDisplay(sel);
 
-        mRadioDisplayController.setCurrentStation(
+        mDisplayController.setCurrentStation(
                 ProgramInfoExt.getProgramName(info, ProgramInfoExt.NAME_NO_CHANNEL_FALLBACK));
         RadioMetadata meta = ProgramInfoExt.getMetadata(mCurrentProgram);
-        mRadioDisplayController.setCurrentSongTitleAndArtist(
+        mDisplayController.setCurrentSongTitleAndArtist(
                 meta.getString(RadioMetadata.METADATA_KEY_TITLE),
                 meta.getString(RadioMetadata.METADATA_KEY_ARTIST));
-        mRadioDisplayController.setChannelIsPreset(mRadioStorage.isPreset(sel));
+        mDisplayController.setChannelIsPreset(mRadioStorage.isPreset(sel));
     }
 
     private final View.OnClickListener mBackwardSeekClickListener = new View.OnClickListener() {
@@ -450,7 +450,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
             // Update the UI immediately. If the preset failed for some reason, the RadioStorage
             // will notify us and UI update will happen then.
-            mRadioDisplayController.setChannelIsPreset(!isPreset);
+            mDisplayController.setChannelIsPreset(!isPreset);
         }
     };
 
@@ -461,10 +461,10 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
             try {
                 if (mAppService == null || !mAppService.isInitialized()) {
-                    mRadioDisplayController.setEnabled(false);
+                    mDisplayController.setEnabled(false);
                 }
 
-                mRadioDisplayController.setEnabled(true);
+                mDisplayController.setEnabled(true);
 
                 mAppService.addCurrentProgramListener(mCurrentProgramListener);
 
