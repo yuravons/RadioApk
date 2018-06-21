@@ -460,7 +460,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
             mAppService = (IRadioAppService) binder;
 
             try {
-                if (mAppService == null || !mAppService.isInitialized()) {
+                if (mAppService == null) {
                     mDisplayController.setEnabled(false);
                 }
 
