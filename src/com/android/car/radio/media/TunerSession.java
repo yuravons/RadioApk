@@ -40,7 +40,7 @@ import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.R;
 import com.android.car.radio.audio.PlaybackStateListenerAdapter;
 import com.android.car.radio.service.CurrentProgramListenerAdapter;
-import com.android.car.radio.service.IRadioManager;
+import com.android.car.radio.service.IRadioAppService;
 
 import java.util.Objects;
 
@@ -55,19 +55,19 @@ public class TunerSession extends MediaSessionCompat {
     private final Context mContext;
     private final BrowseTree mBrowseTree;
     @Nullable private final ImageResolver mImageResolver;
-    private final IRadioManager mUiSession;
+    private final IRadioAppService mAppService;
     private final PlaybackStateCompat.Builder mPlaybackStateBuilder =
             new PlaybackStateCompat.Builder();
     @Nullable private ProgramInfo mCurrentProgram;
 
     public TunerSession(@NonNull Context context, @NonNull BrowseTree browseTree,
-            @NonNull IRadioManager uiSession, @Nullable ImageResolver imageResolver) {
+            @NonNull IRadioAppService uiSession, @Nullable ImageResolver imageResolver) {
         super(context, TAG);
 
         mContext = Objects.requireNonNull(context);
         mBrowseTree = Objects.requireNonNull(browseTree);
         mImageResolver = imageResolver;
-        mUiSession = Objects.requireNonNull(uiSession);
+        mAppService = Objects.requireNonNull(uiSession);
 
         // ACTION_PAUSE is reserved for time-shifted playback
         mPlaybackStateBuilder.setActions(
@@ -119,7 +119,7 @@ public class TunerSession extends MediaSessionCompat {
     }
 
     private void selectionError() {
-        tryExec(() -> mUiSession.mute());
+        tryExec(() -> mAppService.mute());
         mPlaybackStateBuilder.setErrorMessage(mContext.getString(R.string.invalid_selection));
         onPlaybackStateChanged(PlaybackStateCompat.STATE_ERROR);
         mPlaybackStateBuilder.setErrorMessage(null);
@@ -128,22 +128,22 @@ public class TunerSession extends MediaSessionCompat {
     private class TunerSessionCallback extends MediaSessionCompat.Callback {
         @Override
         public void onStop() {
-            tryExec(() -> mUiSession.mute());
+            tryExec(() -> mAppService.mute());
         }
 
         @Override
         public void onPlay() {
-            tryExec(() -> mUiSession.unMute());
+            tryExec(() -> mAppService.unMute());
         }
 
         @Override
         public void onSkipToNext() {
-            tryExec(() -> mUiSession.seekForward());
+            tryExec(() -> mAppService.seekForward());
         }
 
         @Override
         public void onSkipToPrevious() {
-            tryExec(() -> mUiSession.seekBackward());
+            tryExec(() -> mAppService.seekBackward());
         }
 
         @Override
@@ -152,10 +152,10 @@ public class TunerSession extends MediaSessionCompat {
                 if (mCurrentProgram == null) return;
                 if (rating.hasHeart()) {
                     Program fav = Program.fromProgramInfo(mCurrentProgram);
-                    tryExec(() -> mUiSession.addFavorite(fav));
+                    tryExec(() -> mAppService.addFavorite(fav));
                 } else {
                     ProgramSelector fav = mCurrentProgram.getSelector();
-                    tryExec(() -> mUiSession.removeFavorite(fav));
+                    tryExec(() -> mAppService.removeFavorite(fav));
                 }
             }
         }
@@ -170,7 +170,7 @@ public class TunerSession extends MediaSessionCompat {
 
             ProgramSelector selector = mBrowseTree.parseMediaId(mediaId);
             if (selector != null) {
-                tryExec(() -> mUiSession.tune(selector));
+                tryExec(() -> mAppService.tune(selector));
             } else {
                 Log.w(TAG, "Invalid media ID: " + mediaId);
                 selectionError();
@@ -181,7 +181,7 @@ public class TunerSession extends MediaSessionCompat {
         public void onPlayFromUri(Uri uri, Bundle extras) {
             ProgramSelector selector = ProgramSelectorExt.fromUri(uri);
             if (selector != null) {
-                tryExec(() -> mUiSession.tune(selector));
+                tryExec(() -> mAppService.tune(selector));
             } else {
                 Log.w(TAG, "Invalid URI: " + uri);
                 selectionError();

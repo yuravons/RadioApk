@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2016 The Android Open Source Project
+/**
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,10 +11,10 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
-package com.android.car.radio;
+package com.android.car.radio.service;
 
 import android.app.Service;
 import android.content.Intent;
@@ -39,8 +39,6 @@ import com.android.car.radio.audio.IPlaybackStateListener;
 import com.android.car.radio.media.TunerSession;
 import com.android.car.radio.platform.ImageMemoryCache;
 import com.android.car.radio.platform.RadioManagerExt;
-import com.android.car.radio.service.ICurrentProgramListener;
-import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.storage.RadioStorage;
 import com.android.car.radio.utils.ObserverList;
 
@@ -56,11 +54,11 @@ import java.util.Optional;
  *
  * <p>Utilize the {@link RadioBinder} to perform radio operations.
  */
-public class RadioService extends MediaBrowserServiceCompat {
+public class RadioAppService extends MediaBrowserServiceCompat {
 
-    private static String TAG = "BcRadioApp.uisrv";
+    private static final String TAG = "BcRadioApp.appsrv";
 
-    public static String ACTION_UI_SERVICE = "com.android.car.radio.ACTION_UI_SERVICE";
+    public static String ACTION_APP_SERVICE = "com.android.car.radio.ACTION_APP_SERVICE";
 
     /**
      * The amount of time to wait before re-trying to open the {@link #mRadioTuner}.
@@ -89,7 +87,7 @@ public class RadioService extends MediaBrowserServiceCompat {
     private ProgramList mProgramList;
 
     /**
-     * Whether or not this {@link RadioService} currently has audio focus, meaning it is the
+     * Whether or not this {@link RadioAppService} currently has audio focus, meaning it is the
      * primary driver of media. Usually, interaction with the radio will be prefaced with an
      * explicit request for audio focus. However, this is not ideal when muting the radio, so this
      * state needs to be tracked.
@@ -108,7 +106,7 @@ public class RadioService extends MediaBrowserServiceCompat {
 
     @Override
     public IBinder onBind(Intent intent) {
-        if (ACTION_UI_SERVICE.equals(intent.getAction())) {
+        if (ACTION_APP_SERVICE.equals(intent.getAction())) {
             return mBinder;
         }
         return super.onBind(intent);
@@ -231,7 +229,7 @@ public class RadioService extends MediaBrowserServiceCompat {
         }
     }
 
-    private IRadioManager.Stub mBinder = new IRadioManager.Stub() {
+    private IRadioAppService.Stub mBinder = new IRadioAppService.Stub() {
         /**
          * Tunes the radio to the given frequency. To be notified of a successful tune, register
          * as a {@link android.hardware.radio.RadioTuner.Callback}.
@@ -348,7 +346,7 @@ public class RadioService extends MediaBrowserServiceCompat {
 
         /**
          * Returns {@code true} if the radio was able to successfully initialize. A value of
-         * {@code false} here could mean that the {@code RadioService} was not able to connect to
+         * {@code false} here could mean that the {@code RadioAppService} was not able to connect to
          * the {@link RadioManager} or there were no radio modules on the current device.
          */
         @Override

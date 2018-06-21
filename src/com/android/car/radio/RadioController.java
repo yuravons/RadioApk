@@ -45,7 +45,8 @@ import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.audio.IPlaybackStateListener;
 import com.android.car.radio.service.CurrentProgramListenerAdapter;
 import com.android.car.radio.service.ICurrentProgramListener;
-import com.android.car.radio.service.IRadioManager;
+import com.android.car.radio.service.IRadioAppService;
+import com.android.car.radio.service.RadioAppService;
 import com.android.car.radio.storage.RadioStorage;
 import com.android.car.radio.utils.ProgramSelectorUtils;
 
@@ -80,7 +81,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     private ProgramInfo mCurrentProgram;  // TODO(b/73950974): remove
 
     private final Activity mActivity;
-    private IRadioManager mRadioManager;
+    private IRadioAppService mAppService;
 
     private View mRadioBackground;
     private boolean mShouldColorStatusBar;
@@ -157,33 +158,33 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     }
 
     /**
-     * See {@link IRadioManager#addCurrentProgramListener}.
+     * See {@link IRadioAppService#addCurrentProgramListener}.
      */
     public void addCurrentProgramListener(@NonNull ICurrentProgramListener listener) {
-        exec(() -> mRadioManager.addCurrentProgramListener(Objects.requireNonNull(listener)));
+        exec(() -> mAppService.addCurrentProgramListener(Objects.requireNonNull(listener)));
     }
 
     /**
-     * See {@link IRadioManager#removeCurrentProgramListener}.
+     * See {@link IRadioAppService#removeCurrentProgramListener}.
      */
     public void removeCurrentProgramListener(@Nullable ICurrentProgramListener listener) {
-        if (mRadioManager == null) return;
-        exec(() -> mRadioManager.removeCurrentProgramListener(listener));
+        if (mAppService == null) return;
+        exec(() -> mAppService.removeCurrentProgramListener(listener));
     }
 
     /**
-     * See {@link IRadioManager#addPlaybackStateListener}.
+     * See {@link IRadioAppService#addPlaybackStateListener}.
      */
     public void addPlaybackStateListener(@NonNull IPlaybackStateListener listener) {
-        exec(() -> mRadioManager.addPlaybackStateListener(Objects.requireNonNull(listener)));
+        exec(() -> mAppService.addPlaybackStateListener(Objects.requireNonNull(listener)));
     }
 
     /**
-     * See {@link IRadioManager#removePlaybackStateListener}.
+     * See {@link IRadioAppService#removePlaybackStateListener}.
      */
     public void removePlaybackStateListener(@Nullable IPlaybackStateListener listener) {
-        if (mRadioManager == null) return;
-        exec(() -> mRadioManager.removePlaybackStateListener(listener));
+        if (mAppService == null) return;
+        exec(() -> mAppService.removePlaybackStateListener(listener));
     }
 
     /**
@@ -209,10 +210,10 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
             Log.d(TAG, "starting radio");
         }
 
-        Intent bindIntent = new Intent(RadioService.ACTION_UI_SERVICE, null /* uri */,
-                mActivity, RadioService.class);
+        Intent bindIntent = new Intent(RadioAppService.ACTION_APP_SERVICE, null /* uri */,
+                mActivity, RadioAppService.class);
         if (!mActivity.bindService(bindIntent, mServiceConnection, Context.BIND_AUTO_CREATE)) {
-            Log.e(TAG, "Failed to connect to RadioService.");
+            Log.e(TAG, "Failed to connect to RadioAppService.");
         }
     }
 
@@ -220,7 +221,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
      * Tunes the radio to the given channel if it is valid and a {@link RadioTuner} has been opened.
      */
     public void tune(ProgramSelector sel) {
-        exec(() -> mRadioManager.tune(sel));
+        exec(() -> mAppService.tune(sel));
     }
 
     /**
@@ -238,7 +239,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
      * @param radioBand One of {@link RadioManager#BAND_FM}, {@link RadioManager#BAND_AM}.
      */
     public void switchBand(int radioBand) {
-        exec(() -> mRadioManager.switchBand(radioBand));
+        exec(() -> mAppService.switchBand(radioBand));
     }
 
     /**
@@ -341,8 +342,8 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
         mActivity.unbindService(mServiceConnection);
         mRadioStorage.removePresetsChangeListener(this);
 
-        if (mRadioManager != null) {
-            tryExec(() -> mRadioManager.removeCurrentProgramListener(mCurrentProgramListener));
+        if (mAppService != null) {
+            tryExec(() -> mAppService.removeCurrentProgramListener(mCurrentProgramListener));
         }
     }
 
@@ -358,8 +359,8 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
      * Gets a list of programs from the radio tuner's background scan
      */
     public List<ProgramInfo> getProgramList() {
-        if (mRadioManager != null) {
-            return exec(() -> mRadioManager.getProgramList());
+        if (mAppService != null) {
+            return exec(() -> mAppService.getProgramList());
         }
         return null;
     }
@@ -382,24 +383,24 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     private final View.OnClickListener mBackwardSeekClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (mRadioManager == null) return;
+            if (mAppService == null) return;
 
             // TODO(b/73950974): show some kind of animation
             clearMetadataDisplay();
 
             // TODO(b/73950974): watch for timeout and if it happens, display metadata back
-            exec(() -> mRadioManager.seekBackward());
+            exec(() -> mAppService.seekBackward());
         }
     };
 
     private final View.OnClickListener mForwardSeekClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (mRadioManager == null) return;
+            if (mAppService == null) return;
 
             clearMetadataDisplay();
 
-            exec(() -> mRadioManager.seekForward());
+            exec(() -> mAppService.seekForward());
         }
     };
 
@@ -410,19 +411,19 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     private final View.OnClickListener mPlayPauseClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (mRadioManager == null) {
+            if (mAppService == null) {
                 return;
             }
 
             try {
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "Play button clicked. Currently muted: " + mRadioManager.isMuted());
+                    Log.d(TAG, "Play button clicked. Currently muted: " + mAppService.isMuted());
                 }
 
-                if (mRadioManager.isMuted()) {
-                    mRadioManager.unMute();
+                if (mAppService.isMuted()) {
+                    mAppService.unMute();
                 } else {
-                    mRadioManager.mute();
+                    mAppService.mute();
                 }
             } catch (RemoteException e) {
                 Log.e(TAG, "playPauseClickListener(); remote exception: " + e.getMessage());
@@ -456,16 +457,16 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className, IBinder binder) {
-            mRadioManager = ((IRadioManager) binder);
+            mAppService = (IRadioAppService) binder;
 
             try {
-                if (mRadioManager == null || !mRadioManager.isInitialized()) {
+                if (mAppService == null || !mAppService.isInitialized()) {
                     mRadioDisplayController.setEnabled(false);
                 }
 
                 mRadioDisplayController.setEnabled(true);
 
-                mRadioManager.addCurrentProgramListener(mCurrentProgramListener);
+                mAppService.addCurrentProgramListener(mCurrentProgramListener);
 
                 // Notify listeners
                 for (RadioServiceConnectionListener listener : mRadioServiceConnectionListeners) {
@@ -478,7 +479,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
         @Override
         public void onServiceDisconnected(ComponentName className) {
-            mRadioManager = null;
+            mAppService = null;
         }
     };
 
