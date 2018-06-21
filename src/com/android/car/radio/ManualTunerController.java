@@ -164,6 +164,8 @@ public class ManualTunerController {
      * Refreshes tuner key state with new radio band, if changed without using AM/FM band buttons
      */
     public void updateCurrentRadioBand(int band) {
+        if (mCurrentRadioBand == band) return;
+
         mCurrentRadioBand = band;
         if (band == RadioManager.BAND_FM) {
             mChannelValidator = mFmChannelValidator;
