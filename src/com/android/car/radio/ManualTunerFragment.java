@@ -24,13 +24,13 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 
 import androidx.fragment.app.Fragment;
 
 import com.android.car.radio.service.CurrentProgramListenerAdapter;
 import com.android.car.radio.service.ICurrentProgramListener;
 import com.android.car.radio.utils.ProgramSelectorUtils;
+import com.android.car.radio.widget.BandToggleButton;
 
 /**
  * Fragment that allows tuning to a specific frequency using a keypad
@@ -39,7 +39,7 @@ public class ManualTunerFragment extends Fragment {
 
     private ManualTunerController mController;
     private RadioController mRadioController;
-    private ImageButton mBandToggleButton;
+    private BandToggleButton mBandToggleButton;
 
     private final ICurrentProgramListener mCurrentProgramListener =
             new CurrentProgramListenerAdapter(this::onCurrentProgramChanged);
@@ -50,13 +50,13 @@ public class ManualTunerFragment extends Fragment {
         View view = inflater.inflate(R.layout.tuner_fragment, container, false);
         mController = new ManualTunerController(getContext(), view, RadioManager.BAND_FM);
         mController.setDoneButtonListener(this::onManualTunerDone);
+
         mBandToggleButton = view.findViewById(R.id.manual_tuner_band_toggle);
-        mBandToggleButton.setOnClickListener(v -> mRadioController.switchBand(
-                mRadioController.getCurrentRadioBand() == RadioManager.BAND_FM
-                        ? RadioManager.BAND_AM
-                        : RadioManager.BAND_FM));
+        mBandToggleButton.setCallback(mRadioController::switchBand);
+
         mRadioController.addRadioServiceConnectionListener(() ->
                 mRadioController.addCurrentProgramListener(mCurrentProgramListener));
+
         return view;
     }
 
@@ -73,11 +73,8 @@ public class ManualTunerFragment extends Fragment {
     }
 
     private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
-        int radioBand = ProgramSelectorUtils.getRadioBand(info.getSelector());
-        mBandToggleButton.setImageResource(radioBand == RadioManager.BAND_FM
-                ? R.drawable.ic_radio_fm
-                : R.drawable.ic_radio_am);
-        mController.updateCurrentRadioBand(radioBand);
+        mController.updateCurrentRadioBand(ProgramSelectorUtils.getRadioBand(info.getSelector()));
+        mBandToggleButton.onCurrentProgramChanged(info);
     }
 
     static ManualTunerFragment newInstance(RadioController radioController) {

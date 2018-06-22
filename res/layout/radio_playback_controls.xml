@@ -21,7 +21,7 @@ limitations under the License.
     android:orientation="horizontal"
     android:paddingStart="@dimen/car_padding_5"
     android:paddingEnd="@dimen/car_padding_5">
-    <ImageButton
+    <com.android.car.radio.widget.BandToggleButton
         android:id="@+id/band_toggle_button"
         android:layout_gravity="center_vertical"
         android:layout_width="@dimen/radio_control_button_size"
@@ -29,7 +29,6 @@ limitations under the License.
         android:textColor="@color/car_body2_light"
         android:gravity="center"
         android:clickable="true"
-        android:src="@drawable/ic_radio_fm"
         android:background="@drawable/playback_button_background"
         style="@style/RadioButton" />
     <Space
@@ -50,7 +49,7 @@ limitations under the License.
         android:layout_height="1dp"
         android:layout_weight="1" >
     </Space>
-    <com.android.car.radio.PlayPauseButton
+    <com.android.car.radio.widget.PlayPauseButton
         android:id="@+id/radio_play_button"
         android:layout_gravity="center_vertical"
         android:layout_width="@dimen/radio_control_button_size"
