@@ -95,8 +95,7 @@ limitations under the License.
     <Space
         android:layout_width="@dimen/car_padding_6"
         android:layout_height="0dp"/>
-    <ImageButton
+    <com.android.car.radio.widget.BandToggleButton
         android:id="@+id/manual_tuner_band_toggle"
-        android:src="@drawable/ic_radio_fm"
         style="@style/DialpadKeyButtonStyle" />
 </GridLayout>

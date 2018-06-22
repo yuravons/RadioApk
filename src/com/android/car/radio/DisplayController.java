@@ -25,6 +25,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.android.car.radio.audio.PlaybackStateListenerAdapter;
+import com.android.car.radio.widget.PlayPauseButton;
 
 import java.util.Objects;
 

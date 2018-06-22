@@ -16,14 +16,10 @@
 
 package com.android.car.radio;
 
-import android.annotation.NonNull;
 import android.content.Intent;
-import android.hardware.radio.RadioManager;
-import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -33,7 +29,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.android.car.radio.service.CurrentProgramListenerAdapter;
 import com.android.car.radio.service.ICurrentProgramListener;
-import com.android.car.radio.utils.ProgramSelectorUtils;
+import com.android.car.radio.widget.BandToggleButton;
 
 import com.google.android.material.tabs.TabLayout;
 
@@ -57,20 +53,26 @@ public class RadioActivity extends FragmentActivity {
 
     private RadioController mRadioController;
     private View mRootView;
-    private ImageButton mBandToggleButton;
+    private BandToggleButton mBandToggleButton;
 
-    private final ICurrentProgramListener mCurrentProgramListener =
-            new CurrentProgramListenerAdapter(this::onCurrentProgramChanged);
+    private ICurrentProgramListener mCurrentProgramListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mRadioController = new RadioController(this);
-        mRadioController.addRadioServiceConnectionListener(() ->
-                mRadioController.addCurrentProgramListener(mCurrentProgramListener));
         setContentView(R.layout.radio_activity);
         mRootView = findViewById(R.id.main_radio_display);
+        mBandToggleButton = findViewById(R.id.band_toggle_button);
+
+        mRadioController = new RadioController(this);
+        mBandToggleButton.setCallback(mRadioController::switchBand);
+
+        mCurrentProgramListener = new CurrentProgramListenerAdapter(
+                mBandToggleButton::onCurrentProgramChanged);
+        mRadioController.addRadioServiceConnectionListener(() ->
+                mRadioController.addCurrentProgramListener(mCurrentProgramListener));
+
         RadioPagerAdapter adapter =
                 new RadioPagerAdapter(this, getSupportFragmentManager(), mRadioController);
         ViewPager viewPager = findViewById(R.id.viewpager);
@@ -118,16 +120,6 @@ public class RadioActivity extends FragmentActivity {
             }
         });
         tabLayout.getTabAt(0).select();
-
-        mBandToggleButton = findViewById(R.id.band_toggle_button);
-        mBandToggleButton.setOnClickListener(v -> {
-            if (mRadioController.getCurrentRadioBand() == RadioManager.BAND_AM) {
-                mRadioController.switchBand(RadioManager.BAND_FM);
-            } else {
-                mRadioController.switchBand(RadioManager.BAND_AM);
-            }
-        });
-
     }
 
     @Override
@@ -165,14 +157,5 @@ public class RadioActivity extends FragmentActivity {
         super.onDestroy();
 
         mRadioController.shutdown();
-    }
-
-    private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
-        int radioBand = ProgramSelectorUtils.getRadioBand(info.getSelector());
-        if (radioBand == RadioManager.BAND_FM) {
-            mBandToggleButton.setImageResource(R.drawable.ic_radio_fm);
-        } else if (radioBand == RadioManager.BAND_AM) {
-            mBandToggleButton.setImageResource(R.drawable.ic_radio_am);
-        }
     }
 }

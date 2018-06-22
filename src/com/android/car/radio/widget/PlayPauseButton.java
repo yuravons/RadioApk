@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package com.android.car.radio;
+package com.android.car.radio.widget;
 
 import android.content.Context;
 import android.media.session.PlaybackState;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.ImageView;
+
+import com.android.car.radio.R;
 
 /**
  * An {@link ImageView} that renders a play/pause button like a floating action button.
