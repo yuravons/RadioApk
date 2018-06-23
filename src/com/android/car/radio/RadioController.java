@@ -48,7 +48,6 @@ import com.android.car.radio.service.ICurrentProgramListener;
 import com.android.car.radio.service.IRadioAppService;
 import com.android.car.radio.service.RadioAppService;
 import com.android.car.radio.storage.RadioStorage;
-import com.android.car.radio.utils.ProgramSelectorUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -191,7 +190,9 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
      * Sets the listeners that will be notified when the radio service is connected.
      */
     public void addRadioServiceConnectionListener(RadioServiceConnectionListener listener) {
+        // TODO(b/73950974): synchronized
         mRadioServiceConnectionListeners.add(listener);
+        if (mAppService != null) listener.onRadioServiceConnected();
     }
 
     /**
@@ -222,15 +223,6 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
      */
     public void tune(ProgramSelector sel) {
         exec(() -> mAppService.tune(sel));
-    }
-
-    /**
-     * Returns the band this radio is currently tuned to.
-     *
-     * TODO(b/73950974): don't be AM/FM exclusive
-     */
-    public int getCurrentRadioBand() {
-        return ProgramSelectorUtils.getRadioBand(mCurrentProgram.getSelector());
     }
 
     /**
@@ -373,7 +365,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
         mDisplayController.setCurrentStation(
                 ProgramInfoExt.getProgramName(info, ProgramInfoExt.NAME_NO_CHANNEL_FALLBACK));
-        RadioMetadata meta = ProgramInfoExt.getMetadata(mCurrentProgram);
+        RadioMetadata meta = ProgramInfoExt.getMetadata(info);
         mDisplayController.setCurrentSongTitleAndArtist(
                 meta.getString(RadioMetadata.METADATA_KEY_TITLE),
                 meta.getString(RadioMetadata.METADATA_KEY_ARTIST));
@@ -439,7 +431,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
             ProgramInfo info = mCurrentProgram;
             if (info == null) return;
 
-            ProgramSelector sel = mCurrentProgram.getSelector();
+            ProgramSelector sel = info.getSelector();
             boolean isPreset = mRadioStorage.isPreset(sel);
 
             if (isPreset) {

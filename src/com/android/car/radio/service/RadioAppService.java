@@ -333,10 +333,17 @@ public class RadioAppService extends MediaBrowserServiceCompat {
 
         @Override
         public void onError(int status) {
-            // this should be handled by RadioService, not an app
-            Log.e(TAG, "Hardware error: " + status);
-            close();
-            stopSelf();
+            switch (status) {
+                case RadioTuner.ERROR_HARDWARE_FAILURE:
+                case RadioTuner.ERROR_SERVER_DIED:
+                    // this should be handled by RadioService, not an app
+                    Log.e(TAG, "Fatal hardware error: " + status);
+                    close();
+                    stopSelf();
+                    break;
+                default:
+                    Log.w(TAG, "Hardware error: " + status);
+            }
         }
 
         @Override
