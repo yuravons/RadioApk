@@ -29,6 +29,10 @@ import android.os.IBinder;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.LifecycleRegistry;
 import androidx.media.MediaBrowserServiceCompat;
 
 import com.android.car.broadcastradio.support.media.BrowseTree;
@@ -53,7 +57,7 @@ import java.util.Optional;
  *
  * <p>Utilize the {@link RadioBinder} to perform radio operations.
  */
-public class RadioAppService extends MediaBrowserServiceCompat {
+public class RadioAppService extends MediaBrowserServiceCompat implements LifecycleOwner {
 
     private static final String TAG = "BcRadioApp.appsrv";
 
@@ -63,8 +67,9 @@ public class RadioAppService extends MediaBrowserServiceCompat {
 
     private final Handler mHandler = new Handler();
 
+    private final LifecycleRegistry mLifecycleRegistry = new LifecycleRegistry(this);
+
     private RadioStorage mRadioStorage;
-    private final RadioStorage.PresetsChangeListener mPresetsListener = this::onPresetsChanged;
 
     private RadioTuner mRadioTuner;
 
@@ -88,14 +93,6 @@ public class RadioAppService extends MediaBrowserServiceCompat {
             new ObserverList<>(null, ICurrentProgramListener::onCurrentProgramChanged);
 
     @Override
-    public IBinder onBind(Intent intent) {
-        if (ACTION_APP_SERVICE.equals(intent.getAction())) {
-            return mBinder;
-        }
-        return super.onBind(intent);
-    }
-
-    @Override
     public void onCreate() {
         super.onCreate();
 
@@ -112,11 +109,27 @@ public class RadioAppService extends MediaBrowserServiceCompat {
         mMediaSession = new TunerSession(this, mBrowseTree, mBinder, mImageCache);
         setSessionToken(mMediaSession.getSessionToken());
         mBrowseTree.setAmFmRegionConfig(mRadioManager.getAmFmRegionConfig());
-
-        mRadioStorage.addPresetsChangeListener(mPresetsListener);
-        onPresetsChanged();
+        mRadioStorage.getFavorites().observe(this,
+                favs -> mBrowseTree.setFavorites(new HashSet<>(favs)));
 
         openRadioBandInternal(mRadioStorage.getStoredRadioBand());
+
+        mLifecycleRegistry.markState(Lifecycle.State.CREATED);
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        mLifecycleRegistry.markState(Lifecycle.State.STARTED);
+        if (ACTION_APP_SERVICE.equals(intent.getAction())) {
+            return mBinder;
+        }
+        return super.onBind(intent);
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        mLifecycleRegistry.markState(Lifecycle.State.CREATED);
+        return false;
     }
 
     @Override
@@ -125,7 +138,8 @@ public class RadioAppService extends MediaBrowserServiceCompat {
             Log.d(TAG, "onDestroy()");
         }
 
-        mRadioStorage.removePresetsChangeListener(mPresetsListener);
+        mLifecycleRegistry.markState(Lifecycle.State.DESTROYED);
+
         mMediaSession.release();
         mRadioManager.getRadioTunerExt().close();
         close();
@@ -133,11 +147,10 @@ public class RadioAppService extends MediaBrowserServiceCompat {
         super.onDestroy();
     }
 
-    private void onPresetsChanged() {
-        synchronized (mLock) {
-            mBrowseTree.setFavorites(new HashSet<>(mRadioStorage.getPresets()));
-            mMediaSession.notifyFavoritesChanged();
-        }
+    @NonNull
+    @Override
+    public Lifecycle getLifecycle() {
+        return mLifecycleRegistry;
     }
 
     /**
@@ -369,6 +382,7 @@ public class RadioAppService extends MediaBrowserServiceCompat {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        mLifecycleRegistry.markState(Lifecycle.State.STARTED);
         if (BrowseTree.ACTION_PLAY_BROADCASTRADIO.equals(intent.getAction())) {
             Log.i(TAG, "Executing general play radio intent");
             mMediaSession.getController().getTransportControls().playFromMediaId(

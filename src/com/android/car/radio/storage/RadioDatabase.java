@@ -87,8 +87,8 @@ abstract class RadioDatabase extends RoomDatabase {
      * identifier if there is a conflict.
      */
     @WorkerThread
-    public void insertFavorite(@NonNull Program preset) {
-        favoriteDao().insertAll(new Favorite(preset));
+    public void insertFavorite(@NonNull Program favorite) {
+        favoriteDao().insertAll(new Favorite(favorite));
     }
 
     /**

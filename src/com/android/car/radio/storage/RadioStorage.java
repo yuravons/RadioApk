@@ -25,15 +25,11 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Observer;
 
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.radio.utils.ProgramSelectorUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -55,21 +51,7 @@ public class RadioStorage {
     private static RadioStorage sInstance;
     private static RadioDatabase sRadioDatabase;
 
-    /**
-     * Listener that will be called when something in the radio storage changes.
-     */
-    public interface PresetsChangeListener {
-        /**
-         * Called when favorite list has changed.
-         */
-        void onPresetsRefreshed();
-    }
-
     private final LiveData<List<Program>> mFavorites;
-
-    // TODO(b/73950974): use Observer<> directly
-    private final Map<PresetsChangeListener, Observer<List<Program>>> mPresetListeners =
-            new HashMap<>();
 
     private RadioStorage(Context context) {
         if (sSharedPref == null) {
@@ -95,49 +77,36 @@ public class RadioStorage {
     }
 
     /**
-     * Registers the given {@link PresetsChangeListener} to be notified when any radio preset state
-     * has changed.
+     * Returns a list of all favorites added previously by the user.
      */
-    public void addPresetsChangeListener(PresetsChangeListener listener) {
-        Observer<List<Program>> observer = list -> listener.onPresetsRefreshed();
-        synchronized (mPresetListeners) {
-            mFavorites.observeForever(observer);
-            mPresetListeners.put(listener, observer);
-        }
+    @NonNull
+    public LiveData<List<Program>> getFavorites() {
+        return mFavorites;
     }
 
     /**
-     * Unregisters the given {@link PresetsChangeListener}.
-     */
-    public void removePresetsChangeListener(PresetsChangeListener listener) {
-        Observer<List<Program>> observer;
-        synchronized (mPresetListeners) {
-            observer = mPresetListeners.remove(listener);
-            mFavorites.removeObserver(observer);
-        }
-    }
-
-    /**
-     * Returns all currently loaded presets. If there are no stored presets, this method will
-     * return an empty {@link List}.
+     * Checks, if a given program is favorite.
      *
-     * <p>Register as a {@link PresetsChangeListener} to be notified of any changes in the
-     * preset list.
+     * @param favorites List of favorites.
+     * @param selector Program to check.
      */
-    public @NonNull List<Program> getPresets() {
-        List<Program> favorites = mFavorites.getValue();
-        if (favorites != null) return favorites;
-
-        // It won't be a problem when we use Observer<> directly.
-        Log.w(TAG, "Database is not ready yet");
-        return new ArrayList<>();
+    public static boolean isFavorite(@NonNull List<Program> favorites,
+            @NonNull ProgramSelector selector) {
+        return favorites.contains(new Program(selector, ""));
     }
 
     /**
-     * Returns {@code true} if the given {@link ProgramSelector} is a user saved favorite.
+     * Checks, if a given program is favorite.
+     *
+     * @param selector Program to check.
      */
-    public boolean isPreset(@NonNull ProgramSelector selector) {
-        return mFavorites.getValue().contains(new Program(selector, ""));
+    public boolean isFavorite(@NonNull ProgramSelector selector) {
+        List<Program> favorites = mFavorites.getValue();
+        if (favorites == null) {
+            Log.w(TAG, "Database is not ready yet");
+            return false;
+        }
+        return isFavorite(favorites, selector);
     }
 
     /**

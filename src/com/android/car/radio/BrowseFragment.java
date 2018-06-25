@@ -34,7 +34,6 @@ import com.android.car.radio.service.CurrentProgramListenerAdapter;
 import com.android.car.radio.service.ICurrentProgramListener;
 import com.android.car.radio.storage.RadioStorage;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,7 +42,7 @@ import java.util.List;
 public class BrowseFragment extends Fragment {
 
     private RadioController mRadioController;
-    private BrowseAdapter mBrowseAdapter = new BrowseAdapter();
+    private BrowseAdapter mBrowseAdapter;
     private RadioStorage mRadioStorage;
     private View mRootView;
     private PagedListView mBrowseList;
@@ -62,6 +61,9 @@ public class BrowseFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         Context context = getContext();
 
+        mRadioStorage = RadioStorage.getInstance(context);
+        mBrowseAdapter = new BrowseAdapter(this, mRadioStorage.getFavorites());
+
         mRadioController.addRadioServiceConnectionListener(this::onRadioServiceConnected);
         mBrowseAdapter.setOnItemClickListener(mRadioController::tune);
         mBrowseAdapter.setOnItemFavoriteListener(this::handlePresetItemFavoriteChanged);
@@ -74,9 +76,6 @@ public class BrowseFragment extends Fragment {
         recyclerView.setFadingEdgeLength(getResources()
                 .getDimensionPixelSize(R.dimen.car_padding_4));
 
-        mRadioStorage = RadioStorage.getInstance(context);
-        mRadioStorage.addPresetsChangeListener(this::onPresetsRefreshed);
-
         updateProgramList();
     }
 
@@ -87,11 +86,7 @@ public class BrowseFragment extends Fragment {
     }
 
     private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
-        mBrowseAdapter.setActiveProgram(Program.fromProgramInfo(info));
-    }
-
-    private void onPresetsRefreshed() {
-        mBrowseAdapter.updateFavorites(mRadioStorage.getPresets());
+        mBrowseAdapter.onCurrentProgramChanged(info);
     }
 
     private void onRadioServiceConnected() {
@@ -114,14 +109,7 @@ public class BrowseFragment extends Fragment {
     }
 
     private void updateProgramList() {
-        List<ProgramInfo> list = mRadioController.getProgramList();
-        if (list != null && list.size() > 0) {
-            List<Program> browseList = new ArrayList<>(list.size());
-            for (ProgramInfo programInfo : list) {
-                browseList.add(Program.fromProgramInfo(programInfo));
-            }
-            mBrowseAdapter.setBrowseList(browseList);
-        }
-        mBrowseAdapter.updateFavorites(mRadioStorage.getPresets());
+        List<ProgramInfo> plist = mRadioController.getProgramList();
+        if (plist != null) mBrowseAdapter.setProgramList(plist);
     }
 }

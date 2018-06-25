@@ -40,7 +40,7 @@ import com.android.car.radio.storage.RadioStorage;
 public class FavoritesFragment extends Fragment {
 
     private RadioController mRadioController;
-    private BrowseAdapter mBrowseAdapter = new BrowseAdapter();
+    private BrowseAdapter mBrowseAdapter;
     private RadioStorage mRadioStorage;
     private PagedListView mBrowseList;
 
@@ -58,6 +58,9 @@ public class FavoritesFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         Context context = getContext();
 
+        mRadioStorage = RadioStorage.getInstance(context);
+        mBrowseAdapter = new BrowseAdapter(this, mRadioStorage.getFavorites());
+
         mRadioController.addRadioServiceConnectionListener(this::onRadioServiceConnected);
         mBrowseAdapter.setOnItemClickListener(mRadioController::tune);
         mBrowseAdapter.setOnItemFavoriteListener(this::handlePresetItemFavoriteChanged);
@@ -69,9 +72,6 @@ public class FavoritesFragment extends Fragment {
         recyclerView.setVerticalFadingEdgeEnabled(true);
         recyclerView.setFadingEdgeLength(getResources()
                 .getDimensionPixelSize(R.dimen.car_padding_4));
-
-        mRadioStorage = RadioStorage.getInstance(context);
-        mRadioStorage.addPresetsChangeListener(this::onPresetsRefreshed);
     }
 
     @Override
@@ -81,16 +81,11 @@ public class FavoritesFragment extends Fragment {
     }
 
     private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
-        mBrowseAdapter.setActiveProgram(Program.fromProgramInfo(info));
-    }
-
-    private void onPresetsRefreshed() {
-        mBrowseAdapter.updateFavorites(mRadioStorage.getPresets());
+        mBrowseAdapter.onCurrentProgramChanged(info);
     }
 
     private void onRadioServiceConnected() {
         mRadioController.addCurrentProgramListener(mCurrentProgramListener);
-        mBrowseAdapter.setBrowseList(mRadioStorage.getPresets());
     }
 
     private void handlePresetItemFavoriteChanged(Program program, boolean saveAsFavorite) {
