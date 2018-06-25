@@ -23,7 +23,6 @@ import android.animation.ValueAnimator;
 import android.annotation.ColorInt;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -38,6 +37,8 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
+
+import androidx.fragment.app.FragmentActivity;
 
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.broadcastradio.support.platform.ProgramInfoExt;
@@ -56,7 +57,7 @@ import java.util.Objects;
 /**
  * A controller that handles the display of metadata on the current radio station.
  */
-public class RadioController implements RadioStorage.PresetsChangeListener {
+public class RadioController {
     private static final String TAG = "Em.RadioController";
 
     /**
@@ -75,11 +76,14 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
     private static final int CHANNEL_CHANGE_DURATION_MS = 200;
 
+    private final Object mLock = new Object();
+
+    @Nullable private ProgramInfo mCurrentProgram;
+
     private final ValueAnimator mAnimator = new ValueAnimator();
     private int mCurrentlyDisplayedChannel;  // for animation purposes
-    private ProgramInfo mCurrentProgram;  // TODO(b/73950974): remove
 
-    private final Activity mActivity;
+    private final FragmentActivity mActivity;
     private IRadioAppService mAppService;
 
     private View mRadioBackground;
@@ -111,16 +115,16 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
         void onRadioServiceConnected();
     }
 
-    public RadioController(Activity activity) {
-        mActivity = activity;
+    public RadioController(@NonNull FragmentActivity activity) {
+        mActivity = Objects.requireNonNull(activity);
 
-        mDisplayController = new DisplayController(mActivity, this);
+        mDisplayController = new DisplayController(activity, this);
 
-        mAmBandString = mActivity.getString(R.string.radio_am_text);
-        mFmBandString = mActivity.getString(R.string.radio_fm_text);
+        mAmBandString = activity.getString(R.string.radio_am_text);
+        mFmBandString = activity.getString(R.string.radio_fm_text);
 
-        mRadioStorage = RadioStorage.getInstance(mActivity);
-        mRadioStorage.addPresetsChangeListener(this);
+        mRadioStorage = RadioStorage.getInstance(activity);
+        mRadioStorage.getFavorites().observe(activity, this::onFavoritesChanged);
     }
 
     /**
@@ -332,19 +336,18 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
         }
 
         mActivity.unbindService(mServiceConnection);
-        mRadioStorage.removePresetsChangeListener(this);
 
         if (mAppService != null) {
             tryExec(() -> mAppService.removeCurrentProgramListener(mCurrentProgramListener));
         }
     }
 
-    @Override
-    public void onPresetsRefreshed() {
-        // Check if the current channel's preset status has changed.
-        ProgramInfo info = mCurrentProgram;
-        boolean isPreset = (info != null) && mRadioStorage.isPreset(info.getSelector());
-        mDisplayController.setChannelIsPreset(isPreset);
+    private void onFavoritesChanged(List<Program> favorites) {
+        synchronized (mLock) {
+            if (mCurrentProgram == null) return;
+            boolean isFav = RadioStorage.isFavorite(favorites, mCurrentProgram.getSelector());
+            mDisplayController.setCurrentIsFavorite(isFav);
+        }
     }
 
     /**
@@ -369,7 +372,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
         mDisplayController.setCurrentSongTitleAndArtist(
                 meta.getString(RadioMetadata.METADATA_KEY_TITLE),
                 meta.getString(RadioMetadata.METADATA_KEY_ARTIST));
-        mDisplayController.setChannelIsPreset(mRadioStorage.isPreset(sel));
+        mDisplayController.setCurrentIsFavorite(mRadioStorage.isFavorite(sel));
     }
 
     private final View.OnClickListener mBackwardSeekClickListener = new View.OnClickListener() {
@@ -424,25 +427,17 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     };
 
     private final View.OnClickListener mPresetButtonClickListener = new View.OnClickListener() {
-        // TODO: Maybe add a check to send a store/remove preset event after a delay so that
-        // there aren't multiple writes if the user presses the button quickly.
         @Override
         public void onClick(View v) {
             ProgramInfo info = mCurrentProgram;
             if (info == null) return;
 
             ProgramSelector sel = info.getSelector();
-            boolean isPreset = mRadioStorage.isPreset(sel);
-
-            if (isPreset) {
+            if (mRadioStorage.isFavorite(sel)) {  // TODO(b/73950974): carry state with a click
                 mRadioStorage.removePreset(sel);
             } else {
                 mRadioStorage.storePreset(Program.fromProgramInfo(info));
             }
-
-            // Update the UI immediately. If the preset failed for some reason, the RadioStorage
-            // will notify us and UI update will happen then.
-            mDisplayController.setChannelIsPreset(!isPreset);
         }
     };
 

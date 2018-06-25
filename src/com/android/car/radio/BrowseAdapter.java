@@ -16,21 +16,26 @@
 
 package com.android.car.radio;
 
-import android.annotation.NonNull;
 import android.hardware.radio.ProgramSelector;
-import android.util.Log;
+import android.hardware.radio.RadioManager.ProgramInfo;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.car.widget.PagedListView;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.broadcastradio.support.Program;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -38,15 +43,14 @@ import java.util.Objects;
  */
 public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
         implements PagedListView.ItemCap {
-    private static final String TAG = "BcRadioApp.BrowseAdapter";
-
     // Only one type of view in this adapter.
     private static final int PRESETS_VIEW_TYPE = 0;
 
-    private Program mActiveProgram;
-    private boolean mHasFavorites;
+    private final Object mLock = new Object();
 
-    private @NonNull List<FavoritableProgram> mPrograms = new ArrayList<>();
+    private @NonNull List<Entry> mPrograms = new ArrayList<>();
+    private @Nullable ProgramInfo mCurrentProgram;
+
     private OnItemClickListener mItemClickListener;
     private OnItemFavoriteListener mItemFavoriteListener;
 
@@ -78,60 +82,89 @@ public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
         void onItemFavoriteChanged(Program program, boolean saveAsFavorite);
     }
 
+    private class Entry {
+        public Program program;
+        public boolean isFavorite;
+        public boolean wasFavorite;
+
+        Entry(Program program, boolean isFavorite) {
+            this.program = program;
+            this.isFavorite = isFavorite;
+            this.wasFavorite = isFavorite;
+        }
+    }
+
+    public BrowseAdapter(@NonNull LifecycleOwner lifecycleOwner,
+            @NonNull LiveData<List<Program>> favorites) {
+        favorites.observe(lifecycleOwner, this::onFavoritesChanged);
+    }
+
     /**
      * Set a listener to be notified whenever a program card is pressed.
      */
     public void setOnItemClickListener(@NonNull OnItemClickListener listener) {
-        mItemClickListener = Objects.requireNonNull(listener);
+        synchronized (mLock) {
+            mItemClickListener = Objects.requireNonNull(listener);
+        }
     }
 
     /**
      * Set a listener to be notified whenever a program favorite is changed.
      */
     public void setOnItemFavoriteListener(@NonNull OnItemFavoriteListener listener) {
-        mItemFavoriteListener = Objects.requireNonNull(listener);
+        synchronized (mLock) {
+            mItemFavoriteListener = Objects.requireNonNull(listener);
+        }
     }
 
     /**
      * Sets the given list as the list of programs to display.
      */
-    public void setBrowseList(List<Program> programs) {
-        mPrograms = new ArrayList<>();
-        for (Program p : programs) {
-            mPrograms.add(new FavoritableProgram(p, true));
+    public void setProgramList(@NonNull List<ProgramInfo> programs) {
+        Map<ProgramSelector.Identifier, ProgramInfo> liveMap = programs.stream().collect(
+                Collectors.toMap(p -> p.getSelector().getPrimaryId(), p -> p));
+        synchronized (mLock) {
+            // Remove entries no longer on live list, except those which were favorites previously
+            List<Entry> remove = new ArrayList<>();
+            for (Entry entry : mPrograms) {
+                ProgramSelector.Identifier id = entry.program.getSelector().getPrimaryId();
+                ProgramInfo liveEntry = liveMap.get(id);
+                if (liveEntry != null) {
+                    liveMap.remove(id);  // item is already on the list, don't add twice
+                } else if (!entry.wasFavorite) {
+                    remove.add(entry);  // no longer live and was never favorite - remove it
+                }
+            }
+            mPrograms.removeAll(remove);
+
+            // Add new entries from live list
+            liveMap.values().stream()
+                    .map(pi -> new Entry(Program.fromProgramInfo(pi), false))
+                    .forEachOrdered(mPrograms::add);
+
+            notifyDataSetChanged();
         }
-        if (mPrograms.size() == 0 && mActiveProgram != null) {
-            mPrograms.add(new FavoritableProgram(mActiveProgram, false));
-        }
-        notifyDataSetChanged();
     }
 
     /**
      * Updates the stations that are favorites, while keeping unfavorited stations in the list
      */
-    public void updateFavorites(List<Program> favorites) {
-        List<Program> newPrograms = new ArrayList<>(favorites);
-        // remove unfavorited programs
-        for (int i = 0; i < mPrograms.size(); i++) {
-            Program program = mPrograms.get(i).mProgram;
-            mPrograms.get(i).mIsFavorite = favorites.contains(program);
-            if (newPrograms.contains(program)) {
-                newPrograms.remove(program);
+    private void onFavoritesChanged(List<Program> favorites) {
+        Map<ProgramSelector.Identifier, Program> favMap = favorites.stream().collect(
+                Collectors.toMap(p -> p.getSelector().getPrimaryId(), p -> p));
+        synchronized (mLock) {
+            // Mark existing elements as favorites or not
+            for (Entry entry : mPrograms) {
+                ProgramSelector.Identifier id = entry.program.getSelector().getPrimaryId();
+                entry.isFavorite = favMap.containsKey(id);
+                if (entry.isFavorite) favMap.remove(id);  // don't add twice
             }
-        }
-        // add favorited programs
-        for (Program p : newPrograms) {
-            mPrograms.add(new FavoritableProgram(p, true));
-        }
 
-        if (favorites.size() == 0) {
-            mHasFavorites = false;
-            mPrograms.clear();
-            mPrograms.add(new FavoritableProgram(mActiveProgram, false));
-        } else {
-            mHasFavorites = true;
+            // Add new items
+            favMap.values().stream().map(p -> new Entry(p, true)).forEachOrdered(mPrograms::add);
+
+            notifyDataSetChanged();
         }
-        notifyDataSetChanged();
     }
 
     /**
@@ -139,13 +172,11 @@ public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
      * this adapter. This will cause that station to be highlighted in the list. If the station
      * passed to this method does not match any of the programs, then none will be highlighted.
      */
-    public void setActiveProgram(Program program) {
-        mActiveProgram = program;
-        if (!mHasFavorites) {
-            mPrograms.clear();
-            mPrograms.add(new FavoritableProgram(mActiveProgram, false));
+    public void onCurrentProgramChanged(@NonNull ProgramInfo info) {
+        synchronized (mLock) {
+            mCurrentProgram = Objects.requireNonNull(info);
+            notifyDataSetChanged();
         }
-        notifyDataSetChanged();
     }
 
     @Override
@@ -159,13 +190,12 @@ public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
 
     @Override
     public void onBindViewHolder(ProgramViewHolder holder, int position) {
-        Program station = mPrograms.get(position).mProgram;
-        boolean isActiveStation = false;
-        if (mActiveProgram != null) {
-            isActiveStation = station.getSelector().equals(mActiveProgram.getSelector());
+        synchronized (mLock) {
+            Entry entry = getEntryLocked(position);
+            boolean isCurrent = mCurrentProgram != null
+                    && entry.program.getSelector().equals(mCurrentProgram.getSelector());
+            holder.bindPreset(entry.program, isCurrent, getItemCount(), entry.isFavorite);
         }
-        holder.bindPreset(station, isActiveStation, getItemCount(),
-                mPrograms.get(position).mIsFavorite);
     }
 
     @Override
@@ -173,9 +203,21 @@ public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
         return PRESETS_VIEW_TYPE;
     }
 
+    private Entry getEntryLocked(int position) {
+        // if there are no elements on the list, return current program
+        if (position == 0 && mPrograms.size() == 0) {
+            return new Entry(Program.fromProgramInfo(mCurrentProgram), false);
+        }
+        return mPrograms.get(position);
+    }
+
     @Override
     public int getItemCount() {
-        return mPrograms.size();
+        synchronized (mLock) {
+            int cnt = mPrograms.size();
+            if (cnt == 0 && mCurrentProgram != null) return 1;
+            return cnt;
+        }
     }
 
     @Override
@@ -185,37 +227,21 @@ public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
     }
 
     private void handlePresetClicked(int position) {
-        if (Log.isLoggable(TAG, Log.VERBOSE)) {
-            Log.v(TAG, String.format("onPresetClicked(); item count: %d; position: %d",
-                    getItemCount(), position));
-        }
-        if (mItemClickListener != null && getItemCount() > position) {
-            if (getItemCount() == 0) {
-                mItemClickListener.onItemClicked(mActiveProgram.getSelector());
-                return;
-            }
-            mItemClickListener.onItemClicked(mPrograms.get(position).mProgram.getSelector());
+        synchronized (mLock) {
+            if (mItemClickListener == null) return;
+            if (position >= getItemCount()) return;
+
+            mItemClickListener.onItemClicked(getEntryLocked(position).program.getSelector());
         }
     }
 
     private void handlePresetFavoriteChanged(int position, boolean saveAsFavorite) {
-        if (mItemFavoriteListener != null && getItemCount() > position) {
-            if (getItemCount() == 0) {
-                mItemFavoriteListener.onItemFavoriteChanged(mActiveProgram, saveAsFavorite);
-                return;
-            }
+        synchronized (mLock) {
+            if (mItemFavoriteListener == null) return;
+            if (position >= getItemCount()) return;
+
             mItemFavoriteListener.onItemFavoriteChanged(
-                    mPrograms.get(position).mProgram, saveAsFavorite);
-        }
-    }
-
-    private class FavoritableProgram {
-        private Program mProgram;
-        private boolean mIsFavorite;
-
-        FavoritableProgram(Program program, boolean favorite) {
-            mProgram = program;
-            mIsFavorite = favorite;
+                    getEntryLocked(position).program, saveAsFavorite);
         }
     }
 }

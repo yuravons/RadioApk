@@ -208,14 +208,12 @@ public class DisplayController {
     }
 
     /**
-     * Sets whether or not the current channel that is playing is a preset. If it is, then the
+     * Sets whether or not the current program is stored as a favorite. If it is, then the
      * icon will be updatd to reflect this state.
      */
-    public void setChannelIsPreset(boolean isPreset) {
-        if (mAddPresetsButton != null) {
-            mAddPresetsButton.setImageResource(isPreset
-                    ? R.drawable.ic_star_filled
-                    : R.drawable.ic_star_empty);
-        }
+    public void setCurrentIsFavorite(boolean isFavorite) {
+        if (mAddPresetsButton == null) return;
+        mAddPresetsButton.setImageResource(
+                isFavorite ? R.drawable.ic_star_filled : R.drawable.ic_star_empty);
     }
 }

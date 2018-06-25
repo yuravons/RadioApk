@@ -92,6 +92,7 @@ public class TunerSession extends MediaSessionCompat {
                 new CurrentProgramListenerAdapter(this::onCurrentProgramChanged)));
         exec(() -> uiSession.addPlaybackStateListener(
                 new PlaybackStateListenerAdapter(this::onPlaybackStateChanged)));
+        mRadioStorage.getFavorites().observeForever(favorites -> updateMetadata());
 
         setActive(true);
     }
@@ -99,7 +100,7 @@ public class TunerSession extends MediaSessionCompat {
     private void updateMetadata() {
         synchronized (mLock) {
             if (mCurrentProgram == null) return;
-            boolean fav = mBrowseTree.isFavorite(mCurrentProgram.getSelector());
+            boolean fav = mRadioStorage.isFavorite(mCurrentProgram.getSelector());
             setMetadata(MediaMetadataCompat.fromMediaMetadata(
                     ProgramInfoExt.toMediaMetadata(mCurrentProgram, fav, mImageResolver)));
         }
@@ -118,11 +119,6 @@ public class TunerSession extends MediaSessionCompat {
                     PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f);
             setPlaybackState(mPlaybackStateBuilder.build());
         }
-    }
-
-    // TODO(b/73950974): replace with mRadioStorage.addPresetsChangeListener
-    public void notifyFavoritesChanged() {
-        updateMetadata();
     }
 
     private void selectionError() {
