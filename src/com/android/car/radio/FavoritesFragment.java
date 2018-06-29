@@ -90,9 +90,9 @@ public class FavoritesFragment extends Fragment {
 
     private void handlePresetItemFavoriteChanged(Program program, boolean saveAsFavorite) {
         if (saveAsFavorite) {
-            mRadioStorage.storePreset(program);
+            mRadioStorage.addFavorite(program);
         } else {
-            mRadioStorage.removePreset(program.getSelector());
+            mRadioStorage.removeFavorite(program.getSelector());
         }
     }
 

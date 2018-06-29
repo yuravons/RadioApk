@@ -18,7 +18,6 @@ package com.android.car.radio;
 
 import android.annotation.NonNull;
 import android.hardware.radio.ProgramSelector;
-import android.hardware.radio.RadioManager;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -27,9 +26,9 @@ import android.view.ViewGroup;
 
 import androidx.fragment.app.Fragment;
 
+import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.service.CurrentProgramListenerAdapter;
 import com.android.car.radio.service.ICurrentProgramListener;
-import com.android.car.radio.utils.ProgramSelectorUtils;
 import com.android.car.radio.widget.BandToggleButton;
 
 /**
@@ -48,7 +47,7 @@ public class ManualTunerFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.tuner_fragment, container, false);
-        mController = new ManualTunerController(getContext(), view, RadioManager.BAND_FM);
+        mController = new ManualTunerController(getContext(), view, ProgramType.FM);
         mController.setDoneButtonListener(this::onManualTunerDone);
 
         mBandToggleButton = view.findViewById(R.id.manual_tuner_band_toggle);
@@ -73,7 +72,7 @@ public class ManualTunerFragment extends Fragment {
     }
 
     private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
-        mController.updateCurrentRadioBand(ProgramSelectorUtils.getRadioBand(info.getSelector()));
+        mController.setCurrentBand(ProgramType.fromSelector(info.getSelector()));
         mBandToggleButton.onCurrentProgramChanged(info);
     }
 

@@ -69,22 +69,16 @@ limitations under the License.
         app:layout_constraintEnd_toStartOf="@+id/radio_station_channel"
         android:visibility="invisible"
         style="@style/TextAppearance.Car.Body2" />
+
     <TextView
         android:id="@+id/radio_station_channel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBaseline_toBaselineOf="@+id/radio_station_details"
-        app:layout_constraintEnd_toStartOf="@+id/radio_station_band"
-        style="@style/TextAppearance.Car.Body2" />
-    <TextView
-        android:id="@+id/radio_station_band"
         android:layout_marginTop="@dimen/car_radio_station_top_margin"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingStart="@dimen/car_radio_band_display_margin_start"
-        app:layout_constraintBaseline_toBaselineOf="@+id/radio_station_channel"
+        app:layout_constraintBaseline_toBaselineOf="@+id/radio_station_details"
         app:layout_constraintEnd_toEndOf="parent"
         style="@style/TextAppearance.Car.Body2" />
+
     <include
         layout="@layout/radio_playback_controls"
         android:layout_width="0dp"
