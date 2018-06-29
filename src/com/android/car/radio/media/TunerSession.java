@@ -154,9 +154,9 @@ public class TunerSession extends MediaSessionCompat {
             synchronized (mLock) {
                 if (mCurrentProgram == null) return;
                 if (rating.hasHeart()) {
-                    mRadioStorage.storePreset(Program.fromProgramInfo(mCurrentProgram));
+                    mRadioStorage.addFavorite(Program.fromProgramInfo(mCurrentProgram));
                 } else {
-                    mRadioStorage.removePreset(mCurrentProgram.getSelector());
+                    mRadioStorage.removeFavorite(mCurrentProgram.getSelector());
                 }
             }
         }

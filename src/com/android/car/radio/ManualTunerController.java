@@ -15,18 +15,21 @@
  */
 package com.android.car.radio;
 
-import android.annotation.NonNull;
 import android.content.Context;
 import android.hardware.radio.ProgramSelector;
-import android.hardware.radio.RadioManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
+import com.android.car.radio.bands.ProgramType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A controller for the various buttons in the manual tuner screen.
@@ -42,7 +45,7 @@ public class ManualTunerController {
 
     private final TextView mChannelView;
 
-    private int mCurrentRadioBand;
+    private @NonNull ProgramType mCurrentBand;
 
     private final List<Button> mManualTunerButtons = new ArrayList<>(NUM_OF_MANUAL_TUNER_BUTTONS);
 
@@ -108,19 +111,17 @@ public class ManualTunerController {
         void onDone(ProgramSelector sel);
     }
 
-    public ManualTunerController(Context context, View container, int currentRadioBand) {
+    public ManualTunerController(Context context, View container, @Nullable ProgramType pt) {
         mChannelView = container.findViewById(R.id.manual_tuner_channel);
 
         // Default to FM band.
-        if (currentRadioBand != RadioManager.BAND_FM && currentRadioBand != RadioManager.BAND_AM) {
-            currentRadioBand = RadioManager.BAND_FM;
+        if (pt != ProgramType.AM && pt != ProgramType.FM) {
+            pt = ProgramType.FM;
         }
 
-        mCurrentRadioBand = currentRadioBand;
+        mCurrentBand = Objects.requireNonNull(pt);
 
-        mChannelValidator = mCurrentRadioBand == RadioManager.BAND_AM
-                ? mAmChannelValidator
-                : mFmChannelValidator;
+        mChannelValidator = pt == ProgramType.AM ? mAmChannelValidator : mFmChannelValidator;
 
         mEnabledButtonColor = context.getColor(R.color.manual_tuner_button_text);
         mDisabledButtonColor = context.getColor(R.color.car_radio_control_button_disabled);
@@ -163,15 +164,18 @@ public class ManualTunerController {
     /**
      * Refreshes tuner key state with new radio band, if changed without using AM/FM band buttons
      */
-    public void updateCurrentRadioBand(int band) {
-        if (mCurrentRadioBand == band) return;
-
-        mCurrentRadioBand = band;
-        if (band == RadioManager.BAND_FM) {
-            mChannelValidator = mFmChannelValidator;
-        } else {
-            mChannelValidator = mAmChannelValidator;
+    public void setCurrentBand(@Nullable ProgramType pt) {
+        switch (pt.id) {
+            case ProgramType.ID_AM:
+                mChannelValidator = mAmChannelValidator;
+                break;
+            default:
+                pt = ProgramType.FM;
+                mChannelValidator = mFmChannelValidator;
         }
+
+        if (mCurrentBand == pt) return;
+        mCurrentBand = Objects.requireNonNull(pt);
         resetChannel();
     }
 

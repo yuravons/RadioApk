@@ -21,6 +21,7 @@ import android.hardware.radio.RadioManager;
 
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.radio.audio.IPlaybackStateListener;
+import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.service.ICurrentProgramListener;
 
 /**
@@ -62,13 +63,13 @@ interface IRadioAppService {
     boolean isMuted();
 
     /**
-     * Switches radio band.
+     * Tune to a default channel of a given program type (band).
      *
-     * Usually, this means tuning to the recently listened program on a given band.
+     * Usually, this means tuning to the recently listened program of a given band.
      *
-     * @param radioBand One of {@link RadioManager#BAND_FM}, {@link RadioManager#BAND_AM}.
+     * @param band Program type to switch to
      */
-    void switchBand(int radioBand);
+    void switchBand(in ProgramType band);
 
     /**
      * Adds {@link ICurrentProgramListener} listener for current program info updates.

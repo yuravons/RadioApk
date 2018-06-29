@@ -30,6 +30,7 @@ import android.support.v4.media.MediaBrowserCompat.MediaItem;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LifecycleRegistry;
@@ -39,6 +40,7 @@ import com.android.car.broadcastradio.support.media.BrowseTree;
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.audio.AudioStreamController;
 import com.android.car.radio.audio.IPlaybackStateListener;
+import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.media.TunerSession;
 import com.android.car.radio.platform.ImageMemoryCache;
 import com.android.car.radio.platform.RadioManagerExt;
@@ -112,7 +114,7 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
         mRadioStorage.getFavorites().observe(this,
                 favs -> mBrowseTree.setFavorites(new HashSet<>(favs)));
 
-        openRadioBandInternal(mRadioStorage.getStoredRadioBand());
+        openRadioBandInternal();
 
         mLifecycleRegistry.markState(Lifecycle.State.CREATED);
     }
@@ -156,12 +158,12 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
     /**
      * Opens the current radio band. Currently, this only supports FM and AM bands.
      *
-     * @param radioBand One of {@link RadioManager#BAND_FM}, {@link RadioManager#BAND_AM},
-     *                  {@link RadioManager#BAND_FM_HD} or {@link RadioManager#BAND_AM_HD}.
+     * TODO(b/73950974): remove
+     *
      * @return {@link RadioManager#STATUS_OK} if successful; otherwise,
      * {@link RadioManager#STATUS_ERROR}.
      */
-    private int openRadioBandInternal(int radioBand) {
+    private int openRadioBandInternal() {
         if (!mAudioStreamController.requestMuted(false)) return RadioManager.STATUS_ERROR;
 
         if (mRadioTuner == null) {
@@ -174,24 +176,24 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
             Log.d(TAG, "openRadioBandInternal() STATUS_OK");
         }
 
-        tuneToDefault(radioBand);
+        tuneToDefault(null);
 
         return RadioManager.STATUS_OK;
     }
 
-    private void tuneToDefault(int band) {
+    private void tuneToDefault(@Nullable ProgramType pt) {
         if (!mAudioStreamController.preparePlayback(Optional.empty())) return;
 
-        long storedChannel = mRadioStorage.getStoredRadioChannel(band);
-        if (storedChannel != RadioStorage.INVALID_RADIO_CHANNEL) {
-            Log.i(TAG, "Restoring stored program: " + storedChannel);
-            mRadioTuner.tune(ProgramSelectorExt.createAmFmSelector(storedChannel));
+        ProgramSelector sel = mRadioStorage.getRecentlySelected(pt);
+        if (sel != null) {
+            Log.i(TAG, "Restoring recently selected program: " + sel);
+            mRadioTuner.tune(sel);
         } else {
-            Log.i(TAG, "No stored program, seeking forward to not play static");
+            Log.i(TAG, "No recently selected program, seeking forward to not play static");
 
             // TODO(b/80500464): don't hardcode, pull from tuner config
             long lastChannel;
-            if (band == RadioManager.BAND_AM) lastChannel = 1620;
+            if (pt == ProgramType.AM) lastChannel = 1620;
             else lastChannel = 108000;
             mRadioTuner.tune(ProgramSelectorExt.createAmFmSelector(lastChannel));
 
@@ -242,14 +244,6 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
         @Override
         public void seekForward() {
             if (!mAudioStreamController.preparePlayback(Optional.of(true))) return;
-
-            if (mRadioTuner == null) {
-                int radioStatus = openRadioBandInternal(mRadioStorage.getStoredRadioBand());
-                if (radioStatus == RadioManager.STATUS_ERROR) {
-                    return;
-                }
-            }
-
             mRadioTuner.scan(RadioTuner.DIRECTION_UP, true);
         }
 
@@ -260,14 +254,6 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
         @Override
         public void seekBackward() {
             if (!mAudioStreamController.preparePlayback(Optional.of(false))) return;
-
-            if (mRadioTuner == null) {
-                int radioStatus = openRadioBandInternal(mRadioStorage.getStoredRadioBand());
-                if (radioStatus == RadioManager.STATUS_ERROR) {
-                    return;
-                }
-            }
-
             mRadioTuner.scan(RadioTuner.DIRECTION_DOWN, true);
         }
 
@@ -300,8 +286,8 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
         }
 
         @Override
-        public void switchBand(int radioBand) {
-            tuneToDefault(radioBand);
+        public void switchBand(ProgramType band) {
+            tuneToDefault(band);
         }
 
         @Override
@@ -339,7 +325,10 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
             }
 
             mAudioStreamController.notifyProgramInfoChanged();
-            mRadioStorage.storeRadioChannel(info.getSelector());
+
+            /* This might be in response only to explicit tune calls (including next/prev seek),
+             * but it would be nontrivial with current API. */
+            mRadioStorage.setRecentlySelected(info.getSelector());
 
             mCurrentProgramListeners.update(info);
         }

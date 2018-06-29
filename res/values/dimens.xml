@@ -29,10 +29,6 @@ limitations under the License.
     <!-- The top margin before the start of the radio's metadata and channel display. -->
     <dimen name="car_radio_container_top_padding">0dp</dimen>
 
-    <!-- The margin below the radio station information (e.g. channel name). This margin is
-         negative to move the text closer to the channel frequency. -->
-    <dimen name="car_radio_band_display_margin_start">8dp</dimen>
-
     <!-- The width of the container that holds the current radio station metadata. -->
     <dimen name="car_radio_metadata_container_width">290dp</dimen>
 

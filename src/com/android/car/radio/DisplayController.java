@@ -35,8 +35,7 @@ import java.util.Objects;
 public class DisplayController {
     private final Context mContext;
 
-    private TextView mChannelBand;
-    private TextView mChannelNumber;
+    private TextView mChannel;
 
     private TextView mCurrentSongTitleAndArtist;
     private TextView mCurrentStation;
@@ -61,8 +60,7 @@ public class DisplayController {
      * Initializes this {@link DisplayController}.
      */
     public void initialize(View container) {
-        mChannelBand = container.findViewById(R.id.radio_station_band);
-        mChannelNumber = container.findViewById(R.id.radio_station_channel);
+        mChannel = container.findViewById(R.id.radio_station_channel);
 
         mCurrentSongTitleAndArtist = container.findViewById(R.id.radio_station_details);
         mCurrentStation = container.findViewById(R.id.radio_station_name);
@@ -147,23 +145,11 @@ public class DisplayController {
     }
 
     /**
-     * Sets the current radio channel (e.g. 88.5).
+     * Sets the current radio channel (e.g. 88.5 FM).
      */
-    public void setChannelNumber(String channel) {
-        if (mChannelNumber != null) {
-            mChannelNumber.setText(channel);
-        }
-    }
-
-    /**
-     * Sets the radio channel band (e.g. FM).
-     */
-    public void setChannelBand(String channelBand) {
-        if (mChannelBand != null) {
-            mChannelBand.setText(channelBand);
-            mChannelBand.setVisibility(
-                    !TextUtils.isEmpty(channelBand) ? View.VISIBLE : View.GONE);
-        }
+    public void setChannel(String channel) {
+        if (mChannel == null) return;
+        mChannel.setText(channel);
     }
 
     /**

@@ -44,6 +44,7 @@ import com.android.car.broadcastradio.support.Program;
 import com.android.car.broadcastradio.support.platform.ProgramInfoExt;
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.audio.IPlaybackStateListener;
+import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.service.CurrentProgramListenerAdapter;
 import com.android.car.radio.service.ICurrentProgramListener;
 import com.android.car.radio.service.IRadioAppService;
@@ -81,7 +82,7 @@ public class RadioController {
     @Nullable private ProgramInfo mCurrentProgram;
 
     private final ValueAnimator mAnimator = new ValueAnimator();
-    private int mCurrentlyDisplayedChannel;  // for animation purposes
+    private @Nullable ProgramSelector mCurrentlyDisplayedChannel;  // for animation purposes
 
     private final FragmentActivity mActivity;
     private IRadioAppService mAppService;
@@ -232,30 +233,11 @@ public class RadioController {
     /**
      * Switch radio band. Currently, this only supports FM and AM bands.
      *
-     * @param radioBand One of {@link RadioManager#BAND_FM}, {@link RadioManager#BAND_AM}.
+     * @param pt {@link ProgramType} to switch to.
      */
-    public void switchBand(int radioBand) {
-        exec(() -> mAppService.switchBand(radioBand));
-    }
-
-    /**
-     * Delegates to the {@link DisplayController} to highlight the radio band.
-     */
-    private void updateAmFmDisplayState(int band) {
-        switch (band) {
-            case RadioManager.BAND_FM:
-                mDisplayController.setChannelBand(mFmBandString);
-                break;
-
-            case RadioManager.BAND_AM:
-                mDisplayController.setChannelBand(mAmBandString);
-                break;
-
-            // TODO: Support BAND_FM_HD and BAND_AM_HD.
-
-            default:
-                mDisplayController.setChannelBand(null);
-        }
+    public void switchBand(@NonNull ProgramType pt) {
+        Objects.requireNonNull(pt);
+        exec(() -> mAppService.switchBand(pt));
     }
 
     // TODO(b/73950974): move channel animation to DisplayController
@@ -267,35 +249,25 @@ public class RadioController {
         if (!ProgramSelectorExt.isAmFmProgram(sel)
                 || !ProgramSelectorExt.hasId(sel, ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY)) {
             // channel animation is implemented for AM/FM only
-            mCurrentlyDisplayedChannel = 0;
-            mDisplayController.setChannelNumber("");
-
-            updateAmFmDisplayState(RadioStorage.INVALID_RADIO_BAND);
+            mCurrentlyDisplayedChannel = null;
+            mDisplayController.setChannel(ProgramSelectorExt.getDisplayName(sel, 0));
             return;
         }
 
-        int freq = (int)sel.getFirstId(ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY);
-
-        boolean wasAm = ProgramSelectorExt.isAmFrequency(mCurrentlyDisplayedChannel);
-        boolean wasFm = ProgramSelectorExt.isFmFrequency(mCurrentlyDisplayedChannel);
-        boolean isAm = ProgramSelectorExt.isAmFrequency(freq);
-        int band = isAm ? RadioManager.BAND_AM : RadioManager.BAND_FM;
-
-        updateAmFmDisplayState(band);
-
-        if (isAm && wasAm || !isAm && wasFm) {
-            mAnimator.setIntValues((int)mCurrentlyDisplayedChannel, (int)freq);
+        if (ProgramType.fromSelector(mCurrentlyDisplayedChannel) == ProgramType.fromSelector(sel)) {
+            int fromFreq = (int) mCurrentlyDisplayedChannel
+                    .getFirstId(ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY);
+            int toFreq = (int) sel.getFirstId(ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY);
+            mAnimator.setIntValues((int) fromFreq, (int) toFreq);
             mAnimator.setDuration(CHANNEL_CHANGE_DURATION_MS);
-            mAnimator.addUpdateListener(animation -> mDisplayController.setChannelNumber(
-                    ProgramSelectorExt.formatAmFmFrequency((int)animation.getAnimatedValue(),
-                            ProgramSelectorExt.NAME_NO_MODULATION)));
+            mAnimator.addUpdateListener(animation -> mDisplayController.setChannel(
+                    ProgramSelectorExt.formatAmFmFrequency((int) animation.getAnimatedValue(), 0)));
             mAnimator.start();
         } else {
             // it's a different band - don't animate
-            mDisplayController.setChannelNumber(
-                    ProgramSelectorExt.getDisplayName(sel, ProgramSelectorExt.NAME_NO_MODULATION));
+            mDisplayController.setChannel(ProgramSelectorExt.getDisplayName(sel, 0));
         }
-        mCurrentlyDisplayedChannel = freq;
+        mCurrentlyDisplayedChannel = sel;
     }
 
     private void setBackgroundColor(int backgroundColor) {
@@ -434,9 +406,9 @@ public class RadioController {
 
             ProgramSelector sel = info.getSelector();
             if (mRadioStorage.isFavorite(sel)) {  // TODO(b/73950974): carry state with a click
-                mRadioStorage.removePreset(sel);
+                mRadioStorage.removeFavorite(sel);
             } else {
-                mRadioStorage.storePreset(Program.fromProgramInfo(info));
+                mRadioStorage.addFavorite(Program.fromProgramInfo(info));
             }
         }
     };
