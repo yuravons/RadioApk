@@ -29,12 +29,12 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.hardware.radio.ProgramSelector;
-import android.hardware.radio.RadioManager;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.hardware.radio.RadioMetadata;
 import android.hardware.radio.RadioTuner;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.View;
 
@@ -59,7 +59,7 @@ import java.util.Objects;
  * A controller that handles the display of metadata on the current radio station.
  */
 public class RadioController {
-    private static final String TAG = "Em.RadioController";
+    private static final String TAG = "BcRadioApp.RadioController";
 
     /**
      * The percentage by which to darken the color that should be set on the status bar.
@@ -138,7 +138,7 @@ public class RadioController {
 
         mDisplayController.setBackwardSeekButtonListener(mBackwardSeekClickListener);
         mDisplayController.setForwardSeekButtonListener(mForwardSeekClickListener);
-        mDisplayController.setPlayButtonListener(mPlayPauseClickListener);
+        mDisplayController.setPlayButtonCallback(this::onSwitchToPlayState);
         mDisplayController.setFavoriteToggleListener(this::onFavoriteToggled);
 
         mRadioBackground = container;
@@ -371,32 +371,19 @@ public class RadioController {
         }
     };
 
-    /**
-     * Click listener for the play/pause button. Currently, all this does is mute/unmute the radio
-     * because the {@link RadioManager} does not support the ability to pause/start again.
-     */
-    private final View.OnClickListener mPlayPauseClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (mAppService == null) {
-                return;
-            }
-
-            try {
-                if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "Play button clicked. Currently muted: " + mAppService.isMuted());
-                }
-
-                if (mAppService.isMuted()) {
-                    mAppService.unMute();
-                } else {
-                    mAppService.mute();
-                }
-            } catch (RemoteException e) {
-                Log.e(TAG, "playPauseClickListener(); remote exception: " + e.getMessage());
-            }
+    private void onSwitchToPlayState(@PlaybackStateCompat.State int newPlayState) {
+        switch (newPlayState) {
+            case PlaybackStateCompat.STATE_PLAYING:
+                exec(() -> mAppService.setMuted(false));
+                break;
+            case PlaybackStateCompat.STATE_PAUSED:
+            case PlaybackStateCompat.STATE_STOPPED:
+                exec(() -> mAppService.setMuted(true));
+                break;
+            default:
+                Log.w(TAG, "Invalid request to switch to play state " + newPlayState);
         }
-    };
+    }
 
     private void onFavoriteToggled(boolean addFavorite) {
         ProgramInfo info = mCurrentProgram;

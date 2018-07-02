@@ -34,33 +34,21 @@ interface IRadioAppService {
     void tune(in ProgramSelector sel);
 
     /**
-     * Seeks the radio forward.
+     * Seeks forward.
      */
     void seekForward();
 
     /**
-     * Seeks the radio backwards.
+     * Seeks backwards.
      */
     void seekBackward();
 
     /**
-     * Mutes the radioN
+     * Mutes or resumes audio.
      *
-     * @return {@code true} if the mute was successful.
+     * @param muted {@code true} to mute, {@code false} to resume audio.
      */
-    boolean mute();
-
-    /**
-     * Un-mutes the radio and causes audio to play.
-     *
-     * @return {@code true} if the un-mute was successful.
-     */
-    boolean unMute();
-
-    /**
-     * Returns {@code true} if the radio is currently muted.
-     */
-    boolean isMuted();
+    void setMuted(boolean muted);
 
     /**
      * Tune to a default channel of a given program type (band).

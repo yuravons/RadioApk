@@ -149,13 +149,11 @@ public class DisplayController {
     }
 
     /**
-     * Sets the {@link android.view.View.OnClickListener} for the play button. Clicking on this
-     * button should toggle the radio from muted to un-muted.
+     * Sets the callback for the play/pause button.
      */
-    public void setPlayButtonListener(View.OnClickListener listener) {
-        if (mPlayButton != null) {
-            mPlayButton.setOnClickListener(listener);
-        }
+    public void setPlayButtonCallback(@Nullable PlayPauseButton.Callback callback) {
+        if (mPlayButton == null) return;
+        mPlayButton.setCallback(callback);
     }
 
     /**

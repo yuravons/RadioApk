@@ -17,10 +17,14 @@
 package com.android.car.radio.widget;
 
 import android.content.Context;
-import android.media.session.PlaybackState;
+import android.graphics.drawable.Drawable;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
+
+import androidx.annotation.Nullable;
 
 import com.android.car.radio.R;
 
@@ -28,24 +32,67 @@ import com.android.car.radio.R;
  * An {@link ImageView} that renders a play/pause button like a floating action button.
  */
 public class PlayPauseButton extends ImageView {
-    private static final String TAG = "Em.PlayPauseButton";
+    private static final String TAG = "BcRadioApp.PlayPauseButton";
 
     private static final int[] STATE_PLAYING = {R.attr.state_playing};
     private static final int[] STATE_PAUSED = {R.attr.state_paused};
 
+    @Nullable private Callback mCallback;
+
+    @PlaybackStateCompat.State
     private int mPlaybackState = -1;
+
+    /**
+     * Callback for toggle event.
+     */
+    public interface Callback {
+        /**
+         * Called when the button was clicked.
+         *
+         * @param newPlayState New playback state to switch to.
+         */
+        void onSwitchTo(@PlaybackStateCompat.State int newPlayState);
+    }
 
     public PlayPauseButton(Context context, AttributeSet attrs) {
         super(context, attrs);
+        setOnClickListener(this::onClick);
+    }
+
+    public void setCallback(@Nullable Callback callback) {
+        mCallback = callback;
     }
 
     /**
      * Set the current play state of the button.
      *
-     * @param playState One of the values from {@link PlaybackState}.
+     * @param playState Current playback state
      */
-    public void setPlayState(int playState) {
+    public void setPlayState(@PlaybackStateCompat.State int playState) {
         mPlaybackState = playState;
+    }
+
+    private void onClick(View v) {
+        Callback callback = mCallback;
+        if (callback == null) return;
+
+        int switchTo;
+        switch(mPlaybackState) {
+            case PlaybackStateCompat.STATE_PLAYING:
+            case PlaybackStateCompat.STATE_CONNECTING:
+                switchTo = PlaybackStateCompat.STATE_PAUSED;
+                break;
+            case PlaybackStateCompat.STATE_NONE:
+            case PlaybackStateCompat.STATE_PAUSED:
+            case PlaybackStateCompat.STATE_STOPPED:
+                switchTo = PlaybackStateCompat.STATE_PLAYING;
+                break;
+            default:
+                Log.e(TAG, "Unsupported PlaybackState: " + mPlaybackState);
+                return;
+        }
+
+        callback.onSwitchTo(switchTo);
     }
 
     @Override
@@ -54,21 +101,22 @@ public class PlayPauseButton extends ImageView {
         final int[] drawableState = super.onCreateDrawableState(extraSpace + 1);
 
         switch(mPlaybackState) {
-            case PlaybackState.STATE_PLAYING:
+            case PlaybackStateCompat.STATE_PLAYING:
                 mergeDrawableStates(drawableState, STATE_PLAYING);
                 break;
-            case PlaybackState.STATE_NONE:
-            case PlaybackState.STATE_PAUSED:
-            case PlaybackState.STATE_STOPPED:
-            case PlaybackState.STATE_CONNECTING:
+            case PlaybackStateCompat.STATE_NONE:
+            case PlaybackStateCompat.STATE_PAUSED:
+            case PlaybackStateCompat.STATE_STOPPED:
+            case PlaybackStateCompat.STATE_CONNECTING:
                 mergeDrawableStates(drawableState, STATE_PAUSED);
                 break;
             default:
                 Log.e(TAG, "Unsupported PlaybackState: " + mPlaybackState);
         }
-        if (getBackground() != null) {
-            getBackground().setState(drawableState);
-        }
+
+        Drawable background = getBackground();
+        if (background != null) background.setState(drawableState);
+
         return drawableState;
     }
 }

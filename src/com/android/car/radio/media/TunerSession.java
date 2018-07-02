@@ -122,7 +122,7 @@ public class TunerSession extends MediaSessionCompat {
     }
 
     private void selectionError() {
-        tryExec(() -> mAppService.mute());
+        tryExec(() -> mAppService.setMuted(true));
         mPlaybackStateBuilder.setErrorMessage(mContext.getString(R.string.invalid_selection));
         onPlaybackStateChanged(PlaybackStateCompat.STATE_ERROR);
         mPlaybackStateBuilder.setErrorMessage(null);
@@ -131,12 +131,12 @@ public class TunerSession extends MediaSessionCompat {
     private class TunerSessionCallback extends MediaSessionCompat.Callback {
         @Override
         public void onStop() {
-            tryExec(() -> mAppService.mute());
+            tryExec(() -> mAppService.setMuted(true));
         }
 
         @Override
         public void onPlay() {
-            tryExec(() -> mAppService.unMute());
+            tryExec(() -> mAppService.setMuted(false));
         }
 
         @Override
