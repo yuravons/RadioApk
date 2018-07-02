@@ -139,7 +139,7 @@ public class RadioController {
         mDisplayController.setBackwardSeekButtonListener(mBackwardSeekClickListener);
         mDisplayController.setForwardSeekButtonListener(mForwardSeekClickListener);
         mDisplayController.setPlayButtonListener(mPlayPauseClickListener);
-        mDisplayController.setAddPresetButtonListener(mPresetButtonClickListener);
+        mDisplayController.setFavoriteToggleListener(this::onFavoriteToggled);
 
         mRadioBackground = container;
     }
@@ -398,20 +398,16 @@ public class RadioController {
         }
     };
 
-    private final View.OnClickListener mPresetButtonClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            ProgramInfo info = mCurrentProgram;
-            if (info == null) return;
+    private void onFavoriteToggled(boolean addFavorite) {
+        ProgramInfo info = mCurrentProgram;
+        if (info == null) return;
 
-            ProgramSelector sel = info.getSelector();
-            if (mRadioStorage.isFavorite(sel)) {  // TODO(b/73950974): carry state with a click
-                mRadioStorage.removeFavorite(sel);
-            } else {
-                mRadioStorage.addFavorite(Program.fromProgramInfo(info));
-            }
+        if (addFavorite) {
+            mRadioStorage.addFavorite(Program.fromProgramInfo(info));
+        } else {
+            mRadioStorage.removeFavorite(info.getSelector());
         }
-    };
+    }
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
