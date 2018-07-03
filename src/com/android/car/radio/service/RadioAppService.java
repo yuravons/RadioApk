@@ -16,6 +16,8 @@
 
 package com.android.car.radio.service;
 
+import static com.android.car.radio.utils.Remote.tryExec;
+
 import android.app.Service;
 import android.content.Intent;
 import android.hardware.radio.ProgramList;
@@ -27,6 +29,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -39,14 +42,13 @@ import androidx.media.MediaBrowserServiceCompat;
 import com.android.car.broadcastradio.support.media.BrowseTree;
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.audio.AudioStreamController;
-import com.android.car.radio.audio.IPlaybackStateListener;
 import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.media.TunerSession;
 import com.android.car.radio.platform.ImageMemoryCache;
 import com.android.car.radio.platform.RadioManagerExt;
 import com.android.car.radio.storage.RadioStorage;
-import com.android.car.radio.utils.ObserverList;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -84,6 +86,10 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
     private TunerSession mMediaSession;
     private ProgramList mProgramList;
 
+    // current observables state for newly bound IRadioAppCallbacks
+    private ProgramInfo mCurrentProgram = null;
+    private int mCurrentPlaybackState = PlaybackStateCompat.STATE_NONE;
+
     /**
      * An internal {@link android.hardware.radio.RadioTuner.Callback} that will listen for
      * changes in radio metadata and pass these method calls through to
@@ -91,8 +97,7 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
      */
     private RadioTuner.Callback mInternalRadioTunerCallback = new InternalRadioCallback();
 
-    private final ObserverList<ProgramInfo, ICurrentProgramListener> mCurrentProgramListeners =
-            new ObserverList<>(null, ICurrentProgramListener::onCurrentProgramChanged);
+    private final List<IRadioAppCallback> mRadioAppCallbacks = new ArrayList<>();
 
     @Override
     public void onCreate() {
@@ -103,12 +108,15 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
         }
 
         mRadioManager = new RadioManagerExt(this);
-        mAudioStreamController = new AudioStreamController(this, mRadioManager);
+        mAudioStreamController =
+                new AudioStreamController(this, mRadioManager, this::onPlaybackStateChanged);
         mRadioStorage = RadioStorage.getInstance(this);
         mImageCache = new ImageMemoryCache(mRadioManager, 1000);
 
+        RadioAppServiceWrapper wrapper = new RadioAppServiceWrapper(mBinder);
+
         mBrowseTree = new BrowseTree(this, mImageCache);
-        mMediaSession = new TunerSession(this, mBrowseTree, mBinder, mImageCache);
+        mMediaSession = new TunerSession(this, mBrowseTree, wrapper, mImageCache);
         setSessionToken(mMediaSession.getSessionToken());
         mBrowseTree.setAmFmRegionConfig(mRadioManager.getAmFmRegionConfig());
         mRadioStorage.getFavorites().observe(this,
@@ -181,6 +189,15 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
         return RadioManager.STATUS_OK;
     }
 
+    private void onPlaybackStateChanged(int newState) {
+        synchronized (mLock) {
+            mCurrentPlaybackState = newState;
+            for (IRadioAppCallback callback : mRadioAppCallbacks) {
+                tryExec(() -> callback.onPlaybackStateChanged(newState));
+            }
+        }
+    }
+
     private void tuneToDefault(@Nullable ProgramType pt) {
         if (!mAudioStreamController.preparePlayback(Optional.empty())) return;
 
@@ -222,10 +239,24 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
     }
 
     private IRadioAppService.Stub mBinder = new IRadioAppService.Stub() {
-        /**
-         * Tunes the radio to the given frequency. To be notified of a successful tune, register
-         * as a {@link android.hardware.radio.RadioTuner.Callback}.
-         */
+        @Override
+        public void addCallback(IRadioAppCallback callback) {
+            synchronized (mLock) {
+                mRadioAppCallbacks.add(Objects.requireNonNull(callback));
+                tryExec(() -> {
+                    if (mCurrentProgram != null) callback.onCurrentProgramChanged(mCurrentProgram);
+                    callback.onPlaybackStateChanged(mCurrentPlaybackState);
+                });
+            }
+        }
+
+        @Override
+        public void removeCallback(IRadioAppCallback callback) {
+            synchronized (mLock) {
+                mRadioAppCallbacks.remove(callback);
+            }
+        }
+
         @Override
         public void tune(ProgramSelector sel) {
             if (!mAudioStreamController.preparePlayback(Optional.empty())) return;
@@ -237,20 +268,12 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
             return mRadioTuner.getDynamicProgramList(null).toList();
         }
 
-        /**
-         * Seeks the radio forward. To be notified of a successful tune, register as a
-         * {@link android.hardware.radio.RadioTuner.Callback}.
-         */
         @Override
         public void seekForward() {
             if (!mAudioStreamController.preparePlayback(Optional.of(true))) return;
             mRadioTuner.scan(RadioTuner.DIRECTION_UP, true);
         }
 
-        /**
-         * Seeks the radio backwards. To be notified of a successful tune, register as a
-         * {@link android.hardware.radio.RadioTuner.Callback}.
-         */
         @Override
         public void seekBackward() {
             if (!mAudioStreamController.preparePlayback(Optional.of(false))) return;
@@ -265,26 +288,6 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
         @Override
         public void switchBand(ProgramType band) {
             tuneToDefault(band);
-        }
-
-        @Override
-        public void addCurrentProgramListener(ICurrentProgramListener listener) {
-            mCurrentProgramListeners.add(listener);
-        }
-
-        @Override
-        public void removeCurrentProgramListener(ICurrentProgramListener listener) {
-            mCurrentProgramListeners.remove(listener);
-        }
-
-        @Override
-        public void addPlaybackStateListener(IPlaybackStateListener callback) {
-            mAudioStreamController.addPlaybackStateListener(callback);
-        }
-
-        @Override
-        public void removePlaybackStateListener(IPlaybackStateListener callback) {
-            mAudioStreamController.removePlaybackStateListener(callback);
         }
     };
 
@@ -301,13 +304,19 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
                 Log.d(TAG, "Program info changed: " + info);
             }
 
-            mAudioStreamController.notifyProgramInfoChanged();
+            synchronized (mLock) {
+                mCurrentProgram = info;
 
-            /* This might be in response only to explicit tune calls (including next/prev seek),
-             * but it would be nontrivial with current API. */
-            mRadioStorage.setRecentlySelected(info.getSelector());
+                mAudioStreamController.notifyProgramInfoChanged();
 
-            mCurrentProgramListeners.update(info);
+                /* This might be in response only to explicit tune calls (including next/prev seek),
+                 * but it would be nontrivial with current API. */
+                mRadioStorage.setRecentlySelected(info.getSelector());
+
+                for (IRadioAppCallback callback : mRadioAppCallbacks) {
+                    tryExec(() -> callback.onCurrentProgramChanged(info));
+                }
+            }
         }
 
         @Override

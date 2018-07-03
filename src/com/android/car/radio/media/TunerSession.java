@@ -16,11 +16,6 @@
 
 package com.android.car.radio.media;
 
-import static com.android.car.radio.utils.Remote.exec;
-import static com.android.car.radio.utils.Remote.tryExec;
-
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.content.Context;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
@@ -32,15 +27,16 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.broadcastradio.support.media.BrowseTree;
 import com.android.car.broadcastradio.support.platform.ImageResolver;
 import com.android.car.broadcastradio.support.platform.ProgramInfoExt;
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.R;
-import com.android.car.radio.audio.PlaybackStateListenerAdapter;
-import com.android.car.radio.service.CurrentProgramListenerAdapter;
-import com.android.car.radio.service.IRadioAppService;
+import com.android.car.radio.service.RadioAppServiceWrapper;
 import com.android.car.radio.storage.RadioStorage;
 
 import java.util.Objects;
@@ -56,7 +52,7 @@ public class TunerSession extends MediaSessionCompat {
     private final Context mContext;
     private final BrowseTree mBrowseTree;
     @Nullable private final ImageResolver mImageResolver;
-    private final IRadioAppService mAppService;
+    private final RadioAppServiceWrapper mAppService;
 
     private final RadioStorage mRadioStorage;
 
@@ -65,13 +61,13 @@ public class TunerSession extends MediaSessionCompat {
     @Nullable private ProgramInfo mCurrentProgram;
 
     public TunerSession(@NonNull Context context, @NonNull BrowseTree browseTree,
-            @NonNull IRadioAppService uiSession, @Nullable ImageResolver imageResolver) {
+            @NonNull RadioAppServiceWrapper appService, @Nullable ImageResolver imageResolver) {
         super(context, TAG);
 
         mContext = Objects.requireNonNull(context);
         mBrowseTree = Objects.requireNonNull(browseTree);
         mImageResolver = imageResolver;
-        mAppService = Objects.requireNonNull(uiSession);
+        mAppService = Objects.requireNonNull(appService);
 
         mRadioStorage = RadioStorage.getInstance(context);
 
@@ -88,28 +84,21 @@ public class TunerSession extends MediaSessionCompat {
         onPlaybackStateChanged(PlaybackStateCompat.STATE_NONE);
         setCallback(new TunerSessionCallback());
 
-        exec(() -> uiSession.addCurrentProgramListener(
-                new CurrentProgramListenerAdapter(this::onCurrentProgramChanged)));
-        exec(() -> uiSession.addPlaybackStateListener(
-                new PlaybackStateListenerAdapter(this::onPlaybackStateChanged)));
-        mRadioStorage.getFavorites().observeForever(favorites -> updateMetadata());
+        // TunerSession is a part of RadioAppService, so observeForever is fine here.
+        appService.getPlaybackState().observeForever(this::onPlaybackStateChanged);
+        appService.getCurrentProgram().observeForever(this::updateMetadata);
+        mRadioStorage.getFavorites().observeForever(
+                favorites -> updateMetadata(mAppService.getCurrentProgram().getValue()));
 
         setActive(true);
     }
 
-    private void updateMetadata() {
+    private void updateMetadata(@Nullable ProgramInfo info) {
         synchronized (mLock) {
-            if (mCurrentProgram == null) return;
-            boolean fav = mRadioStorage.isFavorite(mCurrentProgram.getSelector());
+            if (info == null) return;
+            boolean fav = mRadioStorage.isFavorite(info.getSelector());
             setMetadata(MediaMetadataCompat.fromMediaMetadata(
-                    ProgramInfoExt.toMediaMetadata(mCurrentProgram, fav, mImageResolver)));
-        }
-    }
-
-    private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
-        synchronized (mLock) {
-            mCurrentProgram = info;
-            updateMetadata();
+                    ProgramInfoExt.toMediaMetadata(info, fav, mImageResolver)));
         }
     }
 
@@ -122,7 +111,7 @@ public class TunerSession extends MediaSessionCompat {
     }
 
     private void selectionError() {
-        tryExec(() -> mAppService.setMuted(true));
+        mAppService.setMuted(true);
         mPlaybackStateBuilder.setErrorMessage(mContext.getString(R.string.invalid_selection));
         onPlaybackStateChanged(PlaybackStateCompat.STATE_ERROR);
         mPlaybackStateBuilder.setErrorMessage(null);
@@ -131,32 +120,34 @@ public class TunerSession extends MediaSessionCompat {
     private class TunerSessionCallback extends MediaSessionCompat.Callback {
         @Override
         public void onStop() {
-            tryExec(() -> mAppService.setMuted(true));
+            mAppService.setMuted(true);
         }
 
         @Override
         public void onPlay() {
-            tryExec(() -> mAppService.setMuted(false));
+            mAppService.setMuted(false);
         }
 
         @Override
         public void onSkipToNext() {
-            tryExec(() -> mAppService.seekForward());
+            mAppService.seekForward();
         }
 
         @Override
         public void onSkipToPrevious() {
-            tryExec(() -> mAppService.seekBackward());
+            mAppService.seekBackward();
         }
 
         @Override
         public void onSetRating(RatingCompat rating) {
             synchronized (mLock) {
-                if (mCurrentProgram == null) return;
+                ProgramInfo info = mAppService.getCurrentProgram().getValue();
+                if (info == null) return;
+
                 if (rating.hasHeart()) {
-                    mRadioStorage.addFavorite(Program.fromProgramInfo(mCurrentProgram));
+                    mRadioStorage.addFavorite(Program.fromProgramInfo(info));
                 } else {
-                    mRadioStorage.removeFavorite(mCurrentProgram.getSelector());
+                    mRadioStorage.removeFavorite(info.getSelector());
                 }
             }
         }
@@ -171,7 +162,7 @@ public class TunerSession extends MediaSessionCompat {
 
             ProgramSelector selector = mBrowseTree.parseMediaId(mediaId);
             if (selector != null) {
-                tryExec(() -> mAppService.tune(selector));
+                mAppService.tune(selector);
             } else {
                 Log.w(TAG, "Invalid media ID: " + mediaId);
                 selectionError();
@@ -182,7 +173,7 @@ public class TunerSession extends MediaSessionCompat {
         public void onPlayFromUri(Uri uri, Bundle extras) {
             ProgramSelector selector = ProgramSelectorExt.fromUri(uri);
             if (selector != null) {
-                tryExec(() -> mAppService.tune(selector));
+                mAppService.tune(selector);
             } else {
                 Log.w(TAG, "Invalid URI: " + uri);
                 selectionError();

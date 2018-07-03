@@ -16,9 +16,7 @@
 
 package com.android.car.radio;
 
-import android.annotation.NonNull;
 import android.content.Context;
-import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,8 +28,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.broadcastradio.support.Program;
-import com.android.car.radio.service.CurrentProgramListenerAdapter;
-import com.android.car.radio.service.ICurrentProgramListener;
 import com.android.car.radio.storage.RadioStorage;
 
 /**
@@ -43,9 +39,6 @@ public class FavoritesFragment extends Fragment {
     private BrowseAdapter mBrowseAdapter;
     private RadioStorage mRadioStorage;
     private PagedListView mBrowseList;
-
-    private final ICurrentProgramListener mCurrentProgramListener =
-            new CurrentProgramListenerAdapter(this::onCurrentProgramChanged);
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -59,9 +52,9 @@ public class FavoritesFragment extends Fragment {
         Context context = getContext();
 
         mRadioStorage = RadioStorage.getInstance(context);
-        mBrowseAdapter = new BrowseAdapter(this, mRadioStorage.getFavorites());
+        mBrowseAdapter = new BrowseAdapter(this, mRadioController.getCurrentProgram(),
+                mRadioStorage.getFavorites());
 
-        mRadioController.addRadioServiceConnectionListener(this::onRadioServiceConnected);
         mBrowseAdapter.setOnItemClickListener(mRadioController::tune);
         mBrowseAdapter.setOnItemFavoriteListener(this::handlePresetItemFavoriteChanged);
 
@@ -72,20 +65,6 @@ public class FavoritesFragment extends Fragment {
         recyclerView.setVerticalFadingEdgeEnabled(true);
         recyclerView.setFadingEdgeLength(getResources()
                 .getDimensionPixelSize(R.dimen.car_padding_4));
-    }
-
-    @Override
-    public void onDestroyView() {
-        mRadioController.removeCurrentProgramListener(mCurrentProgramListener);
-        super.onDestroyView();
-    }
-
-    private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
-        mBrowseAdapter.onCurrentProgramChanged(info);
-    }
-
-    private void onRadioServiceConnected() {
-        mRadioController.addCurrentProgramListener(mCurrentProgramListener);
     }
 
     private void handlePresetItemFavoriteChanged(Program program, boolean saveAsFavorite) {

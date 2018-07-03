@@ -25,8 +25,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentActivity;
 
-import com.android.car.radio.audio.PlaybackStateListenerAdapter;
 import com.android.car.radio.widget.PlayPauseButton;
 
 import java.util.Objects;
@@ -64,13 +64,11 @@ public class DisplayController {
         void onFavoriteToggled(boolean addFavorite);
     }
 
-    public DisplayController(@NonNull Context context,
+    public DisplayController(@NonNull FragmentActivity activity,
             @NonNull RadioController radioController) {
-        mContext = Objects.requireNonNull(context);
+        mContext = Objects.requireNonNull(activity);
 
-        radioController.addRadioServiceConnectionListener(() ->
-                radioController.addPlaybackStateListener(new PlaybackStateListenerAdapter(
-                        this::onPlaybackStateChanged)));
+        radioController.getPlaybackState().observe(activity, this::onPlaybackStateChanged);
     }
 
     /**
