@@ -24,20 +24,42 @@ import android.media.AudioManager;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
+import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 
 import com.android.car.radio.platform.RadioManagerExt;
 import com.android.car.radio.platform.RadioTunerExt;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Manages radio's audio stream.
  */
 public class AudioStreamController {
     private static final String TAG = "BcRadioApp.AudioSCntrl";
+
+    /** Tune operation. */
+    public static final int OPERATION_TUNE = 1;
+
+    /** Seek forward operation. */
+    public static final int OPERATION_SEEK_FWD = 2;
+
+    /** Seek backwards operation. */
+    public static final int OPERATION_SEEK_BKW = 3;
+
+    /**
+     * Operation types for {@link #preparePlayback}.
+     */
+    @IntDef(value = {
+        OPERATION_TUNE,
+        OPERATION_SEEK_FWD,
+        OPERATION_SEEK_BKW,
+    })
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface PlaybackOperation {}
 
     private final Object mLock = new Object();
     private final AudioManager mAudioManager;
@@ -147,18 +169,25 @@ public class AudioStreamController {
     /**
      * Prepare playback for ongoing tune/scan operation.
      *
-     * @param skipDirectionNext true if it's skipping to next station;
-     *                          false if skipping to previous;
-     *                          empty if tuning to arbitrary selector.
+     * @param operation Playback operation type
      */
-    public boolean preparePlayback(Optional<Boolean> skipDirectionNext) {
+    public boolean preparePlayback(@PlaybackOperation int operation) {
         synchronized (mLock) {
             if (!requestAudioFocusLocked()) return false;
 
-            int state = PlaybackStateCompat.STATE_CONNECTING;
-            if (skipDirectionNext.isPresent()) {
-                state = skipDirectionNext.get() ? PlaybackStateCompat.STATE_SKIPPING_TO_NEXT
-                        : PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS;
+            int state;
+            switch (operation) {
+                case OPERATION_TUNE:
+                    state = PlaybackStateCompat.STATE_CONNECTING;
+                    break;
+                case OPERATION_SEEK_FWD:
+                    state = PlaybackStateCompat.STATE_SKIPPING_TO_NEXT;
+                    break;
+                case OPERATION_SEEK_BKW:
+                    state = PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid operation: " + operation);
             }
             mCallback.onPlaybackStateChanged(state);
 
