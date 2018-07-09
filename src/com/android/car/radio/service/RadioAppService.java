@@ -107,13 +107,13 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
             Log.d(TAG, "onCreate()");
         }
 
+        RadioAppServiceWrapper wrapper = new RadioAppServiceWrapper(mBinder);
+
         mRadioManager = new RadioManagerExt(this);
-        mAudioStreamController =
-                new AudioStreamController(this, mRadioManager, this::onPlaybackStateChanged);
+        mAudioStreamController = new AudioStreamController(this, mRadioManager,
+                wrapper.getCurrentProgram(), this::onPlaybackStateChanged);
         mRadioStorage = RadioStorage.getInstance(this);
         mImageCache = new ImageMemoryCache(mRadioManager, 1000);
-
-        RadioAppServiceWrapper wrapper = new RadioAppServiceWrapper(mBinder);
 
         mBrowseTree = new BrowseTree(this, mImageCache);
         mMediaSession = new TunerSession(this, mBrowseTree, wrapper, mImageCache);
@@ -306,8 +306,6 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
 
             synchronized (mLock) {
                 mCurrentProgram = info;
-
-                mAudioStreamController.notifyProgramInfoChanged();
 
                 /* This might be in response only to explicit tune calls (including next/prev seek),
                  * but it would be nontrivial with current API. */
