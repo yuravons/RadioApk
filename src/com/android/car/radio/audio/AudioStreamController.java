@@ -186,11 +186,6 @@ public class AudioStreamController {
         }
     }
 
-    // TODO(b/73950974): depend on callbacks only
-    public boolean isMuted() {
-        return !mHasSomeFocus;
-    }
-
     private void onAudioFocusChange(int focusChange) {
         Log.v(TAG, "onAudioFocusChange(" + focusChange + ")");
 

@@ -123,13 +123,6 @@ public class RadioTunerExt {
         }
     }
 
-    public boolean isMuted() {
-        synchronized (mLock) {
-            if (mPendingMuteOperation != null) return mPendingMuteOperation;
-            return mAudioPatch == null;
-        }
-    }
-
     public void close() {
         mCar.disconnect();
     }

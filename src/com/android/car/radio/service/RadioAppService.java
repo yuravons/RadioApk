@@ -257,32 +257,9 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
             mRadioTuner.scan(RadioTuner.DIRECTION_DOWN, true);
         }
 
-        /**
-         * Mutes the radio.
-         *
-         * @return {@code true} if the mute was successful.
-         */
         @Override
-        public boolean mute() {
-            return mAudioStreamController.requestMuted(true);
-        }
-
-        /**
-         * Un-mutes the radio and causes audio to play.
-         *
-         * @return {@code true} if the un-mute was successful.
-         */
-        @Override
-        public boolean unMute() {
-            return mAudioStreamController.requestMuted(false);
-        }
-
-        /**
-         * Returns {@code true} if the radio is currently muted.
-         */
-        @Override
-        public boolean isMuted() {
-            return mAudioStreamController.isMuted();
+        public void setMuted(boolean muted) {
+            mAudioStreamController.requestMuted(muted);
         }
 
         @Override
