@@ -17,6 +17,7 @@
 package com.android.car.radio.audio;
 
 import android.content.Context;
+import android.hardware.radio.RadioManager.ProgramInfo;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
@@ -24,6 +25,7 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
 
 import com.android.car.radio.platform.RadioManagerExt;
 import com.android.car.radio.platform.RadioTunerExt;
@@ -63,7 +65,19 @@ public class AudioStreamController {
         void onPlaybackStateChanged(int newState);
     }
 
+    /**
+     * New (and only) instance of Audio stream controller.
+     *
+     * This is a part of RadioAppService that handles audio streams and playback status.
+     *
+     * @param context Context
+     * @param radioManager tuner hardware manager
+     * @param currentProgram Dynamic wrapper on current program information. This controller uses it
+     *        to track wheter requested tune switch is done
+     * @param callback Callback for playback state changes
+     */
     public AudioStreamController(@NonNull Context context, @NonNull RadioManagerExt radioManager,
+            @NonNull LiveData<ProgramInfo> currentProgram,
             @NonNull PlaybackStateCallback callback) {
         mAudioManager = Objects.requireNonNull(
                 (AudioManager) context.getSystemService(Context.AUDIO_SERVICE));
@@ -80,6 +94,16 @@ public class AudioStreamController {
                 .setWillPauseWhenDucked(true)
                 .setOnAudioFocusChangeListener(this::onAudioFocusChange)
                 .build();
+
+        // AudioStreamController is a part of RadioAppService, so it's fine to observe forever.
+        currentProgram.observeForever(info -> onCurrentProgramChanged());
+    }
+
+    private boolean unmuteLocked() {
+        if (mRadioTunerExt.setMuted(false)) return true;
+        Log.w(TAG, "Failed to unmute, dropping audio focus");
+        abandonAudioFocusLocked();
+        return false;
     }
 
     private boolean requestAudioFocusLocked() {
@@ -99,7 +123,7 @@ public class AudioStreamController {
         mHasSomeFocus = true;
 
         // we assume that audio focus was requested only when we mean to unmute
-        if (!mRadioTunerExt.setMuted(false)) return false;
+        if (!unmuteLocked()) return false;
 
         return true;
     }
@@ -143,14 +167,7 @@ public class AudioStreamController {
         }
     }
 
-    /**
-     * Notifies AudioStreamController that radio hardware is done with tune/scan operation.
-     *
-     * TODO(b/73950974): use callbacks, don't hardcode
-     *
-     * @see #preparePlayback
-     */
-    public void notifyProgramInfoChanged() {
+    private void onCurrentProgramChanged() {
         synchronized (mLock) {
             if (!mIsTuning) return;
             mIsTuning = false;
@@ -185,7 +202,7 @@ public class AudioStreamController {
                 case AudioManager.AUDIOFOCUS_GAIN:
                     mHasSomeFocus = true;
                     // we assume that audio focus was requested only when we mean to unmute
-                    mRadioTunerExt.setMuted(false);
+                    unmuteLocked();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS:
                     Log.i(TAG, "Unexpected audio focus loss");

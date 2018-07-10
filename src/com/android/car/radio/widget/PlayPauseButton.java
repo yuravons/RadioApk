@@ -105,9 +105,11 @@ public class PlayPauseButton extends ImageView {
                 mergeDrawableStates(drawableState, STATE_PLAYING);
                 break;
             case PlaybackStateCompat.STATE_NONE:
-            case PlaybackStateCompat.STATE_PAUSED:
             case PlaybackStateCompat.STATE_STOPPED:
+            case PlaybackStateCompat.STATE_PAUSED:
             case PlaybackStateCompat.STATE_CONNECTING:
+            case PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS:
+            case PlaybackStateCompat.STATE_SKIPPING_TO_NEXT:
                 mergeDrawableStates(drawableState, STATE_PAUSED);
                 break;
             default:
