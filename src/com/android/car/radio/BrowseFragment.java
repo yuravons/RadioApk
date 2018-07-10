@@ -70,8 +70,9 @@ public class BrowseFragment extends Fragment {
         recyclerView.setFadingEdgeLength(getResources()
                 .getDimensionPixelSize(R.dimen.car_padding_4));
 
-        mRadioController.addServiceConnectedListener(this::updateProgramList);
-        updateProgramList();
+        mRadioController.isConnected().observe(this, connected -> {
+            if (connected) updateProgramList();
+        });
     }
 
     private void handlePresetItemFavoriteChanged(Program program, boolean saveAsFavorite) {

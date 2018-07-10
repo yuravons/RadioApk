@@ -27,6 +27,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
 
+import com.android.car.radio.util.Log;
 import com.android.car.radio.widget.PlayPauseButton;
 
 import java.util.Objects;
@@ -35,20 +36,22 @@ import java.util.Objects;
  * Controller that controls the appearance state of various UI elements in the radio.
  */
 public class DisplayController {
+    private static final String TAG = "BcRadioApp.display";
+
     private final Context mContext;
 
-    private TextView mChannel;
+    private final TextView mChannel;
 
-    private TextView mCurrentSongTitleAndArtist;
-    private TextView mCurrentStation;
+    private final TextView mCurrentSongTitleAndArtist;
+    private final TextView mCurrentStation;
 
-    private ImageView mBackwardSeekButton;
-    private ImageView mForwardSeekButton;
+    private final ImageView mBackwardSeekButton;
+    private final ImageView mForwardSeekButton;
 
-    private PlayPauseButton mPlayButton;
+    private final PlayPauseButton mPlayButton;
 
     private boolean mIsFavorite = false;
-    private ImageView mFavoriteButton;
+    private final ImageView mFavoriteButton;
     private FavoriteToggleListener mFavoriteToggleListener;
 
     /**
@@ -68,39 +71,39 @@ public class DisplayController {
             @NonNull RadioController radioController) {
         mContext = Objects.requireNonNull(activity);
 
+        mChannel = activity.findViewById(R.id.radio_station_channel);
+        mCurrentSongTitleAndArtist = activity.findViewById(R.id.radio_station_details);
+        mCurrentStation = activity.findViewById(R.id.radio_station_name);
+        mBackwardSeekButton = activity.findViewById(R.id.radio_back_button);
+        mForwardSeekButton = activity.findViewById(R.id.radio_forward_button);
+        mPlayButton = activity.findViewById(R.id.radio_play_button);
+        mFavoriteButton = activity.findViewById(R.id.radio_add_presets_button);
+
         radioController.getPlaybackState().observe(activity, this::onPlaybackStateChanged);
-    }
 
-    /**
-     * Initializes this {@link DisplayController}.
-     */
-    public void initialize(View container) {
-        mChannel = container.findViewById(R.id.radio_station_channel);
-
-        mCurrentSongTitleAndArtist = container.findViewById(R.id.radio_station_details);
-        mCurrentStation = container.findViewById(R.id.radio_station_name);
-
-        mBackwardSeekButton = container.findViewById(R.id.radio_back_button);
-        mForwardSeekButton = container.findViewById(R.id.radio_forward_button);
-
-        mPlayButton = container.findViewById(R.id.radio_play_button);
-
-        mFavoriteButton = container.findViewById(R.id.radio_add_presets_button);
         if (mFavoriteButton != null) {
             mFavoriteButton.setOnClickListener(v -> {
                 FavoriteToggleListener listener = mFavoriteToggleListener;
                 if (listener != null) listener.onFavoriteToggled(!mIsFavorite);
             });
         }
+
+        setEnabled(false);
     }
 
     /**
-     * Set whether or not the buttons controlled by this controller are enabled. If {@code false}
-     * is passed to this method, then no {@link View.OnClickListener}s will be
-     * triggered when the buttons are pressed. In addition, the look of the button wil be updated
-     * to reflect their disabled state.
+     * Set whether or not the UI is active (depending on the state of service connection)
+     *
+     * If the UI is disabled, then no callbacks will be triggered when the buttons are pressed.
+     * In addition, the look of the button wil be updated to reflect their disabled state.
+     *
+     * @param enabled {@code true} to enable the UI, {@code false} otherwise.
      */
     public void setEnabled(boolean enabled) {
+        Log.d(TAG, "Making UI enabled: " + enabled);
+
+        // TODO(b/111314230): disable RadioPagerAdapter (and/or its pages) as well
+
         // Color the buttons so that they are grey in appearance if they are disabled.
         int tint = enabled
                 ? mContext.getColor(R.color.car_radio_control_button)
