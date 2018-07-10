@@ -27,8 +27,7 @@ import android.widget.TextView;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager.widget.ViewPager;
 
-import com.android.car.radio.service.CurrentProgramListenerAdapter;
-import com.android.car.radio.service.ICurrentProgramListener;
+import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.widget.BandToggleButton;
 
 import com.google.android.material.tabs.TabLayout;
@@ -55,8 +54,6 @@ public class RadioActivity extends FragmentActivity {
     private View mRootView;
     private BandToggleButton mBandToggleButton;
 
-    private ICurrentProgramListener mCurrentProgramListener;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,11 +64,8 @@ public class RadioActivity extends FragmentActivity {
 
         mRadioController = new RadioController(this);
         mBandToggleButton.setCallback(mRadioController::switchBand);
-
-        mCurrentProgramListener = new CurrentProgramListenerAdapter(
-                mBandToggleButton::onCurrentProgramChanged);
-        mRadioController.addRadioServiceConnectionListener(() ->
-                mRadioController.addCurrentProgramListener(mCurrentProgramListener));
+        mRadioController.getCurrentProgram().observe(this, info ->
+                mBandToggleButton.setType(ProgramType.fromSelector(info.getSelector())));
 
         RadioPagerAdapter adapter =
                 new RadioPagerAdapter(this, getSupportFragmentManager(), mRadioController);
@@ -152,8 +146,6 @@ public class RadioActivity extends FragmentActivity {
 
     @Override
     protected void onDestroy() {
-        mRadioController.removeCurrentProgramListener(mCurrentProgramListener);
-
         super.onDestroy();
 
         mRadioController.shutdown();

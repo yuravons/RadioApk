@@ -95,8 +95,10 @@ public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
     }
 
     public BrowseAdapter(@NonNull LifecycleOwner lifecycleOwner,
+            @NonNull LiveData<ProgramInfo> currentProgram,
             @NonNull LiveData<List<Program>> favorites) {
         favorites.observe(lifecycleOwner, this::onFavoritesChanged);
+        currentProgram.observe(lifecycleOwner, this::onCurrentProgramChanged);
     }
 
     /**
@@ -172,7 +174,7 @@ public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
      * this adapter. This will cause that station to be highlighted in the list. If the station
      * passed to this method does not match any of the programs, then none will be highlighted.
      */
-    public void onCurrentProgramChanged(@NonNull ProgramInfo info) {
+    private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
         synchronized (mLock) {
             mCurrentProgram = Objects.requireNonNull(info);
             notifyDataSetChanged();

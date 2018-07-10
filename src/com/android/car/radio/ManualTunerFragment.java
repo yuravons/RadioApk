@@ -16,7 +16,6 @@
 
 package com.android.car.radio;
 
-import android.annotation.NonNull;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.Bundle;
@@ -24,11 +23,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.android.car.radio.bands.ProgramType;
-import com.android.car.radio.service.CurrentProgramListenerAdapter;
-import com.android.car.radio.service.ICurrentProgramListener;
 import com.android.car.radio.widget.BandToggleButton;
 
 /**
@@ -40,9 +38,6 @@ public class ManualTunerFragment extends Fragment {
     private RadioController mRadioController;
     private BandToggleButton mBandToggleButton;
 
-    private final ICurrentProgramListener mCurrentProgramListener =
-            new CurrentProgramListenerAdapter(this::onCurrentProgramChanged);
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
@@ -53,16 +48,9 @@ public class ManualTunerFragment extends Fragment {
         mBandToggleButton = view.findViewById(R.id.manual_tuner_band_toggle);
         mBandToggleButton.setCallback(mRadioController::switchBand);
 
-        mRadioController.addRadioServiceConnectionListener(() ->
-                mRadioController.addCurrentProgramListener(mCurrentProgramListener));
+        mRadioController.getCurrentProgram().observe(this, this::onCurrentProgramChanged);
 
         return view;
-    }
-
-    @Override
-    public void onDestroyView() {
-        mRadioController.removeCurrentProgramListener(mCurrentProgramListener);
-        super.onDestroyView();
     }
 
     private void onManualTunerDone(ProgramSelector sel) {
@@ -72,8 +60,9 @@ public class ManualTunerFragment extends Fragment {
     }
 
     private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
-        mController.setCurrentBand(ProgramType.fromSelector(info.getSelector()));
-        mBandToggleButton.onCurrentProgramChanged(info);
+        ProgramType pt = ProgramType.fromSelector(info.getSelector());
+        mBandToggleButton.setType(pt);
+        mController.setCurrentBand(pt);
     }
 
     static ManualTunerFragment newInstance(RadioController radioController) {

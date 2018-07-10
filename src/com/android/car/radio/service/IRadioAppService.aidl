@@ -20,14 +20,25 @@ import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
 
 import com.android.car.broadcastradio.support.Program;
-import com.android.car.radio.audio.IPlaybackStateListener;
 import com.android.car.radio.bands.ProgramType;
-import com.android.car.radio.service.ICurrentProgramListener;
+import com.android.car.radio.service.IRadioAppCallback;
 
 /**
  * An interface to the backend Radio app's service.
  */
 interface IRadioAppService {
+    /**
+     * Adds {@link RadioAppService} callback.
+     *
+     * Triggers state updates on newly added callback.
+     */
+    void addCallback(in IRadioAppCallback callback);
+
+    /**
+     * Removes {@link RadioAppService} callback.
+     */
+    void removeCallback(in IRadioAppCallback callback);
+
     /**
      * Tunes to a given program.
      */
@@ -60,31 +71,9 @@ interface IRadioAppService {
     void switchBand(in ProgramType band);
 
     /**
-     * Adds {@link ICurrentProgramListener} listener for current program info updates.
-     *
-     * Notifies newly added listener about current program.
-     */
-    void addCurrentProgramListener(in ICurrentProgramListener listener);
-
-    /**
-     * Removes {@link ICurrentProgramListener} listener.
-     */
-    void removeCurrentProgramListener(in ICurrentProgramListener listener);
-
-    /**
-     * Adds {@link IPlaybackStateListener} listener for play/pause notifications.
-     *
-     * Notifies newly added listener about current state.
-     */
-    void addPlaybackStateListener(in IPlaybackStateListener listener);
-
-    /**
-     * Removes {@link IPlaybackStateListener} listener.
-     */
-    void removePlaybackStateListener(in IPlaybackStateListener listener);
-
-    /**
      * Returns a list of programs found with the tuner's background scan
+     *
+     * TODO(b/73950974): use callback
      */
     List<RadioManager.ProgramInfo> getProgramList();
 }

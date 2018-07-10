@@ -16,13 +16,13 @@
 
 package com.android.car.radio.widget;
 
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.content.Context;
-import android.hardware.radio.RadioManager.ProgramInfo;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageButton;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.android.car.radio.R;
 import com.android.car.radio.bands.ProgramType;
@@ -77,13 +77,16 @@ public class BandToggleButton extends ImageButton {
     }
 
     /**
-     * A callback meant to be hooked to {@link RadioController#addCurrentProgramListener}.
+     * Sets band button state.
+     *
+     * This method doesn't trigger callback.
+     *
+     * @param ptype Program type to set.
      */
-    public void onCurrentProgramChanged(@NonNull ProgramInfo info) {
-        ProgramType pt = ProgramType.fromSelector(info.getSelector());
-        mCurrentBand = pt;
+    public void setType(@NonNull ProgramType ptype) {
+        mCurrentBand = ptype;
 
-        switch (pt.id) {
+        switch (ptype.id) {
             case ProgramType.ID_FM:
                 setImageResource(R.drawable.ic_radio_fm);
                 break;

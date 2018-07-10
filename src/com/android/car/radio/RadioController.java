@@ -16,42 +16,30 @@
 
 package com.android.car.radio;
 
-import static com.android.car.radio.utils.Remote.exec;
-import static com.android.car.radio.utils.Remote.tryExec;
-
 import android.animation.ValueAnimator;
-import android.annotation.ColorInt;
-import android.annotation.NonNull;
-import android.annotation.Nullable;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.hardware.radio.RadioMetadata;
 import android.hardware.radio.RadioTuner;
-import android.os.IBinder;
-import android.os.RemoteException;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.View;
 
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.LiveData;
 
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.broadcastradio.support.platform.ProgramInfoExt;
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
-import com.android.car.radio.audio.IPlaybackStateListener;
 import com.android.car.radio.bands.ProgramType;
-import com.android.car.radio.service.CurrentProgramListenerAdapter;
-import com.android.car.radio.service.ICurrentProgramListener;
-import com.android.car.radio.service.IRadioAppService;
 import com.android.car.radio.service.RadioAppService;
+import com.android.car.radio.service.RadioAppServiceWrapper;
 import com.android.car.radio.storage.RadioStorage;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -85,7 +73,7 @@ public class RadioController {
     private @Nullable ProgramSelector mCurrentlyDisplayedChannel;  // for animation purposes
 
     private final FragmentActivity mActivity;
-    private IRadioAppService mAppService;
+    private RadioAppServiceWrapper mAppService = new RadioAppServiceWrapper();
 
     private View mRadioBackground;
     private boolean mShouldColorStatusBar;
@@ -99,23 +87,6 @@ public class RadioController {
     private final String mAmBandString;
     private final String mFmBandString;
 
-    private final List<RadioServiceConnectionListener> mRadioServiceConnectionListeners =
-            new ArrayList<>();
-
-    private final ICurrentProgramListener mCurrentProgramListener =
-            new CurrentProgramListenerAdapter(this::onCurrentProgramChanged);
-
-    /**
-     * Interface for a class that will be notified when RadioService is successfuly bound
-     */
-    public interface RadioServiceConnectionListener {
-
-        /**
-         * Called when the RadioService is successfully connected
-         */
-        void onRadioServiceConnected();
-    }
-
     public RadioController(@NonNull FragmentActivity activity) {
         mActivity = Objects.requireNonNull(activity);
 
@@ -126,6 +97,10 @@ public class RadioController {
 
         mRadioStorage = RadioStorage.getInstance(activity);
         mRadioStorage.getFavorites().observe(activity, this::onFavoritesChanged);
+
+        mAppService.addConnectedListener(() -> mDisplayController.setEnabled(true));
+
+        mAppService.getCurrentProgram().observe(activity, this::onCurrentProgramChanged);
     }
 
     /**
@@ -142,6 +117,20 @@ public class RadioController {
         mDisplayController.setFavoriteToggleListener(this::onFavoriteToggled);
 
         mRadioBackground = container;
+    }
+
+    /**
+     * See {@link RadioAppServiceWrapper#addConnectedListener}.
+     */
+    public void addServiceConnectedListener(@NonNull RadioAppServiceWrapper.ConnectedListener l) {
+        mAppService.addConnectedListener(l);
+    }
+
+    /**
+     * See {@link RadioAppServiceWrapper#removeConnectedListener}.
+     */
+    public void removeServiceConnectedListener(RadioAppServiceWrapper.ConnectedListener listener) {
+        mAppService.removeConnectedListener(listener);
     }
 
     /**
@@ -162,72 +151,40 @@ public class RadioController {
     }
 
     /**
-     * See {@link IRadioAppService#addCurrentProgramListener}.
-     */
-    public void addCurrentProgramListener(@NonNull ICurrentProgramListener listener) {
-        exec(() -> mAppService.addCurrentProgramListener(Objects.requireNonNull(listener)));
-    }
-
-    /**
-     * See {@link IRadioAppService#removeCurrentProgramListener}.
-     */
-    public void removeCurrentProgramListener(@Nullable ICurrentProgramListener listener) {
-        if (mAppService == null) return;
-        exec(() -> mAppService.removeCurrentProgramListener(listener));
-    }
-
-    /**
-     * See {@link IRadioAppService#addPlaybackStateListener}.
-     */
-    public void addPlaybackStateListener(@NonNull IPlaybackStateListener listener) {
-        exec(() -> mAppService.addPlaybackStateListener(Objects.requireNonNull(listener)));
-    }
-
-    /**
-     * See {@link IRadioAppService#removePlaybackStateListener}.
-     */
-    public void removePlaybackStateListener(@Nullable IPlaybackStateListener listener) {
-        if (mAppService == null) return;
-        exec(() -> mAppService.removePlaybackStateListener(listener));
-    }
-
-    /**
-     * Sets the listeners that will be notified when the radio service is connected.
-     */
-    public void addRadioServiceConnectionListener(RadioServiceConnectionListener listener) {
-        // TODO(b/73950974): synchronized
-        mRadioServiceConnectionListeners.add(listener);
-        if (mAppService != null) listener.onRadioServiceConnected();
-    }
-
-    /**
-     * Removes a listener that will be notified when the radio service is connected.
-     */
-    public void removeRadioServiceConnectionListener(RadioServiceConnectionListener listener) {
-        mRadioServiceConnectionListeners.remove(listener);
-    }
-
-    /**
-     * Starts the controller to handle radio tuning. This method should be called to begin
-     * radio playback.
+     * Starts the controller and establishes connection with {@link RadioAppService}.
      */
     public void start() {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "starting radio");
-        }
+        mAppService.bind(mActivity);
+    }
 
-        Intent bindIntent = new Intent(RadioAppService.ACTION_APP_SERVICE, null /* uri */,
-                mActivity, RadioAppService.class);
-        if (!mActivity.bindService(bindIntent, mServiceConnection, Context.BIND_AUTO_CREATE)) {
-            Log.e(TAG, "Failed to connect to RadioAppService.");
-        }
+    /**
+     * Closes {@link RadioAppService} connection and cleans up the resources.
+     */
+    public void shutdown() {
+        mAppService.unbind();
+    }
+
+    /**
+     * See {@link RadioAppServiceWrapper#getPlaybackState}.
+     */
+    @NonNull
+    public LiveData<Integer> getPlaybackState() {
+        return mAppService.getPlaybackState();
+    }
+
+    /**
+     * See {@link RadioAppServiceWrapper#getCurrentProgram}.
+     */
+    @NonNull
+    public LiveData<ProgramInfo> getCurrentProgram() {
+        return mAppService.getCurrentProgram();
     }
 
     /**
      * Tunes the radio to the given channel if it is valid and a {@link RadioTuner} has been opened.
      */
     public void tune(ProgramSelector sel) {
-        exec(() -> mAppService.tune(sel));
+        mAppService.tune(sel);
     }
 
     /**
@@ -236,8 +193,7 @@ public class RadioController {
      * @param pt {@link ProgramType} to switch to.
      */
     public void switchBand(@NonNull ProgramType pt) {
-        Objects.requireNonNull(pt);
-        exec(() -> mAppService.switchBand(pt));
+        mAppService.switchBand(pt);
     }
 
     // TODO(b/73950974): move channel animation to DisplayController
@@ -299,21 +255,6 @@ public class RadioController {
         mDisplayController.setCurrentSongTitleAndArtist(null, null);
     }
 
-    /**
-     * Closes all active connections in the {@link RadioController}.
-     */
-    public void shutdown() {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "shutdown()");
-        }
-
-        mActivity.unbindService(mServiceConnection);
-
-        if (mAppService != null) {
-            tryExec(() -> mAppService.removeCurrentProgramListener(mCurrentProgramListener));
-        }
-    }
-
     private void onFavoritesChanged(List<Program> favorites) {
         synchronized (mLock) {
             if (mCurrentProgram == null) return;
@@ -326,10 +267,7 @@ public class RadioController {
      * Gets a list of programs from the radio tuner's background scan
      */
     public List<ProgramInfo> getProgramList() {
-        if (mAppService != null) {
-            return exec(() -> mAppService.getProgramList());
-        }
-        return null;
+        return mAppService.getProgramList();
     }
 
     private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
@@ -350,35 +288,31 @@ public class RadioController {
     private final View.OnClickListener mBackwardSeekClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (mAppService == null) return;
-
             // TODO(b/73950974): show some kind of animation
             clearMetadataDisplay();
 
             // TODO(b/73950974): watch for timeout and if it happens, display metadata back
-            exec(() -> mAppService.seekBackward());
+            mAppService.seekBackward();
         }
     };
 
     private final View.OnClickListener mForwardSeekClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (mAppService == null) return;
-
             clearMetadataDisplay();
 
-            exec(() -> mAppService.seekForward());
+            mAppService.seekForward();
         }
     };
 
     private void onSwitchToPlayState(@PlaybackStateCompat.State int newPlayState) {
         switch (newPlayState) {
             case PlaybackStateCompat.STATE_PLAYING:
-                exec(() -> mAppService.setMuted(false));
+                mAppService.setMuted(false);
                 break;
             case PlaybackStateCompat.STATE_PAUSED:
             case PlaybackStateCompat.STATE_STOPPED:
-                exec(() -> mAppService.setMuted(true));
+                mAppService.setMuted(true);
                 break;
             default:
                 Log.w(TAG, "Invalid request to switch to play state " + newPlayState);
@@ -395,35 +329,6 @@ public class RadioController {
             mRadioStorage.removeFavorite(info.getSelector());
         }
     }
-
-    private ServiceConnection mServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder binder) {
-            mAppService = (IRadioAppService) binder;
-
-            try {
-                if (mAppService == null) {
-                    mDisplayController.setEnabled(false);
-                }
-
-                mDisplayController.setEnabled(true);
-
-                mAppService.addCurrentProgramListener(mCurrentProgramListener);
-
-                // Notify listeners
-                for (RadioServiceConnectionListener listener : mRadioServiceConnectionListeners) {
-                    listener.onRadioServiceConnected();
-                }
-            } catch (RemoteException e) {
-                Log.e(TAG, "onServiceConnected(); remote exception: " + e.getMessage());
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName className) {
-            mAppService = null;
-        }
-    };
 
     private final ValueAnimator.AnimatorUpdateListener mBackgroundColorUpdater =
             animator -> {

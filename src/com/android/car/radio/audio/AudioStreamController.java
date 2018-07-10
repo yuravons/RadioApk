@@ -16,7 +16,6 @@
 
 package com.android.car.radio.audio;
 
-import android.annotation.NonNull;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
@@ -24,9 +23,10 @@ import android.media.AudioManager;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.android.car.radio.platform.RadioManagerExt;
 import com.android.car.radio.platform.RadioTunerExt;
-import com.android.car.radio.utils.ObserverList;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -41,6 +41,7 @@ public class AudioStreamController {
     private final AudioManager mAudioManager;
     private final RadioTunerExt mRadioTunerExt;
 
+    private final PlaybackStateCallback mCallback;
     private final AudioFocusRequest mGainFocusReq;
 
     /**
@@ -52,14 +53,22 @@ public class AudioStreamController {
 
     private boolean mIsTuning = false;
 
-    private final ObserverList<Integer, IPlaybackStateListener> mPlaybackStateListeners =
-            new ObserverList<>(PlaybackStateCompat.STATE_NONE,
-                    IPlaybackStateListener::onPlaybackStateChanged);
+    /**
+     * Callback for playback state changes.
+     */
+    public interface PlaybackStateCallback {
+        /**
+         * Called when playback state changes.
+         */
+        void onPlaybackStateChanged(int newState);
+    }
 
-    public AudioStreamController(@NonNull Context context, @NonNull RadioManagerExt radioManager) {
+    public AudioStreamController(@NonNull Context context, @NonNull RadioManagerExt radioManager,
+            @NonNull PlaybackStateCallback callback) {
         mAudioManager = Objects.requireNonNull(
                 (AudioManager) context.getSystemService(Context.AUDIO_SERVICE));
         mRadioTunerExt = Objects.requireNonNull(radioManager.getRadioTunerExt());
+        mCallback = Objects.requireNonNull(callback);
 
         AudioAttributes playbackAttr = new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -71,24 +80,6 @@ public class AudioStreamController {
                 .setWillPauseWhenDucked(true)
                 .setOnAudioFocusChangeListener(this::onAudioFocusChange)
                 .build();
-    }
-
-    /**
-     * Add playback state listener.
-     *
-     * @param listener listener to add
-     */
-    public void addPlaybackStateListener(@NonNull IPlaybackStateListener listener) {
-        mPlaybackStateListeners.add(listener);
-    }
-
-    /**
-     * Remove playback state listener.
-     *
-     * @param listener listener to remove
-     */
-    public void removePlaybackStateListener(IPlaybackStateListener listener) {
-        mPlaybackStateListeners.remove(listener);
     }
 
     private boolean requestAudioFocusLocked() {
@@ -145,7 +136,7 @@ public class AudioStreamController {
                 state = skipDirectionNext.get() ? PlaybackStateCompat.STATE_SKIPPING_TO_NEXT
                         : PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS;
             }
-            mPlaybackStateListeners.update(state);
+            mCallback.onPlaybackStateChanged(state);
 
             mIsTuning = true;
             return true;
@@ -163,7 +154,7 @@ public class AudioStreamController {
         synchronized (mLock) {
             if (!mIsTuning) return;
             mIsTuning = false;
-            mPlaybackStateListeners.update(PlaybackStateCompat.STATE_PLAYING);
+            mCallback.onPlaybackStateChanged(PlaybackStateCompat.STATE_PLAYING);
         }
     }
 
@@ -176,11 +167,11 @@ public class AudioStreamController {
     public boolean requestMuted(boolean muted) {
         synchronized (mLock) {
             if (muted) {
-                mPlaybackStateListeners.update(PlaybackStateCompat.STATE_STOPPED);
+                mCallback.onPlaybackStateChanged(PlaybackStateCompat.STATE_STOPPED);
                 return abandonAudioFocusLocked();
             } else {
                 if (!requestAudioFocusLocked()) return false;
-                mPlaybackStateListeners.update(PlaybackStateCompat.STATE_PLAYING);
+                mCallback.onPlaybackStateChanged(PlaybackStateCompat.STATE_PLAYING);
                 return true;
             }
         }
@@ -200,7 +191,7 @@ public class AudioStreamController {
                     Log.i(TAG, "Unexpected audio focus loss");
                     mHasSomeFocus = false;
                     mRadioTunerExt.setMuted(true);
-                    mPlaybackStateListeners.update(PlaybackStateCompat.STATE_STOPPED);
+                    mCallback.onPlaybackStateChanged(PlaybackStateCompat.STATE_STOPPED);
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:

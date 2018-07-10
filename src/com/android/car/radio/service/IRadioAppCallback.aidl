@@ -14,8 +14,27 @@
  * limitations under the License.
  */
 
-package com.android.car.radio.audio;
+package com.android.car.radio.service;
 
-oneway interface IPlaybackStateListener {
+import android.hardware.radio.RadioManager;
+
+/**
+ * Watches current program changes.
+ */
+oneway interface IRadioAppCallback {
+    /**
+     * Called when current program details changes.
+     *
+     * This might happen as a result of tuning to a different program or just metadata change.
+     *
+     * @param info Current program info
+     */
+    void onCurrentProgramChanged(in RadioManager.ProgramInfo info);
+
+    /**
+     * Called when playback state (play/pause) changes.
+     *
+     * @param state New playback state
+     */
     void onPlaybackStateChanged(int state);
 }
