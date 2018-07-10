@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.android.car.radio.utils;
+package com.android.car.radio.util;
 
 import android.os.RemoteException;
-import android.util.Log;
 
 /**
  * Helper functions to assist remote calls.

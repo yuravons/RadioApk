@@ -43,8 +43,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * with remote services.
  */
 public class RadioAppServiceWrapper {
-    private static final String TAG = "BcRadioApp.appsrvwrp";
-
     private Context mClientContext;
     @Nullable
     private final AtomicReference<IRadioAppService> mService = new AtomicReference<>();

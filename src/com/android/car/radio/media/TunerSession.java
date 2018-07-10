@@ -25,7 +25,6 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.RatingCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -38,6 +37,7 @@ import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.R;
 import com.android.car.radio.service.RadioAppServiceWrapper;
 import com.android.car.radio.storage.RadioStorage;
+import com.android.car.radio.util.Log;
 
 import java.util.Objects;
 
@@ -45,7 +45,7 @@ import java.util.Objects;
  * Implementation of tuner's MediaSession.
  */
 public class TunerSession extends MediaSessionCompat {
-    private static final String TAG = "BcRadioApp.msess";
+    private static final String TAG = "BcRadioApp.media";
 
     private final Object mLock = new Object();
 

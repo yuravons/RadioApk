@@ -16,8 +16,6 @@
 
 package com.android.car.radio.platform;
 
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.hardware.radio.RadioManager;
@@ -25,9 +23,12 @@ import android.hardware.radio.RadioManager.BandDescriptor;
 import android.hardware.radio.RadioTuner;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.android.car.broadcastradio.support.platform.RadioMetadataExt;
+import com.android.car.radio.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;

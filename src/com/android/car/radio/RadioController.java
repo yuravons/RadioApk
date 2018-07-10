@@ -23,7 +23,6 @@ import android.hardware.radio.RadioManager.ProgramInfo;
 import android.hardware.radio.RadioMetadata;
 import android.hardware.radio.RadioTuner;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.ColorInt;
@@ -39,6 +38,7 @@ import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.service.RadioAppService;
 import com.android.car.radio.service.RadioAppServiceWrapper;
 import com.android.car.radio.storage.RadioStorage;
+import com.android.car.radio.util.Log;
 
 import java.util.List;
 import java.util.Objects;
@@ -47,7 +47,7 @@ import java.util.Objects;
  * A controller that handles the display of metadata on the current radio station.
  */
 public class RadioController {
-    private static final String TAG = "BcRadioApp.RadioController";
+    private static final String TAG = "BcRadioApp.controller";
 
     /**
      * The percentage by which to darken the color that should be set on the status bar.
@@ -315,7 +315,7 @@ public class RadioController {
                 mAppService.setMuted(true);
                 break;
             default:
-                Log.w(TAG, "Invalid request to switch to play state " + newPlayState);
+                Log.e(TAG, "Invalid request to switch to play state " + newPlayState);
         }
     }
 

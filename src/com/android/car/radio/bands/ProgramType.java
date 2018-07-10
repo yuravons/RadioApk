@@ -19,13 +19,13 @@ package com.android.car.radio.bands;
 import android.hardware.radio.ProgramSelector;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
+import com.android.car.radio.util.Log;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

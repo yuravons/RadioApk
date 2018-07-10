@@ -16,7 +16,7 @@
 
 package com.android.car.radio.service;
 
-import static com.android.car.radio.utils.Remote.tryExec;
+import static com.android.car.radio.util.Remote.tryExec;
 
 import android.content.Intent;
 import android.hardware.radio.ProgramList;
@@ -28,7 +28,6 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -45,6 +44,7 @@ import com.android.car.radio.media.TunerSession;
 import com.android.car.radio.platform.ImageMemoryCache;
 import com.android.car.radio.platform.RadioManagerExt;
 import com.android.car.radio.storage.RadioStorage;
+import com.android.car.radio.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -55,7 +55,7 @@ import java.util.Objects;
  * A service handling hardware tuner session and audio streaming.
  */
 public class RadioAppService extends MediaBrowserServiceCompat implements LifecycleOwner {
-    private static final String TAG = "BcRadioApp.appsrv";
+    private static final String TAG = "BcRadioApp.service";
 
     public static String ACTION_APP_SERVICE = "com.android.car.radio.ACTION_APP_SERVICE";
 
@@ -82,9 +82,7 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
     public void onCreate() {
         super.onCreate();
 
-        if (Log.isLoggable(TAG, Log.INFO)) {
-            Log.i(TAG, "Starting RadioAppService...");
-        }
+        Log.i(TAG, "Starting RadioAppService...");
 
         RadioAppServiceWrapper wrapper = new RadioAppServiceWrapper(mBinder);
 
@@ -145,9 +143,7 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
 
     @Override
     public void onDestroy() {
-        if (Log.isLoggable(TAG, Log.INFO)) {
-            Log.i(TAG, "Shutting down RadioAppService...");
-        }
+        Log.i(TAG, "Shutting down RadioAppService...");
 
         mLifecycleRegistry.markState(Lifecycle.State.DESTROYED);
 
@@ -186,7 +182,7 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
                 return;
             }
 
-            Log.i(TAG, "No recently selected program, seeking forward to not play static");
+            Log.i(TAG, "No recently selected program set, seeking forward to not play static");
 
             // TODO(b/80500464): don't hardcode, pull from tuner config
             long lastChannel;

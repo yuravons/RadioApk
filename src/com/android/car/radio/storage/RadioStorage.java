@@ -21,7 +21,6 @@ import android.content.SharedPreferences;
 import android.hardware.radio.ProgramSelector;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +29,7 @@ import androidx.lifecycle.LiveData;
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.bands.ProgramType;
+import com.android.car.radio.util.Log;
 
 import java.util.List;
 import java.util.Objects;
