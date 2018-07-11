@@ -17,7 +17,6 @@
 package com.android.car.radio;
 
 import android.content.Context;
-import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,8 +29,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.radio.storage.RadioStorage;
-
-import java.util.List;
 
 /**
  * Fragment that shows all browseable radio stations from background scan
@@ -70,9 +67,7 @@ public class BrowseFragment extends Fragment {
         recyclerView.setFadingEdgeLength(getResources()
                 .getDimensionPixelSize(R.dimen.car_padding_4));
 
-        mRadioController.isConnected().observe(this, connected -> {
-            if (connected) updateProgramList();
-        });
+        mRadioController.getProgramList().observe(this, mBrowseAdapter::setProgramList);
     }
 
     private void handlePresetItemFavoriteChanged(Program program, boolean saveAsFavorite) {
@@ -87,10 +82,5 @@ public class BrowseFragment extends Fragment {
         BrowseFragment fragment = new BrowseFragment();
         fragment.mRadioController = radioController;
         return fragment;
-    }
-
-    private void updateProgramList() {
-        List<ProgramInfo> plist = mRadioController.getProgramList();
-        if (plist != null) mBrowseAdapter.setProgramList(plist);
     }
 }

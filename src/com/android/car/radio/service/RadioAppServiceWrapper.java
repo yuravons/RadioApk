@@ -49,6 +49,7 @@ public class RadioAppServiceWrapper {
     private final MutableLiveData<Boolean> mIsConnected = new MutableLiveData<>();
     private final MutableLiveData<Integer> mPlaybackState = new MutableLiveData<>();
     private final MutableLiveData<ProgramInfo> mCurrentProgram = new MutableLiveData<>();
+    private final MutableLiveData<List<ProgramInfo>> mProgramList = new MutableLiveData<>();
 
     {
         mPlaybackState.postValue(PlaybackStateCompat.STATE_NONE);
@@ -103,6 +104,11 @@ public class RadioAppServiceWrapper {
         public void onPlaybackStateChanged(int state) {
             mPlaybackState.postValue(state);
         }
+
+        @Override
+        public void onProgramListChanged(List<ProgramInfo> plist) {
+            mProgramList.postValue(plist);
+        }
     };
 
     /**
@@ -141,11 +147,27 @@ public class RadioAppServiceWrapper {
         mIsConnected.postValue(false);
     }
 
-    private interface ServiceOperation {
+    private interface ServiceVoidOperation {
         void execute(@NonNull IRadioAppService service) throws RemoteException;
     }
 
-    private void callService(@NonNull ServiceOperation op) {
+    private interface ServiceOperation<V> {
+        V execute(@NonNull IRadioAppService service) throws RemoteException;
+    }
+
+    private <V> V queryService(@NonNull ServiceOperation<V> op) {
+        IRadioAppService service = mService.get();
+        if (service == null) {
+            throw new IllegalStateException("Service is not connected");
+        }
+        try {
+            return op.execute(service);
+        } catch (RemoteException e) {
+            throw new RuntimeException("Remote call failed", e);
+        }
+    }
+
+    private void callService(@NonNull ServiceVoidOperation op) {
         IRadioAppService service = mService.get();
         if (service == null) {
             throw new IllegalStateException("Service is not connected");
@@ -185,6 +207,16 @@ public class RadioAppServiceWrapper {
     @NonNull
     public LiveData<ProgramInfo> getCurrentProgram() {
         return mCurrentProgram;
+    }
+
+    /**
+     * Returns a {@link LiveData} containing programs list found by the background tuner.
+     *
+     * @return Program list container, or {@code null} if program list is not supported
+     */
+    @NonNull
+    public LiveData<List<ProgramInfo>> getProgramList() {
+        return mProgramList;
     }
 
     /**
@@ -229,16 +261,11 @@ public class RadioAppServiceWrapper {
     }
 
     /**
-     * Returns a list of programs found with the tuner's background scan
+     * States whether program list is supported on current device or not.
+     *
+     * @return {@code true} if the program list is supported, {@code false} otherwise.
      */
-    public List<ProgramInfo> getProgramList() {
-        IRadioAppService service = mService.get();
-        if (service == null) return null;
-
-        try {
-            return service.getProgramList();
-        } catch (RemoteException e) {
-            return null;
-        }
+    public boolean isProgramListSupported() {
+        return queryService(service -> service.isProgramListSupported());
     }
 }

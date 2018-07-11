@@ -37,4 +37,11 @@ oneway interface IRadioAppCallback {
      * @param state New playback state
      */
     void onPlaybackStateChanged(int state);
+
+    /**
+     * Called when program list changes.
+     *
+     * @param New program list
+     */
+    void onProgramListChanged(in List<RadioManager.ProgramInfo> plist);
 }
