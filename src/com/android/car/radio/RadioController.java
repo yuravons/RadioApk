@@ -17,7 +17,7 @@
 package com.android.car.radio;
 
 import android.animation.ValueAnimator;
-import android.graphics.Color;
+import android.content.Context;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.hardware.radio.RadioMetadata;
@@ -25,7 +25,6 @@ import android.hardware.radio.RadioTuner;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.view.View;
 
-import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
@@ -44,117 +43,47 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * A controller that handles the display of metadata on the current radio station.
+ * The main controller of the radio app.
  */
 public class RadioController {
     private static final String TAG = "BcRadioApp.controller";
 
-    /**
-     * The percentage by which to darken the color that should be set on the status bar.
-     * This darkening gives the status bar the illusion that it is transparent.
-     *
-     * @see RadioController#setShouldColorStatusBar(boolean)
-     */
-    private static final float STATUS_BAR_DARKEN_PERCENTAGE = 0.4f;
-
-    /**
-     * The animation time for when the background of the radio shifts to a different color.
-     */
-    private static final int BACKGROUND_CHANGE_ANIM_TIME_MS = 450;
-    private static final int INVALID_BACKGROUND_COLOR = 0;
-
     private static final int CHANNEL_CHANGE_DURATION_MS = 200;
 
     private final Object mLock = new Object();
+    private final Context mContext;
+
+    private final RadioAppServiceWrapper mAppService = new RadioAppServiceWrapper();
+    private final DisplayController mDisplayController;
+    private final RadioStorage mRadioStorage;
 
     @Nullable private ProgramInfo mCurrentProgram;
 
     private final ValueAnimator mAnimator = new ValueAnimator();
-    private @Nullable ProgramSelector mCurrentlyDisplayedChannel;  // for animation purposes
-
-    private final FragmentActivity mActivity;
-    private RadioAppServiceWrapper mAppService = new RadioAppServiceWrapper();
-
-    private View mRadioBackground;
-    private boolean mShouldColorStatusBar;
-
-    @ColorInt private int mCurrentBackgroundColor = INVALID_BACKGROUND_COLOR;
-
-    private final DisplayController mDisplayController;
-
-    private final RadioStorage mRadioStorage;
-
-    private final String mAmBandString;
-    private final String mFmBandString;
+    private @Nullable ProgramSelector mCurrentlyDisplayedChannel;
 
     public RadioController(@NonNull FragmentActivity activity) {
-        mActivity = Objects.requireNonNull(activity);
+        mContext = Objects.requireNonNull(activity);
 
         mDisplayController = new DisplayController(activity, this);
-
-        mAmBandString = activity.getString(R.string.radio_am_text);
-        mFmBandString = activity.getString(R.string.radio_fm_text);
 
         mRadioStorage = RadioStorage.getInstance(activity);
         mRadioStorage.getFavorites().observe(activity, this::onFavoritesChanged);
 
-        mAppService.addConnectedListener(() -> mDisplayController.setEnabled(true));
-
         mAppService.getCurrentProgram().observe(activity, this::onCurrentProgramChanged);
-    }
+        mAppService.isConnected().observe(activity, mDisplayController::setEnabled);
 
-    /**
-     * Initializes this {@link RadioController} to control the UI whose root is the given container.
-     */
-    public void initialize(View container) {
-        mCurrentBackgroundColor = INVALID_BACKGROUND_COLOR;
-
-        mDisplayController.initialize(container);
-
-        mDisplayController.setBackwardSeekButtonListener(mBackwardSeekClickListener);
-        mDisplayController.setForwardSeekButtonListener(mForwardSeekClickListener);
+        mDisplayController.setBackwardSeekButtonListener(this::onBackwardSeekClick);
+        mDisplayController.setForwardSeekButtonListener(this::onForwardSeekClick);
         mDisplayController.setPlayButtonCallback(this::onSwitchToPlayState);
         mDisplayController.setFavoriteToggleListener(this::onFavoriteToggled);
-
-        mRadioBackground = container;
-    }
-
-    /**
-     * See {@link RadioAppServiceWrapper#addConnectedListener}.
-     */
-    public void addServiceConnectedListener(@NonNull RadioAppServiceWrapper.ConnectedListener l) {
-        mAppService.addConnectedListener(l);
-    }
-
-    /**
-     * See {@link RadioAppServiceWrapper#removeConnectedListener}.
-     */
-    public void removeServiceConnectedListener(RadioAppServiceWrapper.ConnectedListener listener) {
-        mAppService.removeConnectedListener(listener);
-    }
-
-    /**
-     * Set whether or not this controller should also update the color of the status bar to match
-     * the current background color of the radio. The color that will be set on the status bar
-     * will be slightly darker, giving the illusion that the status bar is transparent.
-     *
-     * <p>This method is needed because of scene transitions. Scene transitions do not take into
-     * account padding that is added programmatically. Since there is no way to get the height of
-     * the status bar and set it in XML, it needs to be done in code. This breaks the scene
-     * transition.
-     *
-     * <p>To make this work, the status bar is not actually translucent; it is colored to appear
-     * that way via this method.
-     */
-    public void setShouldColorStatusBar(boolean shouldColorStatusBar) {
-       mShouldColorStatusBar = shouldColorStatusBar;
     }
 
     /**
      * Starts the controller and establishes connection with {@link RadioAppService}.
      */
     public void start() {
-        mAppService.bind(mActivity);
+        mAppService.bind(mContext);
     }
 
     /**
@@ -162,6 +91,14 @@ public class RadioController {
      */
     public void shutdown() {
         mAppService.unbind();
+    }
+
+    /**
+     * See {@link RadioAppServiceWrapper#isConnected}.
+     */
+    @NonNull
+    public LiveData<Boolean> isConnected() {
+        return mAppService.isConnected();
     }
 
     /**
@@ -226,27 +163,6 @@ public class RadioController {
         mCurrentlyDisplayedChannel = sel;
     }
 
-    private void setBackgroundColor(int backgroundColor) {
-        mRadioBackground.setBackgroundColor(backgroundColor);
-
-        if (mShouldColorStatusBar) {
-            int red = darkenColor(Color.red(backgroundColor));
-            int green = darkenColor(Color.green(backgroundColor));
-            int blue = darkenColor(Color.blue(backgroundColor));
-            int alpha = Color.alpha(backgroundColor);
-
-            mActivity.getWindow().setStatusBarColor(
-                    Color.argb(alpha, red, green, blue));
-        }
-    }
-
-    /**
-     * Darkens the given color by {@link #STATUS_BAR_DARKEN_PERCENTAGE}.
-     */
-    private int darkenColor(int color) {
-        return (int) Math.max(color - (color * STATUS_BAR_DARKEN_PERCENTAGE), 0);
-    }
-
     /**
      * Clears all metadata including song title, artist and station information.
      */
@@ -285,25 +201,18 @@ public class RadioController {
         mDisplayController.setCurrentIsFavorite(mRadioStorage.isFavorite(sel));
     }
 
-    private final View.OnClickListener mBackwardSeekClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            // TODO(b/73950974): show some kind of animation
-            clearMetadataDisplay();
+    private void onBackwardSeekClick(View v) {
+        // TODO(b/73950974): show some kind of animation
+        clearMetadataDisplay();
 
-            // TODO(b/73950974): watch for timeout and if it happens, display metadata back
-            mAppService.seekBackward();
-        }
-    };
+        // TODO(b/73950974): watch for timeout and if it happens, display metadata back
+        mAppService.seekBackward();
+    }
 
-    private final View.OnClickListener mForwardSeekClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            clearMetadataDisplay();
-
-            mAppService.seekForward();
-        }
-    };
+    private void onForwardSeekClick(View v) {
+        clearMetadataDisplay();
+        mAppService.seekForward();
+    }
 
     private void onSwitchToPlayState(@PlaybackStateCompat.State int newPlayState) {
         switch (newPlayState) {
@@ -329,10 +238,4 @@ public class RadioController {
             mRadioStorage.removeFavorite(info.getSelector());
         }
     }
-
-    private final ValueAnimator.AnimatorUpdateListener mBackgroundColorUpdater =
-            animator -> {
-                int backgroundColor = (int) animator.getAnimatedValue();
-                setBackgroundColor(backgroundColor);
-            };
 }

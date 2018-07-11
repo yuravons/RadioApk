@@ -51,7 +51,6 @@ public class RadioActivity extends FragmentActivity {
             "android.intent.action.RADIO_APP_STATE";
 
     private RadioController mRadioController;
-    private View mRootView;
     private BandToggleButton mBandToggleButton;
 
     @Override
@@ -61,7 +60,6 @@ public class RadioActivity extends FragmentActivity {
         Log.d(TAG, "Radio app main activity created");
 
         setContentView(R.layout.radio_activity);
-        mRootView = findViewById(R.id.main_radio_display);
         mBandToggleButton = findViewById(R.id.band_toggle_button);
 
         mRadioController = new RadioController(this);
@@ -122,7 +120,6 @@ public class RadioActivity extends FragmentActivity {
     protected void onStart() {
         super.onStart();
 
-        mRadioController.initialize(mRootView);
         mRadioController.start();
 
         Intent broadcast = new Intent(ACTION_RADIO_APP_STATE_CHANGE);

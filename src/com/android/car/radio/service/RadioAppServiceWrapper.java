@@ -33,7 +33,6 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.android.car.radio.bands.ProgramType;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,23 +46,12 @@ public class RadioAppServiceWrapper {
     @Nullable
     private final AtomicReference<IRadioAppService> mService = new AtomicReference<>();
 
+    private final MutableLiveData<Boolean> mIsConnected = new MutableLiveData<>();
     private final MutableLiveData<Integer> mPlaybackState = new MutableLiveData<>();
     private final MutableLiveData<ProgramInfo> mCurrentProgram = new MutableLiveData<>();
 
     {
         mPlaybackState.postValue(PlaybackStateCompat.STATE_NONE);
-    }
-
-    private final List<ConnectedListener> mConnectedListeners = new ArrayList<>();
-
-    /**
-     * Watches for {@link RadioAppService} being connected.
-     */
-    public interface ConnectedListener {
-        /**
-         * Called when the {@link RadioAppService} is connected.
-         */
-        void onConnected();
     }
 
     /**
@@ -145,16 +133,12 @@ public class RadioAppServiceWrapper {
     private void onServiceConnected(@NonNull IRadioAppService service) {
         mService.set(service);
         initialize(service);
-
-        synchronized (mConnectedListeners) {
-            for (ConnectedListener listener : mConnectedListeners) {
-                listener.onConnected();
-            }
-        }
+        mIsConnected.postValue(true);
     }
 
     private void onServiceDisconnected() {
         mService.set(null);
+        mIsConnected.postValue(false);
     }
 
     private interface ServiceOperation {
@@ -175,22 +159,16 @@ public class RadioAppServiceWrapper {
     }
 
     /**
-     * Adds listener for RadioAppService connection event.
+     * Returns a {@link LiveData} stating if the connection with RadioAppService is alive.
+     *
+     * Possible values are:
+     *  - {@code null} (not set) if the service isn't connected yet
+     *  - {@code true} if the connection is alive
+     *  - {@code false} if the service is disconnected
      */
-    public void addConnectedListener(@NonNull ConnectedListener listener) {
-        synchronized (mConnectedListeners) {
-            mConnectedListeners.add(Objects.requireNonNull(listener));
-            if (mService.get() != null) listener.onConnected();
-        }
-    }
-
-    /**
-     * Removes listener for RadioAppService connection event.
-     */
-    public void removeConnectedListener(ConnectedListener listener) {
-        synchronized (mConnectedListeners) {
-            mConnectedListeners.remove(listener);
-        }
+    @NonNull
+    public LiveData<Boolean> isConnected() {
+        return mIsConnected;
     }
 
     /**
