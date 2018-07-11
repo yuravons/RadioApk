@@ -22,7 +22,6 @@ import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.util.Log;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -30,6 +29,7 @@ import androidx.lifecycle.LiveData;
 
 import com.android.car.radio.platform.RadioManagerExt;
 import com.android.car.radio.platform.RadioTunerExt;
+import com.android.car.radio.util.Log;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -39,7 +39,7 @@ import java.util.Objects;
  * Manages radio's audio stream.
  */
 public class AudioStreamController {
-    private static final String TAG = "BcRadioApp.AudioSCntrl";
+    private static final String TAG = "BcRadioApp.audio";
 
     /** Tune operation. */
     public static final int OPERATION_TUNE = 1;
@@ -132,7 +132,7 @@ public class AudioStreamController {
         if (mHasSomeFocus) return true;
         int res = mAudioManager.requestAudioFocus(mGainFocusReq);
         if (res == AudioManager.AUDIOFOCUS_REQUEST_DELAYED) {
-            Log.i(TAG, "Audio focus request is delayed");
+            Log.d(TAG, "Audio focus request is delayed");
             mHasSomeFocus = true;
             return true;
         }

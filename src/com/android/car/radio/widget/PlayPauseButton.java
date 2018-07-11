@@ -20,19 +20,19 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
 
 import com.android.car.radio.R;
+import com.android.car.radio.util.Log;
 
 /**
  * An {@link ImageView} that renders a play/pause button like a floating action button.
  */
 public class PlayPauseButton extends ImageView {
-    private static final String TAG = "BcRadioApp.PlayPauseButton";
+    private static final String TAG = "BcRadioApp.PlayPauseBtn";
 
     private static final int[] STATE_PLAYING = {R.attr.state_playing};
     private static final int[] STATE_PAUSED = {R.attr.state_paused};

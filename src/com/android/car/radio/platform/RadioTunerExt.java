@@ -16,8 +16,6 @@
 
 package com.android.car.radio.platform;
 
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.car.Car;
 import android.car.CarNotConnectedException;
 import android.car.media.CarAudioManager;
@@ -27,7 +25,11 @@ import android.content.Context;
 import android.content.ServiceConnection;
 import android.media.AudioAttributes;
 import android.os.IBinder;
-import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.android.car.radio.util.Log;
 
 import java.util.stream.Stream;
 
@@ -63,7 +65,7 @@ public class RadioTunerExt {
                     if (mPendingMuteOperation != null) {
                         boolean mute = mPendingMuteOperation;
                         mPendingMuteOperation = null;
-                        Log.i(TAG, "Car connected, executing postponed operation: "
+                        Log.d(TAG, "Car connected, executing postponed operation: "
                                 + (mute ? "mute" : "unmute"));
                         setMuted(mute);
                     }
@@ -91,7 +93,7 @@ public class RadioTunerExt {
     public boolean setMuted(boolean muted) {
         synchronized (mLock) {
             if (mCarAudioManager == null) {
-                Log.i(TAG, "Car not connected yet, postponing operation: "
+                Log.d(TAG, "Car not connected yet, postponing operation: "
                         + (muted ? "mute" : "unmute"));
                 mPendingMuteOperation = muted;
                 return true;
@@ -107,11 +109,11 @@ public class RadioTunerExt {
                                 + "\" is not available");
                         return false;
                     }
-                    Log.d(TAG, "Creating audio patch for " + HARDCODED_TUNER_ADDRESS);
+                    Log.v(TAG, "Creating audio patch for " + HARDCODED_TUNER_ADDRESS);
                     mAudioPatch = mCarAudioManager.createAudioPatch(HARDCODED_TUNER_ADDRESS,
                             AudioAttributes.USAGE_MEDIA, 0);
                 } else {
-                    Log.d(TAG, "Releasing audio patch");
+                    Log.v(TAG, "Releasing audio patch");
                     mCarAudioManager.releaseAudioPatch(mAudioPatch);
                     mAudioPatch = null;
                 }

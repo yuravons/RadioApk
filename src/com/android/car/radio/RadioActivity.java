@@ -18,7 +18,6 @@ package com.android.car.radio;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -28,6 +27,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager.widget.ViewPager;
 
 import com.android.car.radio.bands.ProgramType;
+import com.android.car.radio.util.Log;
 import com.android.car.radio.widget.BandToggleButton;
 
 import com.google.android.material.tabs.TabLayout;
@@ -36,7 +36,7 @@ import com.google.android.material.tabs.TabLayout;
  * The main activity for the radio app.
  */
 public class RadioActivity extends FragmentActivity {
-    private static final String TAG = "BcRadioApp.RadioActivity";
+    private static final String TAG = "BcRadioApp.activity";
 
     /**
      * Intent action for notifying that the radio state has changed.
@@ -57,6 +57,8 @@ public class RadioActivity extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Log.d(TAG, "Radio app main activity created");
 
         setContentView(R.layout.radio_activity);
         mRootView = findViewById(R.id.main_radio_display);
@@ -120,9 +122,6 @@ public class RadioActivity extends FragmentActivity {
     protected void onStart() {
         super.onStart();
 
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "onStart");
-        }
         mRadioController.initialize(mRootView);
         mRadioController.start();
 
@@ -135,10 +134,6 @@ public class RadioActivity extends FragmentActivity {
     protected void onStop() {
         super.onStop();
 
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "onStop");
-        }
-
         Intent broadcast = new Intent(ACTION_RADIO_APP_STATE_CHANGE);
         broadcast.putExtra(EXTRA_RADIO_APP_FOREGROUND, false);
         sendBroadcast(broadcast);
@@ -149,5 +144,7 @@ public class RadioActivity extends FragmentActivity {
         super.onDestroy();
 
         mRadioController.shutdown();
+
+        Log.d(TAG, "Radio app main activity destroyed");
     }
 }

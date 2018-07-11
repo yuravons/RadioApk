@@ -16,15 +16,14 @@
 
 package com.android.car.radio;
 
-import android.annotation.NonNull;
 import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
 import android.hardware.radio.ProgramSelector;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.broadcastradio.support.Program;
@@ -37,8 +36,6 @@ import java.util.Objects;
  * {@code R.layout.radio_preset_item}.
  */
 public class ProgramViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-    private static final String TAG = "Em.PresetVH";
-
     private final OnPresetClickListener mPresetClickListener;
     private final OnPresetFavoriteListener mPresetFavoriteListener;
 
@@ -101,10 +98,6 @@ public class ProgramViewHolder extends RecyclerView.ViewHolder implements View.O
 
     @Override
     public void onClick(View view) {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "onClick() for view at position: " + getAdapterPosition());
-        }
-
         mPresetClickListener.onPresetClicked(getAdapterPosition());
     }
 

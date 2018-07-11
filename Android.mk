@@ -47,7 +47,6 @@ LOCAL_STATIC_ANDROID_LIBRARIES += \
     car-stream-ui-lib
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-constraint-layout-solver \
     androidx.lifecycle_lifecycle-livedata \
     androidx.sqlite_sqlite-framework \
     androidx.sqlite_sqlite \
