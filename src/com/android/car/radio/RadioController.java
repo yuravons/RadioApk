@@ -16,7 +16,6 @@
 
 package com.android.car.radio;
 
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
@@ -32,7 +31,6 @@ import androidx.lifecycle.LiveData;
 
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.broadcastradio.support.platform.ProgramInfoExt;
-import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.service.RadioAppService;
 import com.android.car.radio.service.RadioAppServiceWrapper;
@@ -48,8 +46,6 @@ import java.util.Objects;
 public class RadioController {
     private static final String TAG = "BcRadioApp.controller";
 
-    private static final int CHANNEL_CHANGE_DURATION_MS = 200;
-
     private final Object mLock = new Object();
     private final Context mContext;
 
@@ -58,9 +54,6 @@ public class RadioController {
     private final RadioStorage mRadioStorage;
 
     @Nullable private ProgramInfo mCurrentProgram;
-
-    private final ValueAnimator mAnimator = new ValueAnimator();
-    private @Nullable ProgramSelector mCurrentlyDisplayedChannel;
 
     public RadioController(@NonNull FragmentActivity activity) {
         mContext = Objects.requireNonNull(activity);
@@ -133,44 +126,6 @@ public class RadioController {
         mAppService.switchBand(pt);
     }
 
-    // TODO(b/73950974): move channel animation to DisplayController
-    private void updateRadioChannelDisplay(@NonNull ProgramSelector sel) {
-        int priType = sel.getPrimaryId().getType();
-
-        mAnimator.cancel();
-
-        if (!ProgramSelectorExt.isAmFmProgram(sel)
-                || !ProgramSelectorExt.hasId(sel, ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY)) {
-            // channel animation is implemented for AM/FM only
-            mCurrentlyDisplayedChannel = null;
-            mDisplayController.setChannel(ProgramSelectorExt.getDisplayName(sel, 0));
-            return;
-        }
-
-        if (ProgramType.fromSelector(mCurrentlyDisplayedChannel) == ProgramType.fromSelector(sel)) {
-            int fromFreq = (int) mCurrentlyDisplayedChannel
-                    .getFirstId(ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY);
-            int toFreq = (int) sel.getFirstId(ProgramSelector.IDENTIFIER_TYPE_AMFM_FREQUENCY);
-            mAnimator.setIntValues((int) fromFreq, (int) toFreq);
-            mAnimator.setDuration(CHANNEL_CHANGE_DURATION_MS);
-            mAnimator.addUpdateListener(animation -> mDisplayController.setChannel(
-                    ProgramSelectorExt.formatAmFmFrequency((int) animation.getAnimatedValue(), 0)));
-            mAnimator.start();
-        } else {
-            // it's a different band - don't animate
-            mDisplayController.setChannel(ProgramSelectorExt.getDisplayName(sel, 0));
-        }
-        mCurrentlyDisplayedChannel = sel;
-    }
-
-    /**
-     * Clears all metadata including song title, artist and station information.
-     */
-    private void clearMetadataDisplay() {
-        mDisplayController.setCurrentStation(null);
-        mDisplayController.setCurrentSongTitleAndArtist(null, null);
-    }
-
     private void onFavoritesChanged(List<Program> favorites) {
         synchronized (mLock) {
             if (mCurrentProgram == null) return;
@@ -187,30 +142,36 @@ public class RadioController {
     }
 
     private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
-        mCurrentProgram = Objects.requireNonNull(info);
-        ProgramSelector sel = info.getSelector();
+        synchronized (mLock) {
+            mCurrentProgram = Objects.requireNonNull(info);
+            ProgramSelector sel = info.getSelector();
+            RadioMetadata meta = ProgramInfoExt.getMetadata(info);
 
-        updateRadioChannelDisplay(sel);
+            mDisplayController.setChannel(sel);
 
-        mDisplayController.setCurrentStation(
-                ProgramInfoExt.getProgramName(info, ProgramInfoExt.NAME_NO_CHANNEL_FALLBACK));
-        RadioMetadata meta = ProgramInfoExt.getMetadata(info);
-        mDisplayController.setCurrentSongTitleAndArtist(
-                meta.getString(RadioMetadata.METADATA_KEY_TITLE),
-                meta.getString(RadioMetadata.METADATA_KEY_ARTIST));
-        mDisplayController.setCurrentIsFavorite(mRadioStorage.isFavorite(sel));
+            mDisplayController.setStationName(
+                    ProgramInfoExt.getProgramName(info, ProgramInfoExt.NAME_NO_CHANNEL_FALLBACK));
+
+            if (meta.containsKey(RadioMetadata.METADATA_KEY_TITLE)
+                    || meta.containsKey(RadioMetadata.METADATA_KEY_ARTIST)) {
+                mDisplayController.setDetails(
+                        meta.getString(RadioMetadata.METADATA_KEY_TITLE),
+                        meta.getString(RadioMetadata.METADATA_KEY_ARTIST));
+            } else {
+                mDisplayController.setDetails(meta.getString(RadioMetadata.METADATA_KEY_RDS_RT));
+            }
+
+            mDisplayController.setCurrentIsFavorite(mRadioStorage.isFavorite(sel));
+        }
     }
 
     private void onBackwardSeekClick(View v) {
-        // TODO(b/73950974): show some kind of animation
-        clearMetadataDisplay();
-
-        // TODO(b/73950974): watch for timeout and if it happens, display metadata back
+        mDisplayController.startSeekAnimation(false);
         mAppService.seekBackward();
     }
 
     private void onForwardSeekClick(View v) {
-        clearMetadataDisplay();
+        mDisplayController.startSeekAnimation(true);
         mAppService.seekForward();
     }
 
@@ -229,13 +190,14 @@ public class RadioController {
     }
 
     private void onFavoriteToggled(boolean addFavorite) {
-        ProgramInfo info = mCurrentProgram;
-        if (info == null) return;
+        synchronized (mLock) {
+            if (mCurrentProgram == null) return;
 
-        if (addFavorite) {
-            mRadioStorage.addFavorite(Program.fromProgramInfo(info));
-        } else {
-            mRadioStorage.removeFavorite(info.getSelector());
+            if (addFavorite) {
+                mRadioStorage.addFavorite(Program.fromProgramInfo(mCurrentProgram));
+            } else {
+                mRadioStorage.removeFavorite(mCurrentProgram.getSelector());
+            }
         }
     }
 }
