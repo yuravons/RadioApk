@@ -26,6 +26,7 @@ import android.hardware.radio.RadioTuner;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
 import android.support.v4.media.session.PlaybackStateCompat;
 
@@ -58,6 +59,7 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
     private static final String TAG = "BcRadioApp.service";
 
     public static String ACTION_APP_SERVICE = "com.android.car.radio.ACTION_APP_SERVICE";
+    private static final long PROGRAM_LIST_RATE_LIMITING = 1000;
 
     private final Object mLock = new Object();
     private final LifecycleRegistry mLifecycleRegistry = new LifecycleRegistry(this);
@@ -65,6 +67,7 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
 
     private RadioManagerExt mRadioManager;
     private RadioTuner mRadioTuner;
+    @Nullable private ProgramList mProgramList;
 
     private RadioStorage mRadioStorage;
     private ImageMemoryCache mImageCache;
@@ -76,7 +79,7 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
     // current observables state for newly bound IRadioAppCallbacks
     private ProgramInfo mCurrentProgram = null;
     private int mCurrentPlaybackState = PlaybackStateCompat.STATE_NONE;
-    private ProgramList mProgramList;
+    private long mLastProgramListPush;
 
     @Override
     public void onCreate() {
@@ -102,13 +105,23 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
         mRadioTuner = mRadioManager.openSession(mHardwareCallback, null);
         if (mRadioTuner == null) {
             // TODO(b/73950974): handle openSession failure
-            Log.e(TAG, "Couldn't open tuner session");
-        } else {
-            mProgramList = mRadioTuner.getDynamicProgramList(null);
-            mBrowseTree.setProgramList(mProgramList);
-            tuneToDefault(null);
-            mAudioStreamController.requestMuted(false);
+            throw new RuntimeException("Couldn't open tuner session");
         }
+
+        mProgramList = mRadioTuner.getDynamicProgramList(null);
+        if (mProgramList != null) {
+            mBrowseTree.setProgramList(mProgramList);
+            mProgramList.registerListCallback(new ProgramList.ListCallback() {
+                @Override
+                public void onItemChanged(@NonNull ProgramSelector.Identifier id) {
+                    onProgramListChanged();
+                }
+            });
+            mProgramList.addOnCompleteListener(this::pushProgramListUpdate);
+        }
+
+        tuneToDefault(null);
+        mAudioStreamController.requestMuted(false);
 
         mLifecycleRegistry.markState(Lifecycle.State.CREATED);
     }
@@ -165,6 +178,25 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
             mCurrentPlaybackState = newState;
             for (IRadioAppCallback callback : mRadioAppCallbacks) {
                 tryExec(() -> callback.onPlaybackStateChanged(newState));
+            }
+        }
+    }
+
+    private void onProgramListChanged() {
+        synchronized (mLock) {
+            if (SystemClock.elapsedRealtime() - mLastProgramListPush > PROGRAM_LIST_RATE_LIMITING) {
+                pushProgramListUpdate();
+            }
+        }
+    }
+
+    private void pushProgramListUpdate() {
+        List<ProgramInfo> plist = mProgramList.toList();
+
+        synchronized (mLock) {
+            mLastProgramListPush = SystemClock.elapsedRealtime();
+            for (IRadioAppCallback callback : mRadioAppCallbacks) {
+                tryExec(() -> callback.onProgramListChanged(plist));
             }
         }
     }
@@ -228,6 +260,7 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
             synchronized (mLock) {
                 if (mCurrentProgram != null) callback.onCurrentProgramChanged(mCurrentProgram);
                 callback.onPlaybackStateChanged(mCurrentPlaybackState);
+                if (mProgramList != null) callback.onProgramListChanged(mProgramList.toList());
                 mRadioAppCallbacks.add(callback);
             }
         }
@@ -247,11 +280,6 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
                 }
                 mRadioTuner.tune(sel);
             }
-        }
-
-        @Override
-        public List<ProgramInfo> getProgramList() {
-            return mRadioTuner.getDynamicProgramList(null).toList();
         }
 
         @Override
@@ -284,6 +312,11 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
         @Override
         public void switchBand(ProgramType band) {
             tuneToDefault(band);
+        }
+
+        @Override
+        public boolean isProgramListSupported() {
+            return mProgramList != null;
         }
     };
 

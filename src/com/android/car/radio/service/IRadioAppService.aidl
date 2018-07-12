@@ -71,9 +71,9 @@ interface IRadioAppService {
     void switchBand(in ProgramType band);
 
     /**
-     * Returns a list of programs found with the tuner's background scan
+     * States whether program list is supported on current device or not.
      *
-     * TODO(b/73950974): use callback
+     * @return {@code true} if the program list is supported, {@code false} otherwise.
      */
-    List<RadioManager.ProgramInfo> getProgramList();
+    boolean isProgramListSupported();
 }

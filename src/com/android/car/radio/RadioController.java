@@ -64,12 +64,20 @@ public class RadioController {
         mRadioStorage.getFavorites().observe(activity, this::onFavoritesChanged);
 
         mAppService.getCurrentProgram().observe(activity, this::onCurrentProgramChanged);
-        mAppService.isConnected().observe(activity, mDisplayController::setEnabled);
+        mAppService.isConnected().observe(activity, this::onAppServiceConnected);
 
         mDisplayController.setBackwardSeekButtonListener(this::onBackwardSeekClick);
         mDisplayController.setForwardSeekButtonListener(this::onForwardSeekClick);
         mDisplayController.setPlayButtonCallback(this::onSwitchToPlayState);
         mDisplayController.setFavoriteToggleListener(this::onFavoriteToggled);
+    }
+
+    private void onAppServiceConnected(boolean connected) {
+        mDisplayController.setEnabled(connected);
+        if (!mAppService.isProgramListSupported()) {
+            // TODO(b/111354105): handle case where program list is not supported
+            Log.i(TAG, "Program list is not supported with the current hardware");
+        }
     }
 
     /**
@@ -87,14 +95,6 @@ public class RadioController {
     }
 
     /**
-     * See {@link RadioAppServiceWrapper#isConnected}.
-     */
-    @NonNull
-    public LiveData<Boolean> isConnected() {
-        return mAppService.isConnected();
-    }
-
-    /**
      * See {@link RadioAppServiceWrapper#getPlaybackState}.
      */
     @NonNull
@@ -108,6 +108,14 @@ public class RadioController {
     @NonNull
     public LiveData<ProgramInfo> getCurrentProgram() {
         return mAppService.getCurrentProgram();
+    }
+
+    /**
+     * See {@link RadioAppServiceWrapper#getProgramList}.
+     */
+    @NonNull
+    public LiveData<List<ProgramInfo>> getProgramList() {
+        return mAppService.getProgramList();
     }
 
     /**
@@ -132,13 +140,6 @@ public class RadioController {
             boolean isFav = RadioStorage.isFavorite(favorites, mCurrentProgram.getSelector());
             mDisplayController.setCurrentIsFavorite(isFav);
         }
-    }
-
-    /**
-     * Gets a list of programs from the radio tuner's background scan
-     */
-    public List<ProgramInfo> getProgramList() {
-        return mAppService.getProgramList();
     }
 
     private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
