@@ -26,13 +26,17 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.media.session.PlaybackStateCompat;
 
+import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.android.car.radio.bands.ProgramType;
+import com.android.car.radio.util.Log;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,16 +46,51 @@ import java.util.concurrent.atomic.AtomicReference;
  * with remote services.
  */
 public class RadioAppServiceWrapper {
+    private static final String TAG = "BcRadioApp.servicewr";
+
+    /**
+     * Binding has just been requested and we're connecting to the {@link RadioAppService} now.
+     */
+    public static final int STATE_CONNECTING = 1;
+
+    /**
+     * {@link RadioAppService} connection is up and running.
+     */
+    public static final int STATE_CONNECTED = 2;
+
+    /**
+     * This device has no broadcastradio hardware.
+     */
+    public static final int STATE_NOT_SUPPORTED = 3;
+
+    /**
+     * Some problem has occured (either RadioAppService crashed or there was HW problem).
+     */
+    public static final int STATE_ERROR = 4;
+
+    /**
+     * Application state.
+     */
+    @IntDef(value = {
+        STATE_CONNECTING,
+        STATE_CONNECTED,
+        STATE_NOT_SUPPORTED,
+        STATE_ERROR,
+    })
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface ConnectionState {}
+
     private Context mClientContext;
     @Nullable
     private final AtomicReference<IRadioAppService> mService = new AtomicReference<>();
 
-    private final MutableLiveData<Boolean> mIsConnected = new MutableLiveData<>();
+    private final MutableLiveData<Integer> mConnectionState = new MutableLiveData<>();
     private final MutableLiveData<Integer> mPlaybackState = new MutableLiveData<>();
     private final MutableLiveData<ProgramInfo> mCurrentProgram = new MutableLiveData<>();
     private final MutableLiveData<List<ProgramInfo>> mProgramList = new MutableLiveData<>();
 
     {
+        mConnectionState.postValue(STATE_CONNECTING);
         mPlaybackState.postValue(PlaybackStateCompat.STATE_NONE);
     }
 
@@ -84,17 +123,32 @@ public class RadioAppServiceWrapper {
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className, IBinder binder) {
-            RadioAppServiceWrapper.this.onServiceConnected(
+            RadioAppServiceWrapper.this.onServiceConnected(binder,
                     Objects.requireNonNull(IRadioAppService.Stub.asInterface(binder)));
         }
 
         @Override
         public void onServiceDisconnected(ComponentName className) {
-            RadioAppServiceWrapper.this.onServiceDisconnected();
+            onServiceFailure();
+        }
+
+        @Override
+        public void onBindingDied(ComponentName name) {
+            onServiceFailure();
+        }
+
+        @Override
+        public void onNullBinding(ComponentName name) {
+            RadioAppServiceWrapper.this.onNullBinding();
         }
     };
 
     private final IRadioAppCallback mCallback = new IRadioAppCallback.Stub() {
+        @Override
+        public void onHardwareError() {
+            onServiceFailure();
+        }
+
         @Override
         public void onCurrentProgramChanged(ProgramInfo info) {
             mCurrentProgram.postValue(info);
@@ -136,15 +190,24 @@ public class RadioAppServiceWrapper {
         mClientContext.unbindService(mServiceConnection);
     }
 
-    private void onServiceConnected(@NonNull IRadioAppService service) {
+    private void onServiceConnected(IBinder binder, @NonNull IRadioAppService service) {
+        Log.d(TAG, "RadioAppService connected");
         mService.set(service);
         initialize(service);
-        mIsConnected.postValue(true);
+        mConnectionState.postValue(STATE_CONNECTED);
     }
 
-    private void onServiceDisconnected() {
-        mService.set(null);
-        mIsConnected.postValue(false);
+    private void onServiceFailure() {
+        if (mService.getAndSet(null) == null) return;
+        Log.e(TAG, "RadioAppService failed " + (mClientContext == null ? "(local)" : "(remote)"));
+        mConnectionState.postValue(STATE_ERROR);
+    }
+
+    private void onNullBinding() {
+        Log.i(TAG, "RadioAppService is not accepting connections. "
+                + "It means the radio hardware is not available");
+        mClientContext.unbindService(mServiceConnection);
+        mConnectionState.postValue(STATE_NOT_SUPPORTED);
     }
 
     private interface ServiceVoidOperation {
@@ -155,7 +218,7 @@ public class RadioAppServiceWrapper {
         V execute(@NonNull IRadioAppService service) throws RemoteException;
     }
 
-    private <V> V queryService(@NonNull ServiceOperation<V> op) {
+    private <V> V queryService(@NonNull ServiceOperation<V> op, V defaultResponse) {
         IRadioAppService service = mService.get();
         if (service == null) {
             throw new IllegalStateException("Service is not connected");
@@ -163,7 +226,9 @@ public class RadioAppServiceWrapper {
         try {
             return op.execute(service);
         } catch (RemoteException e) {
-            throw new RuntimeException("Remote call failed", e);
+            Log.e(TAG, "Remote call failed", e);
+            onServiceFailure();
+            return defaultResponse;
         }
     }
 
@@ -175,22 +240,19 @@ public class RadioAppServiceWrapper {
         try {
             op.execute(service);
         } catch (RemoteException e) {
-            // TODO(b/73950974): don't throw when service disconnect event tracking is implemented
-            throw new RuntimeException("Remote call failed", e);
+            Log.e(TAG, "Remote call failed", e);
+            onServiceFailure();
         }
     }
 
     /**
-     * Returns a {@link LiveData} stating if the connection with RadioAppService is alive.
+     * Returns a {@link LiveData} stating if the {@link RadioAppService} connection state.
      *
-     * Possible values are:
-     *  - {@code null} (not set) if the service isn't connected yet
-     *  - {@code true} if the connection is alive
-     *  - {@code false} if the service is disconnected
+     * @see {@link ConnectionState}.
      */
     @NonNull
-    public LiveData<Boolean> isConnected() {
-        return mIsConnected;
+    public LiveData<Integer> getConnectionState() {
+        return mConnectionState;
     }
 
     /**
@@ -266,6 +328,6 @@ public class RadioAppServiceWrapper {
      * @return {@code true} if the program list is supported, {@code false} otherwise.
      */
     public boolean isProgramListSupported() {
-        return queryService(service -> service.isProgramListSupported());
+        return queryService(service -> service.isProgramListSupported(), false);
     }
 }

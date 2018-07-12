@@ -40,7 +40,7 @@ public class PlayPauseButton extends ImageView {
     @Nullable private Callback mCallback;
 
     @PlaybackStateCompat.State
-    private int mPlaybackState = -1;
+    private int mPlaybackState = PlaybackStateCompat.STATE_NONE;
 
     /**
      * Callback for toggle event.

@@ -36,6 +36,7 @@ import com.android.car.broadcastradio.support.platform.ProgramInfoExt;
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.R;
 import com.android.car.radio.service.RadioAppServiceWrapper;
+import com.android.car.radio.service.RadioAppServiceWrapper.ConnectionState;
 import com.android.car.radio.storage.RadioStorage;
 import com.android.car.radio.util.Log;
 
@@ -91,6 +92,14 @@ public class TunerSession extends MediaSessionCompat {
                 favorites -> updateMetadata(mAppService.getCurrentProgram().getValue()));
 
         setActive(true);
+
+        mAppService.getConnectionState().observeForever(this::onSelfStateChanged);
+    }
+
+    private void onSelfStateChanged(@ConnectionState int state) {
+        if (state == RadioAppServiceWrapper.STATE_ERROR) {
+            setActive(false);
+        }
     }
 
     private void updateMetadata(@Nullable ProgramInfo info) {
