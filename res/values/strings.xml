@@ -33,8 +33,11 @@ limitations under the License.
     <string name="radio_play_button_transition_name" translatable="false">
         radio_play_button_transition</string>
 
-    <!-- Text indicating to the user that there was an error loading the error. -->
-    <string name="radio_problem_text">Radio not available</string>
+    <!-- Text indicating the radio hardware is not supported on this device. -->
+    <string name="radio_not_supported_text">Radio not supported</string>
+
+    <!-- Text indicating a fatal error (app service crash or HW failure). -->
+    <string name="radio_failure_text">Radio temporarily not available</string>
 
     <!-- Error message after invalid MediaSession API selection (mainly by other apps,
          like assistant). -->

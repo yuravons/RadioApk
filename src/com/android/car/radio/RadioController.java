@@ -73,7 +73,7 @@ public class RadioController {
     }
 
     private void onAppServiceConnected(boolean connected) {
-        mDisplayController.setEnabled(connected);
+        mDisplayController.setState(DisplayController.STATE_ENABLED);
         if (!mAppService.isProgramListSupported()) {
             // TODO(b/111354105): handle case where program list is not supported
             Log.i(TAG, "Program list is not supported with the current hardware");

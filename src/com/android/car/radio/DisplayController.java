@@ -25,6 +25,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
@@ -34,6 +35,8 @@ import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.util.Log;
 import com.android.car.radio.widget.PlayPauseButton;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.Objects;
 
 /**
@@ -46,8 +49,44 @@ public class DisplayController {
     private static final char EN_DASH = '\u2013';
     private static final String DETAILS_SEPARATOR = " " + EN_DASH + " ";
 
+    /**
+     * Application just started and is connecting to the RadioAppService
+     * (and establishing tuner session).
+     */
+    public static final int STATE_CONNECTING = 1;
+
+    /**
+     * Application is up and running.
+     */
+    public static final int STATE_ENABLED = 2;
+
+    /**
+     * This device has no broadcastradio hardware.
+     */
+    public static final int STATE_NOT_SUPPORTED = 3;
+
+    /**
+     * Some problem has occured (either RadioAppService crashed or there was HW problem).
+     */
+    public static final int STATE_ERROR = 4;
+
+    /**
+     * Application state.
+     */
+    @IntDef(value = {
+        STATE_CONNECTING,
+        STATE_ENABLED,
+        STATE_NOT_SUPPORTED,
+        STATE_ERROR,
+    })
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface AppState {}
+
     private final Context mContext;
 
+    private final View mTabs;
+    private final View mViewpager;
+    private final TextView mStatusMessage;
     private final TextView mChannel;
     private final TextView mDetails;
     private final TextView mStationName;
@@ -55,6 +94,7 @@ public class DisplayController {
     private final ImageView mBackwardSeekButton;
     private final ImageView mForwardSeekButton;
     private final PlayPauseButton mPlayButton;
+    private final View mBandButton;
 
     private boolean mIsFavorite = false;
     private final ImageView mFavoriteButton;
@@ -80,12 +120,16 @@ public class DisplayController {
             @NonNull RadioController radioController) {
         mContext = Objects.requireNonNull(activity);
 
+        mTabs = activity.findViewById(R.id.radio_tabs);
+        mViewpager = activity.findViewById(R.id.viewpager);
+        mStatusMessage = activity.findViewById(R.id.status_message);
         mChannel = activity.findViewById(R.id.radio_station_channel);
         mDetails = activity.findViewById(R.id.radio_station_details);
         mStationName = activity.findViewById(R.id.radio_station_name);
         mBackwardSeekButton = activity.findViewById(R.id.radio_back_button);
         mForwardSeekButton = activity.findViewById(R.id.radio_forward_button);
         mPlayButton = activity.findViewById(R.id.radio_play_button);
+        mBandButton = activity.findViewById(R.id.band_toggle_button);
         mFavoriteButton = activity.findViewById(R.id.radio_add_presets_button);
 
         radioController.getPlaybackState().observe(activity, this::onPlaybackStateChanged);
@@ -97,21 +141,23 @@ public class DisplayController {
             });
         }
 
-        setEnabled(false);
+        setState(STATE_CONNECTING);
     }
 
     /**
-     * Set whether or not the UI is active (depending on the state of service connection)
+     * Sets application state.
      *
-     * If the UI is disabled, then no callbacks will be triggered when the buttons are pressed.
-     * In addition, the look of the button wil be updated to reflect their disabled state.
+     * This shows/hides the UI elements and may display error messages (depending on the current
+     * application state).
      *
-     * @param enabled {@code true} to enable the UI, {@code false} otherwise.
+     * If the UI is disabled/hidden, then no callbacks will be triggered.
+     *
+     * @param state Current application state
      */
-    public void setEnabled(boolean enabled) {
-        Log.d(TAG, "Making UI enabled: " + enabled);
+    public void setState(@AppState int state) {
+        Log.d(TAG, "Adjusting the UI to a new application state: " + state);
 
-        // TODO(b/111314230): disable RadioPagerAdapter (and/or its pages) as well
+        boolean enabled = (state == STATE_ENABLED);
 
         // Color the buttons so that they are grey in appearance if they are disabled.
         int tint = enabled
@@ -128,15 +174,37 @@ public class DisplayController {
             mForwardSeekButton.setEnabled(enabled);
             mForwardSeekButton.setColorFilter(tint);
         }
-
         if (mBackwardSeekButton != null) {
             mBackwardSeekButton.setEnabled(enabled);
             mBackwardSeekButton.setColorFilter(tint);
         }
-
+        if (mBandButton != null) {
+            mBandButton.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        }
         if (mFavoriteButton != null) {
-            mFavoriteButton.setEnabled(enabled);
-            mFavoriteButton.setColorFilter(tint);
+            mFavoriteButton.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        }
+        if (mTabs != null) {
+            mTabs.setVisibility(enabled ? View.VISIBLE : View.INVISIBLE);
+        }
+        if (mViewpager != null) {
+            mViewpager.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        }
+
+        if (mStatusMessage != null) {
+            mStatusMessage.setVisibility(enabled ? View.GONE : View.VISIBLE);
+            switch (state) {
+                case STATE_CONNECTING:
+                case STATE_ENABLED:
+                    mStatusMessage.setText(null);
+                    break;
+                case STATE_NOT_SUPPORTED:
+                    mStatusMessage.setText(R.string.radio_not_supported_text);
+                    break;
+                case STATE_ERROR:
+                    mStatusMessage.setText(R.string.radio_failure_text);
+                    break;
+            }
         }
     }
 
