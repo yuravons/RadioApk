@@ -22,6 +22,7 @@ import android.hardware.radio.RadioManager;
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.service.IRadioAppCallback;
+import com.android.car.radio.service.ITuneCallback;
 
 /**
  * An interface to the backend Radio app's service.
@@ -42,17 +43,12 @@ interface IRadioAppService {
     /**
      * Tunes to a given program.
      */
-    void tune(in ProgramSelector sel);
+    void tune(in ProgramSelector sel, in ITuneCallback callback);
 
     /**
-     * Seeks forward.
+     * Seeks forward or backwards.
      */
-    void seekForward();
-
-    /**
-     * Seeks backwards.
-     */
-    void seekBackward();
+    void seek(boolean forward, in ITuneCallback callback);
 
     /**
      * Mutes or resumes audio.
@@ -76,4 +72,9 @@ interface IRadioAppService {
      * @return {@code true} if the program list is supported, {@code false} otherwise.
      */
     boolean isProgramListSupported();
+
+    /**
+     * Returns list of supported AM/FM bands.
+     */
+    List<RadioManager.BandDescriptor> getAmFmRegionConfig();
 }

@@ -36,6 +36,7 @@ public class PlayPauseButton extends ImageView {
 
     private static final int[] STATE_PLAYING = {R.attr.state_playing};
     private static final int[] STATE_PAUSED = {R.attr.state_paused};
+    private static final int[] STATE_DISABLED = {R.attr.state_disabled};
 
     @Nullable private Callback mCallback;
 
@@ -80,11 +81,14 @@ public class PlayPauseButton extends ImageView {
         switch(mPlaybackState) {
             case PlaybackStateCompat.STATE_PLAYING:
             case PlaybackStateCompat.STATE_CONNECTING:
+            case PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS:
+            case PlaybackStateCompat.STATE_SKIPPING_TO_NEXT:
                 switchTo = PlaybackStateCompat.STATE_PAUSED;
                 break;
             case PlaybackStateCompat.STATE_NONE:
             case PlaybackStateCompat.STATE_PAUSED:
             case PlaybackStateCompat.STATE_STOPPED:
+            case PlaybackStateCompat.STATE_ERROR:
                 switchTo = PlaybackStateCompat.STATE_PLAYING;
                 break;
             default:
@@ -104,13 +108,16 @@ public class PlayPauseButton extends ImageView {
             case PlaybackStateCompat.STATE_PLAYING:
                 mergeDrawableStates(drawableState, STATE_PLAYING);
                 break;
-            case PlaybackStateCompat.STATE_NONE:
             case PlaybackStateCompat.STATE_STOPPED:
             case PlaybackStateCompat.STATE_PAUSED:
             case PlaybackStateCompat.STATE_CONNECTING:
             case PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS:
             case PlaybackStateCompat.STATE_SKIPPING_TO_NEXT:
                 mergeDrawableStates(drawableState, STATE_PAUSED);
+                break;
+            case PlaybackStateCompat.STATE_NONE:
+            case PlaybackStateCompat.STATE_ERROR:
+                mergeDrawableStates(drawableState, STATE_DISABLED);
                 break;
             default:
                 Log.e(TAG, "Unsupported PlaybackState: " + mPlaybackState);

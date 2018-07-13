@@ -25,6 +25,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
+import com.android.car.radio.platform.RadioTunerExt;
+import com.android.car.radio.platform.RadioTunerExt.TuneCallback;
+import com.android.car.radio.service.RadioAppServiceWrapper;
 import com.android.car.radio.util.Log;
 
 import java.lang.annotation.Retention;
@@ -87,6 +90,16 @@ public abstract class ProgramType implements Parcelable {
     public abstract String getEnglishName();
 
     /**
+     * Tunes to a default channel from this band.
+     *
+     * @param tuner Tuner to take action on.
+     * @param appService {@link RadioAppService} Service that provides region info.
+     * @param result Callback for tune success/failure.
+     */
+    public abstract void tuneToDefault(@NonNull RadioTunerExt tuner,
+            @NonNull RadioAppServiceWrapper appService, @Nullable TuneCallback result);
+
+    /**
      * Returns program type for a given selector.
      *
      * @param sel ProgramSelector to check.
@@ -117,7 +130,7 @@ public abstract class ProgramType implements Parcelable {
 
     @Override
     public String toString() {
-        return this.getClass().getName();
+        return getEnglishName();
     }
 
     @Override

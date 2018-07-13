@@ -50,23 +50,19 @@ public class RadioManagerExt {
     private static final int HARDCODED_MODULE_INDEX = 0;
 
     private final Object mLock = new Object();
+    private final Context mContext;
 
     private final HandlerThread mCallbackHandlerThread = new HandlerThread("BcRadioApp.cbhandler");
 
     private final @NonNull RadioManager mRadioManager;
-    private final RadioTunerExt mRadioTunerExt;
     private List<RadioManager.ModuleProperties> mModules;
     private @Nullable List<BandDescriptor> mAmFmRegionConfig;
 
     public RadioManagerExt(@NonNull Context ctx) {
+        mContext = Objects.requireNonNull(ctx);
         mRadioManager = (RadioManager)ctx.getSystemService(Context.RADIO_SERVICE);
         Objects.requireNonNull(mRadioManager, "RadioManager could not be loaded");
-        mRadioTunerExt = new RadioTunerExt(ctx);
         mCallbackHandlerThread.start();
-    }
-
-    public RadioTunerExt getRadioTunerExt() {
-        return mRadioTunerExt;
     }
 
     /* Select only one region. HAL 2.x moves region selection responsibility from the app to the
@@ -102,7 +98,14 @@ public class RadioManagerExt {
         }
     }
 
-    public @Nullable RadioTuner openSession(RadioTuner.Callback callback, Handler handler) {
+    /**
+     * Opens a session to interact with hardware tuner.
+     *
+     * @param callback Session callback.
+     * @param handler The Handler on which the callbacks will be received,
+     *        {@code null} for default handler.
+     */
+    public @Nullable RadioTunerExt openSession(RadioTuner.Callback callback, Handler handler) {
         Log.i(TAG, "Opening broadcast radio session...");
 
         initModules();
@@ -134,7 +137,7 @@ public class RadioManagerExt {
             }
         }
 
-        return tuner;
+        return new RadioTunerExt(mContext, tuner, cbExt);
     }
 
     public @Nullable List<BandDescriptor> getAmFmRegionConfig() {

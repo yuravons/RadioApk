@@ -18,7 +18,7 @@ package com.android.car.radio.bands;
 
 import androidx.annotation.NonNull;
 
-class FMProgramType extends ProgramType {
+class FMProgramType extends AMFMProgramType {
     FMProgramType(@TypeId int id) {
         super(id);
     }

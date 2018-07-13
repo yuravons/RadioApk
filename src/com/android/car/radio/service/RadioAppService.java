@@ -21,6 +21,7 @@ import static com.android.car.radio.util.Remote.tryExec;
 import android.content.Intent;
 import android.hardware.radio.ProgramList;
 import android.hardware.radio.ProgramSelector;
+import android.hardware.radio.RadioManager.BandDescriptor;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.hardware.radio.RadioTuner;
 import android.os.Bundle;
@@ -38,12 +39,13 @@ import androidx.lifecycle.LifecycleRegistry;
 import androidx.media.MediaBrowserServiceCompat;
 
 import com.android.car.broadcastradio.support.media.BrowseTree;
-import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.audio.AudioStreamController;
 import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.media.TunerSession;
 import com.android.car.radio.platform.ImageMemoryCache;
 import com.android.car.radio.platform.RadioManagerExt;
+import com.android.car.radio.platform.RadioTunerExt;
+import com.android.car.radio.platform.RadioTunerExt.TuneCallback;
 import com.android.car.radio.storage.RadioStorage;
 import com.android.car.radio.util.Log;
 
@@ -64,14 +66,15 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
     private final Object mLock = new Object();
     private final LifecycleRegistry mLifecycleRegistry = new LifecycleRegistry(this);
     private final List<IRadioAppCallback> mRadioAppCallbacks = new ArrayList<>();
+    private RadioAppServiceWrapper mWrapper;
 
     private RadioManagerExt mRadioManager;
-    @Nullable private RadioTuner mRadioTuner;
+    @Nullable private RadioTunerExt mRadioTuner;
     @Nullable private ProgramList mProgramList;
 
     private RadioStorage mRadioStorage;
     private ImageMemoryCache mImageCache;
-    private AudioStreamController mAudioStreamController;
+    @Nullable private AudioStreamController mAudioStreamController;
 
     private BrowseTree mBrowseTree;
     private TunerSession mMediaSession;
@@ -87,22 +90,20 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
 
         Log.i(TAG, "Starting RadioAppService...");
 
-        RadioAppServiceWrapper wrapper = new RadioAppServiceWrapper(mBinder);
-
+        mWrapper = new RadioAppServiceWrapper(mBinder);
         mRadioManager = new RadioManagerExt(this);
         mRadioStorage = RadioStorage.getInstance(this);
         mImageCache = new ImageMemoryCache(mRadioManager, 1000);
-        mAudioStreamController = new AudioStreamController(this, mRadioManager,
-                wrapper.getCurrentProgram(), this::onPlaybackStateChanged);
-
         mRadioTuner = mRadioManager.openSession(mHardwareCallback, null);
         if (mRadioTuner == null) {
             Log.e(TAG, "Couldn't open tuner session");
             return;
         }
 
+        mAudioStreamController = new AudioStreamController(this, mRadioTuner,
+                this::onPlaybackStateChanged);
         mBrowseTree = new BrowseTree(this, mImageCache);
-        mMediaSession = new TunerSession(this, mBrowseTree, wrapper, mImageCache);
+        mMediaSession = new TunerSession(this, mBrowseTree, mWrapper, mImageCache);
         setSessionToken(mMediaSession.getSessionToken());
         mBrowseTree.setAmFmRegionConfig(mRadioManager.getAmFmRegionConfig());
         mRadioStorage.getFavorites().observe(this,
@@ -162,7 +163,6 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
         mLifecycleRegistry.markState(Lifecycle.State.DESTROYED);
 
         if (mMediaSession != null) mMediaSession.release();
-        mRadioManager.getRadioTunerExt().close();
         close();
 
         super.onDestroy();
@@ -205,9 +205,9 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
     private void tuneToDefault(@Nullable ProgramType pt) {
         synchronized (mLock) {
             if (mRadioTuner == null) throw new IllegalStateException("Tuner session is closed");
-            if (!mAudioStreamController.preparePlayback(AudioStreamController.OPERATION_TUNE)) {
-                return;
-            }
+            TuneCallback tuneCb = mAudioStreamController.preparePlayback(
+                    AudioStreamController.OPERATION_TUNE);
+            if (tuneCb == null) return;
 
             ProgramSelector sel = mRadioStorage.getRecentlySelected(pt);
             if (sel != null) {
@@ -216,22 +216,18 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
                 return;
             }
 
-            Log.i(TAG, "No recently selected program set, seeking forward to not play static");
-
-            // TODO(b/73950974): don't hardcode, pull from tuner config
-            long lastChannel;
-            if (pt == ProgramType.AM) lastChannel = 1620;
-            else lastChannel = 108000;
-            mRadioTuner.tune(ProgramSelectorExt.createAmFmSelector(lastChannel));
-
-            mRadioTuner.scan(RadioTuner.DIRECTION_UP, true);
+            if (pt == null) pt = ProgramType.FM;
+            Log.i(TAG, "No recently selected program set, selecting default channel for " + pt);
+            pt.tuneToDefault(mRadioTuner, mWrapper, tuneCb);
         }
     }
 
     private void close() {
         synchronized (mLock) {
-            mAudioStreamController.requestMuted(true);
-
+            if (mAudioStreamController != null) {
+                mAudioStreamController.requestMuted(true);
+                mAudioStreamController = null;
+            }
             if (mProgramList != null) {
                 mProgramList.close();
                 mProgramList = null;
@@ -285,42 +281,36 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
         }
 
         @Override
-        public void tune(ProgramSelector sel) {
+        public void tune(ProgramSelector sel, ITuneCallback callback) {
+            Objects.requireNonNull(callback);
             synchronized (mLock) {
                 if (mRadioTuner == null) throw new IllegalStateException("Tuner session is closed");
-                if (!mAudioStreamController.preparePlayback(AudioStreamController.OPERATION_TUNE)) {
-                    return;
-                }
-                mRadioTuner.tune(sel);
+                TuneCallback tuneCb = mAudioStreamController.preparePlayback(
+                        AudioStreamController.OPERATION_TUNE);
+                if (tuneCb == null) return;
+                mRadioTuner.tune(sel, tuneCb.alsoCall(
+                        succ -> tryExec(() -> callback.onFinished(succ))));
             }
         }
 
         @Override
-        public void seekForward() {
+        public void seek(boolean forward, ITuneCallback callback) {
+            Objects.requireNonNull(callback);
             synchronized (mLock) {
                 if (mRadioTuner == null) throw new IllegalStateException("Tuner session is closed");
-                if (!mAudioStreamController.preparePlayback(
-                        AudioStreamController.OPERATION_SEEK_FWD)) {
-                    return;
-                }
-                mRadioTuner.scan(RadioTuner.DIRECTION_UP, true);
-            }
-        }
-
-        @Override
-        public void seekBackward() {
-            synchronized (mLock) {
-                if (mRadioTuner == null) throw new IllegalStateException("Tuner session is closed");
-                if (!mAudioStreamController.preparePlayback(
-                        AudioStreamController.OPERATION_SEEK_BKW)) {
-                    return;
-                }
-                mRadioTuner.scan(RadioTuner.DIRECTION_DOWN, true);
+                TuneCallback tuneCb = mAudioStreamController.preparePlayback(forward
+                        ? AudioStreamController.OPERATION_SEEK_FWD
+                        : AudioStreamController.OPERATION_SEEK_BKW);
+                if (tuneCb == null) return;
+                mRadioTuner.seek(forward, tuneCb.alsoCall(
+                        succ -> tryExec(() -> callback.onFinished(succ))));
             }
         }
 
         @Override
         public void setMuted(boolean muted) {
+            if (mAudioStreamController == null) return;
+            if (muted) mRadioTuner.cancel();
             mAudioStreamController.requestMuted(muted);
         }
 
@@ -332,6 +322,11 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
         @Override
         public boolean isProgramListSupported() {
             return mProgramList != null;
+        }
+
+        @Override
+        public List<BandDescriptor> getAmFmRegionConfig() {
+            return mRadioManager.getAmFmRegionConfig();
         }
     };
 

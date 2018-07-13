@@ -47,6 +47,17 @@ class TunerCallbackAdapterExt extends RadioTuner.Callback {
     private final RadioTuner.Callback mCallback;
     private final Handler mHandler;
 
+    private TuneFailedCallback mTuneFailedCallback;
+    private ProgramInfoCallback mProgramInfoCallback;
+
+    interface TuneFailedCallback {
+        void onTuneFailed(int result, @Nullable ProgramSelector selector);
+    }
+
+    interface ProgramInfoCallback {
+        void onProgramInfoChanged(RadioManager.ProgramInfo info);
+    }
+
     TunerCallbackAdapterExt(@NonNull RadioTuner.Callback callback, @Nullable Handler handler) {
         mCallback = Objects.requireNonNull(callback);
         if (handler == null) {
@@ -68,6 +79,14 @@ class TunerCallbackAdapterExt extends RadioTuner.Callback {
         }
     }
 
+    void setTuneFailedCallback(TuneFailedCallback cb) {
+        mTuneFailedCallback = cb;
+    }
+
+    void setProgramInfoCallback(ProgramInfoCallback cb) {
+        mProgramInfoCallback = cb;
+    }
+
     @Override
     public void onError(int status) {
         mHandler.post(() -> mCallback.onError(status));
@@ -75,6 +94,7 @@ class TunerCallbackAdapterExt extends RadioTuner.Callback {
 
     @Override
     public void onTuneFailed(int result, @Nullable ProgramSelector selector) {
+        mTuneFailedCallback.onTuneFailed(result, selector);
         mHandler.post(() -> mCallback.onTuneFailed(result, selector));
     }
 
@@ -89,6 +109,7 @@ class TunerCallbackAdapterExt extends RadioTuner.Callback {
     }
 
     public void onProgramInfoChanged(RadioManager.ProgramInfo info) {
+        mProgramInfoCallback.onProgramInfoChanged(info);
         mHandler.post(() -> mCallback.onProgramInfoChanged(info));
     }
 
