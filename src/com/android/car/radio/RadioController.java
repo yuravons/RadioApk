@@ -34,6 +34,7 @@ import com.android.car.broadcastradio.support.platform.ProgramInfoExt;
 import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.service.RadioAppService;
 import com.android.car.radio.service.RadioAppServiceWrapper;
+import com.android.car.radio.service.RadioAppServiceWrapper.ConnectionState;
 import com.android.car.radio.storage.RadioStorage;
 import com.android.car.radio.util.Log;
 
@@ -64,7 +65,7 @@ public class RadioController {
         mRadioStorage.getFavorites().observe(activity, this::onFavoritesChanged);
 
         mAppService.getCurrentProgram().observe(activity, this::onCurrentProgramChanged);
-        mAppService.isConnected().observe(activity, this::onAppServiceConnected);
+        mAppService.getConnectionState().observe(activity, this::onConnectionStateChanged);
 
         mDisplayController.setBackwardSeekButtonListener(this::onBackwardSeekClick);
         mDisplayController.setForwardSeekButtonListener(this::onForwardSeekClick);
@@ -72,9 +73,10 @@ public class RadioController {
         mDisplayController.setFavoriteToggleListener(this::onFavoriteToggled);
     }
 
-    private void onAppServiceConnected(boolean connected) {
-        mDisplayController.setState(DisplayController.STATE_ENABLED);
-        if (!mAppService.isProgramListSupported()) {
+    private void onConnectionStateChanged(@ConnectionState int state) {
+        mDisplayController.setState(state);
+        if (state == RadioAppServiceWrapper.STATE_CONNECTED
+                && !mAppService.isProgramListSupported()) {
             // TODO(b/111354105): handle case where program list is not supported
             Log.i(TAG, "Program list is not supported with the current hardware");
         }

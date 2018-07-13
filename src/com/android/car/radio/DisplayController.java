@@ -25,18 +25,17 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
 
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.bands.ProgramType;
+import com.android.car.radio.service.RadioAppServiceWrapper;
+import com.android.car.radio.service.RadioAppServiceWrapper.ConnectionState;
 import com.android.car.radio.util.Log;
 import com.android.car.radio.widget.PlayPauseButton;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.util.Objects;
 
 /**
@@ -48,39 +47,6 @@ public class DisplayController {
     private static final int CHANNEL_CHANGE_DURATION_MS = 200;
     private static final char EN_DASH = '\u2013';
     private static final String DETAILS_SEPARATOR = " " + EN_DASH + " ";
-
-    /**
-     * Application just started and is connecting to the RadioAppService
-     * (and establishing tuner session).
-     */
-    public static final int STATE_CONNECTING = 1;
-
-    /**
-     * Application is up and running.
-     */
-    public static final int STATE_ENABLED = 2;
-
-    /**
-     * This device has no broadcastradio hardware.
-     */
-    public static final int STATE_NOT_SUPPORTED = 3;
-
-    /**
-     * Some problem has occured (either RadioAppService crashed or there was HW problem).
-     */
-    public static final int STATE_ERROR = 4;
-
-    /**
-     * Application state.
-     */
-    @IntDef(value = {
-        STATE_CONNECTING,
-        STATE_ENABLED,
-        STATE_NOT_SUPPORTED,
-        STATE_ERROR,
-    })
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface AppState {}
 
     private final Context mContext;
 
@@ -140,8 +106,6 @@ public class DisplayController {
                 if (listener != null) listener.onFavoriteToggled(!mIsFavorite);
             });
         }
-
-        setState(STATE_CONNECTING);
     }
 
     /**
@@ -154,10 +118,10 @@ public class DisplayController {
      *
      * @param state Current application state
      */
-    public void setState(@AppState int state) {
+    public void setState(@ConnectionState int state) {
         Log.d(TAG, "Adjusting the UI to a new application state: " + state);
 
-        boolean enabled = (state == STATE_ENABLED);
+        boolean enabled = (state == RadioAppServiceWrapper.STATE_CONNECTED);
 
         // Color the buttons so that they are grey in appearance if they are disabled.
         int tint = enabled
@@ -194,14 +158,14 @@ public class DisplayController {
         if (mStatusMessage != null) {
             mStatusMessage.setVisibility(enabled ? View.GONE : View.VISIBLE);
             switch (state) {
-                case STATE_CONNECTING:
-                case STATE_ENABLED:
+                case RadioAppServiceWrapper.STATE_CONNECTING:
+                case RadioAppServiceWrapper.STATE_CONNECTED:
                     mStatusMessage.setText(null);
                     break;
-                case STATE_NOT_SUPPORTED:
+                case RadioAppServiceWrapper.STATE_NOT_SUPPORTED:
                     mStatusMessage.setText(R.string.radio_not_supported_text);
                     break;
-                case STATE_ERROR:
+                case RadioAppServiceWrapper.STATE_ERROR:
                     mStatusMessage.setText(R.string.radio_failure_text);
                     break;
             }
