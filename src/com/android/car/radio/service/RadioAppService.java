@@ -216,7 +216,7 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
 
             Log.i(TAG, "No recently selected program set, seeking forward to not play static");
 
-            // TODO(b/80500464): don't hardcode, pull from tuner config
+            // TODO(b/73950974): don't hardcode, pull from tuner config
             long lastChannel;
             if (pt == ProgramType.AM) lastChannel = 1620;
             else lastChannel = 108000;

@@ -57,6 +57,18 @@ limitations under the License.
         app:layout_constraintTop_toBottomOf="@+id/radio_tabs"
         app:layout_constraintBottom_toTopOf="@+id/main_radio_display" />
 
+    <TextView
+        android:id="@+id/status_message"
+        android:gravity="center"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/radio_tabs"
+        app:layout_constraintBottom_toTopOf="@+id/main_radio_display"
+        android:visibility="gone"
+        style="@style/TextAppearance.Car.Body1.Light" />
+
     <include layout="@layout/radio_playback_card"
         android:id="@+id/main_radio_display"
         android:layout_width="0dp"
