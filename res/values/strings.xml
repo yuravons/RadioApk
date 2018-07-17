@@ -50,7 +50,7 @@ limitations under the License.
     <!-- The text in the drawer that will take the user to the radio's manual tuner. -->
     <string name="manual_tuner_drawer_entry">Manual Tuner</string>
 
-    <!-- The strings for the dialpad in the manual tuner. -->
+    <!-- The digits for the dialpad in the manual tuner. There is no need to localize them. -->
     <string name="manual_tuner_0">0</string>
     <string name="manual_tuner_1">1</string>
     <string name="manual_tuner_2">2</string>

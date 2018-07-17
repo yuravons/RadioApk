@@ -21,9 +21,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.hardware.radio.ProgramSelector;
-import android.hardware.radio.RadioManager.AmBandDescriptor;
-import android.hardware.radio.RadioManager.BandDescriptor;
-import android.hardware.radio.RadioManager.FmBandDescriptor;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -36,14 +33,12 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.android.car.radio.bands.ProgramType;
+import com.android.car.radio.bands.RegionConfig;
 import com.android.car.radio.platform.RadioTunerExt.TuneCallback;
 import com.android.car.radio.util.Log;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -91,9 +86,6 @@ public class RadioAppServiceWrapper {
     @Nullable
     private final AtomicReference<IRadioAppService> mService = new AtomicReference<>();
     private final Object mLock = new Object();
-
-    @Nullable private List<BandDescriptor> mAmRegionConfig;
-    @Nullable private List<BandDescriptor> mFmRegionConfig;
 
     private final MutableLiveData<Integer> mConnectionState = new MutableLiveData<>();
     private final MutableLiveData<Integer> mPlaybackState = new MutableLiveData<>();
@@ -362,35 +354,10 @@ public class RadioAppServiceWrapper {
     }
 
     /**
-     * Returns list of supported AM/FM bands.
+     * Returns current region config (like frequency ranges for AM/FM).
      */
     @NonNull
-    public List<BandDescriptor> getAmFmRegionConfig(ProgramType type) {
-        synchronized (mLock) {
-            if (mAmRegionConfig == null || mFmRegionConfig == null) {
-                List<BandDescriptor> bands = queryService(service ->
-                        service.getAmFmRegionConfig(), null);
-                if (bands == null) return new ArrayList<>();
-                mAmRegionConfig = new ArrayList<>();
-                mFmRegionConfig = new ArrayList<>();
-                for (BandDescriptor band : bands) {
-                    if (band instanceof AmBandDescriptor) {
-                        mAmRegionConfig.add(band);
-                    } else if (band instanceof FmBandDescriptor) {
-                        mFmRegionConfig.add(band);
-                    } else {
-                        Log.w(TAG, "Unknown band type: " + band);
-                    }
-                }
-
-                Comparator<BandDescriptor> cmp = (BandDescriptor a, BandDescriptor b) ->
-                        a.getLowerLimit() - b.getLowerLimit();
-                Collections.sort(mAmRegionConfig, cmp);
-                Collections.sort(mFmRegionConfig, cmp);
-            }
-        }
-        if (type == ProgramType.AM) return mAmRegionConfig;
-        if (type == ProgramType.FM) return mFmRegionConfig;
-        throw new IllegalArgumentException("Unsupported program type: " + type);
+    public RegionConfig getRegionConfig() {
+        return Objects.requireNonNull(queryService(service -> service.getRegionConfig(), null));
     }
 }

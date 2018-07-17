@@ -13,24 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.android.car.radio.bands;
 
-import androidx.annotation.NonNull;
-
-class AMProgramType extends AMFMProgramType {
-    AMProgramType(@TypeId int id) {
-        super(id);
-    }
-
-    @Override
-    @NonNull
-    public String getEnglishName() {
-        return "AM";
-    }
-
-    @Override
-    protected int getLeadingDigitsFactor() {
-        return 1;
-    }
-}
+parcelable RegionConfig;
