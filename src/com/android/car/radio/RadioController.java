@@ -20,7 +20,6 @@ import android.content.Context;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.hardware.radio.RadioMetadata;
-import android.hardware.radio.RadioTuner;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.view.View;
 
@@ -121,7 +120,7 @@ public class RadioController {
     }
 
     /**
-     * Tunes the radio to the given channel if it is valid and a {@link RadioTuner} has been opened.
+     * Tunes the radio to the given channel.
      */
     public void tune(ProgramSelector sel) {
         mAppService.tune(sel);
@@ -170,12 +169,12 @@ public class RadioController {
 
     private void onBackwardSeekClick(View v) {
         mDisplayController.startSeekAnimation(false);
-        mAppService.seekBackward();
+        mAppService.seek(false);
     }
 
     private void onForwardSeekClick(View v) {
         mDisplayController.startSeekAnimation(true);
-        mAppService.seekForward();
+        mAppService.seek(true);
     }
 
     private void onSwitchToPlayState(@PlaybackStateCompat.State int newPlayState) {

@@ -17,8 +17,16 @@
 package com.android.car.radio.bands;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.android.car.radio.platform.RadioTunerExt;
+import com.android.car.radio.platform.RadioTunerExt.TuneCallback;
+import com.android.car.radio.service.RadioAppServiceWrapper;
+import com.android.car.radio.util.Log;
 
 class DABProgramType extends ProgramType {
+    private static final String TAG = "BcRadioApp.ProgramType";
+
     DABProgramType(@TypeId int id) {
         super(id);
     }
@@ -26,5 +34,10 @@ class DABProgramType extends ProgramType {
     @NonNull
     public String getEnglishName() {
         return "DAB";
+    }
+
+    public void tuneToDefault(@NonNull RadioTunerExt tuner,
+            @NonNull RadioAppServiceWrapper appService, @Nullable TuneCallback result) {
+        Log.e(TAG, "Tunning to a default DAB channel is not supported yet");
     }
 }

@@ -139,12 +139,12 @@ public class TunerSession extends MediaSessionCompat {
 
         @Override
         public void onSkipToNext() {
-            mAppService.seekForward();
+            mAppService.seek(true);
         }
 
         @Override
         public void onSkipToPrevious() {
-            mAppService.seekBackward();
+            mAppService.seek(false);
         }
 
         @Override

@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package com.android.car.radio.bands;
+package com.android.car.radio.service;
 
-import androidx.annotation.NonNull;
-
-class AMProgramType extends AMFMProgramType {
-    AMProgramType(@TypeId int id) {
-        super(id);
-    }
-
-    @NonNull
-    public String getEnglishName() {
-        return "AM";
-    }
+/**
+ * Asynchronous result for tune/seek operation.
+ */
+oneway interface ITuneCallback {
+    /**
+     * Called when tune operation has finished.
+     *
+     * @param succeeded States whether operation has succeeded or not.
+     */
+    void onFinished(boolean succeeded);
 }
