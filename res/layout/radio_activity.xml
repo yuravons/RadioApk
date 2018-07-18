@@ -33,7 +33,7 @@ limitations under the License.
         android:layout_width="0dp"
         android:layout_height="@dimen/appbar_height"
         android:layout_marginLeft="@dimen/car_padding_4"
-        android:layout_marginRight="@dimen/car_padding_4"
+        android:layout_marginRight="@dimen/car_margin"
         android:elevation="8dp"
         android:background="@android:color/transparent"
         app:tabBackground="@android:color/transparent"
@@ -46,6 +46,19 @@ limitations under the License.
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <com.android.car.radio.widget.BandToggleButton
+        android:id="@+id/band_toggle_button"
+        android:layout_width="@dimen/band_toggle_button_size"
+        android:layout_height="@dimen/band_toggle_button_size"
+        android:layout_marginTop="@dimen/car_padding_1"
+        android:layout_marginRight="@dimen/car_padding_1"
+        android:clickable="true"
+        android:scaleType="fitXY"
+        android:background="@drawable/playback_button_background"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        style="@style/RadioButton" />
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/viewpager"
@@ -72,7 +85,7 @@ limitations under the License.
     <include layout="@layout/radio_playback_card"
         android:id="@+id/main_radio_display"
         android:layout_width="0dp"
-        android:layout_height="@dimen/radio_playback_height"
+        android:layout_height="@dimen/radio_action_bar_height"
         android:layout_marginLeft="@dimen/car_margin"
         android:layout_marginRight="@dimen/car_margin"
         android:layout_marginBottom="@dimen/playback_card_bottom_margin"
