@@ -23,8 +23,32 @@ class FMProgramType extends AMFMProgramType {
         super(id);
     }
 
+    @Override
     @NonNull
     public String getEnglishName() {
         return "FM";
+    }
+
+    @Override
+    protected int getLeadingDigitsFactor() {
+        return 100;
+    }
+
+    @Override
+    public String format(int leadingDigits) {
+        /* Instead of writing general algorithm, let's exploit properties of FM ranges across all
+         * regions:
+         *  - if the leading digit is 1, the channel is always in 1XX.X format;
+         *  - if the leading digit is anything else than 1, the channel is always in XX.X format;
+         */
+        if (leadingDigits < 0) throw new IllegalArgumentException();
+        if (leadingDigits == 0) return "";
+
+        String channel = Integer.toString(leadingDigits);
+        int integralPartLength = (channel.charAt(0) == '1') ? 3 : 2;
+
+        if (channel.length() < integralPartLength) return channel;
+        return channel.substring(0, integralPartLength) + "."
+                + channel.substring(integralPartLength, channel.length());
     }
 }
