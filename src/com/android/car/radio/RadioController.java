@@ -31,6 +31,7 @@ import androidx.lifecycle.LiveData;
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.broadcastradio.support.platform.ProgramInfoExt;
 import com.android.car.radio.bands.ProgramType;
+import com.android.car.radio.bands.RegionConfig;
 import com.android.car.radio.service.RadioAppService;
 import com.android.car.radio.service.RadioAppServiceWrapper;
 import com.android.car.radio.service.RadioAppServiceWrapper.ConnectionState;
@@ -133,6 +134,11 @@ public class RadioController {
      */
     public void switchBand(@NonNull ProgramType pt) {
         mAppService.switchBand(pt);
+    }
+
+    @NonNull
+    public RegionConfig getRegionConfig() {
+        return mAppService.getRegionConfig();
     }
 
     private void onFavoritesChanged(List<Program> favorites) {

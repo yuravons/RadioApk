@@ -16,7 +16,6 @@
 
 package com.android.car.radio;
 
-import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -27,7 +26,6 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.android.car.radio.bands.ProgramType;
-import com.android.car.radio.widget.BandToggleButton;
 
 /**
  * Fragment that allows tuning to a specific frequency using a keypad
@@ -36,33 +34,22 @@ public class ManualTunerFragment extends Fragment {
 
     private ManualTunerController mController;
     private RadioController mRadioController;
-    private BandToggleButton mBandToggleButton;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.tuner_fragment, container, false);
-        mController = new ManualTunerController(getContext(), view, ProgramType.FM);
-        mController.setDoneButtonListener(this::onManualTunerDone);
-
-        mBandToggleButton = view.findViewById(R.id.manual_tuner_band_toggle);
-        mBandToggleButton.setCallback(mRadioController::switchBand);
+        mController = new ManualTunerController(getContext(), view,
+                mRadioController.getRegionConfig(), mRadioController::tune);
 
         mRadioController.getCurrentProgram().observe(this, this::onCurrentProgramChanged);
 
         return view;
     }
 
-    private void onManualTunerDone(ProgramSelector sel) {
-        if (sel != null) {
-            mRadioController.tune(sel);
-        }
-    }
-
     private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
         ProgramType pt = ProgramType.fromSelector(info.getSelector());
-        mBandToggleButton.setType(pt);
-        mController.setCurrentBand(pt);
+        mController.switchProgramType(pt);
     }
 
     static ManualTunerFragment newInstance(RadioController radioController) {

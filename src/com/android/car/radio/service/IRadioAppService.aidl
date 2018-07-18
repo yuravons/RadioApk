@@ -21,6 +21,7 @@ import android.hardware.radio.RadioManager;
 
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.radio.bands.ProgramType;
+import com.android.car.radio.bands.RegionConfig;
 import com.android.car.radio.service.IRadioAppCallback;
 import com.android.car.radio.service.ITuneCallback;
 
@@ -74,7 +75,7 @@ interface IRadioAppService {
     boolean isProgramListSupported();
 
     /**
-     * Returns list of supported AM/FM bands.
+     * Returns current region config (like frequency ranges for AM/FM).
      */
-    List<RadioManager.BandDescriptor> getAmFmRegionConfig();
+    RegionConfig getRegionConfig();
 }

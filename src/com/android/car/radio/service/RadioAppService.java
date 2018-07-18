@@ -21,7 +21,6 @@ import static com.android.car.radio.util.Remote.tryExec;
 import android.content.Intent;
 import android.hardware.radio.ProgramList;
 import android.hardware.radio.ProgramSelector;
-import android.hardware.radio.RadioManager.BandDescriptor;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.hardware.radio.RadioTuner;
 import android.os.Bundle;
@@ -41,6 +40,7 @@ import androidx.media.MediaBrowserServiceCompat;
 import com.android.car.broadcastradio.support.media.BrowseTree;
 import com.android.car.radio.audio.AudioStreamController;
 import com.android.car.radio.bands.ProgramType;
+import com.android.car.radio.bands.RegionConfig;
 import com.android.car.radio.media.TunerSession;
 import com.android.car.radio.platform.ImageMemoryCache;
 import com.android.car.radio.platform.RadioManagerExt;
@@ -83,6 +83,8 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
     private ProgramInfo mCurrentProgram = null;
     private int mCurrentPlaybackState = PlaybackStateCompat.STATE_NONE;
     private long mLastProgramListPush;
+
+    private RegionConfig mRegionConfigCache;
 
     @Override
     public void onCreate() {
@@ -218,7 +220,7 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
 
             if (pt == null) pt = ProgramType.FM;
             Log.i(TAG, "No recently selected program set, selecting default channel for " + pt);
-            pt.tuneToDefault(mRadioTuner, mWrapper, tuneCb);
+            pt.tuneToDefault(mRadioTuner, mWrapper.getRegionConfig(), tuneCb);
         }
     }
 
@@ -325,8 +327,13 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
         }
 
         @Override
-        public List<BandDescriptor> getAmFmRegionConfig() {
-            return mRadioManager.getAmFmRegionConfig();
+        public RegionConfig getRegionConfig() {
+            synchronized (mLock) {
+                if (mRegionConfigCache == null) {
+                    mRegionConfigCache = new RegionConfig(mRadioManager.getAmFmRegionConfig());
+                }
+                return mRegionConfigCache;
+            }
         }
     };
 

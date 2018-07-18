@@ -27,7 +27,6 @@ import androidx.annotation.Nullable;
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.platform.RadioTunerExt;
 import com.android.car.radio.platform.RadioTunerExt.TuneCallback;
-import com.android.car.radio.service.RadioAppServiceWrapper;
 import com.android.car.radio.util.Log;
 
 import java.lang.annotation.Retention;
@@ -93,11 +92,11 @@ public abstract class ProgramType implements Parcelable {
      * Tunes to a default channel from this band.
      *
      * @param tuner Tuner to take action on.
-     * @param appService {@link RadioAppService} Service that provides region info.
+     * @param config Region config (i.e. frequency ranges).
      * @param result Callback for tune success/failure.
      */
-    public abstract void tuneToDefault(@NonNull RadioTunerExt tuner,
-            @NonNull RadioAppServiceWrapper appService, @Nullable TuneCallback result);
+    public abstract void tuneToDefault(@NonNull RadioTunerExt tuner, @NonNull RegionConfig config,
+            @Nullable TuneCallback result);
 
     /**
      * Returns program type for a given selector.
@@ -126,6 +125,45 @@ public abstract class ProgramType implements Parcelable {
 
         Log.e(TAG, "AM/FM program selector with frequency out of range: " + freq);
         return FM;
+    }
+
+    /**
+     * Checks, if the partial channel number is actually complete.
+     *
+     * This takes display format (see {@link #format}) into account, i.e. doesn't require
+     * FM trailing zeros (95.5 MHz, not 95500 kHz).
+     */
+    public abstract boolean isComplete(@NonNull RegionConfig config, int leadingDigits);
+
+    /**
+     * Generates full channel selector from its leading digits.
+     *
+     * The argument must be validated with {@link #isComplete} prior.
+     */
+    @NonNull
+    public abstract ProgramSelector parseDigits(int leadingDigits);
+
+    /**
+     * Generates an array stating whether certain digits are append-able to a given channel prefix
+     * (so that it's still possible to type in a valid channel afterwards).
+     *
+     * @param config Regional config.
+     * @param leadingDigits Channel prefix.
+     * @return an array of length 10, where {@code arr[i] == true} states that it's possible to
+     *         append {@code i} to {@code leadingDigits}
+     */
+    @NonNull
+    public abstract boolean[] getValidAppendices(@NonNull RegionConfig config, int leadingDigits);
+
+    /**
+     * Format partial channel number.
+     *
+     * This is used by manual tuner dialpad to display channel number entered by the user.
+     */
+    public String format(int leadingDigits) {
+        if (leadingDigits < 0) throw new IllegalArgumentException();
+        if (leadingDigits == 0) return "";
+        return Integer.toString(leadingDigits);
     }
 
     @Override
