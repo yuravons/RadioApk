@@ -23,19 +23,19 @@ import android.hardware.radio.ProgramList;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.hardware.radio.RadioTuner;
+import android.media.browse.MediaBrowser.MediaItem;
+import android.media.session.PlaybackState;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.SystemClock;
-import android.support.v4.media.MediaBrowserCompat.MediaItem;
-import android.support.v4.media.session.PlaybackStateCompat;
+import android.service.media.MediaBrowserService;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LifecycleRegistry;
-import androidx.media.MediaBrowserServiceCompat;
 
 import com.android.car.broadcastradio.support.media.BrowseTree;
 import com.android.car.radio.audio.AudioStreamController;
@@ -57,7 +57,7 @@ import java.util.Objects;
 /**
  * A service handling hardware tuner session and audio streaming.
  */
-public class RadioAppService extends MediaBrowserServiceCompat implements LifecycleOwner {
+public class RadioAppService extends MediaBrowserService implements LifecycleOwner {
     private static final String TAG = "BcRadioApp.service";
 
     public static String ACTION_APP_SERVICE = "com.android.car.radio.ACTION_APP_SERVICE";
@@ -81,7 +81,7 @@ public class RadioAppService extends MediaBrowserServiceCompat implements Lifecy
 
     // current observables state for newly bound IRadioAppCallbacks
     private ProgramInfo mCurrentProgram = null;
-    private int mCurrentPlaybackState = PlaybackStateCompat.STATE_NONE;
+    private int mCurrentPlaybackState = PlaybackState.STATE_NONE;
     private long mLastProgramListPush;
 
     private RegionConfig mRegionConfigCache;

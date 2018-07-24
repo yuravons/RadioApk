@@ -19,7 +19,7 @@ package com.android.car.radio;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.hardware.radio.ProgramSelector;
-import android.support.v4.media.session.PlaybackStateCompat;
+import android.media.session.PlaybackState;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
@@ -292,7 +292,7 @@ public class DisplayController {
         mStationName.setVisibility(isEmpty ? View.INVISIBLE : View.VISIBLE);
     }
 
-    private void onPlaybackStateChanged(@PlaybackStateCompat.State int state) {
+    private void onPlaybackStateChanged(@PlaybackState.State int state) {
         if (mPlayButton != null) {
             mPlayButton.setPlayState(state);
             mPlayButton.refreshDrawableState();

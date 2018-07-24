@@ -18,7 +18,7 @@ package com.android.car.radio.widget;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.support.v4.media.session.PlaybackStateCompat;
+import android.media.session.PlaybackState;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageView;
@@ -40,8 +40,8 @@ public class PlayPauseButton extends ImageView {
 
     @Nullable private Callback mCallback;
 
-    @PlaybackStateCompat.State
-    private int mPlaybackState = PlaybackStateCompat.STATE_NONE;
+    @PlaybackState.State
+    private int mPlaybackState = PlaybackState.STATE_NONE;
 
     /**
      * Callback for toggle event.
@@ -52,7 +52,7 @@ public class PlayPauseButton extends ImageView {
          *
          * @param newPlayState New playback state to switch to.
          */
-        void onSwitchTo(@PlaybackStateCompat.State int newPlayState);
+        void onSwitchTo(@PlaybackState.State int newPlayState);
     }
 
     public PlayPauseButton(Context context, AttributeSet attrs) {
@@ -69,7 +69,7 @@ public class PlayPauseButton extends ImageView {
      *
      * @param playState Current playback state
      */
-    public void setPlayState(@PlaybackStateCompat.State int playState) {
+    public void setPlayState(@PlaybackState.State int playState) {
         mPlaybackState = playState;
     }
 
@@ -79,17 +79,17 @@ public class PlayPauseButton extends ImageView {
 
         int switchTo;
         switch(mPlaybackState) {
-            case PlaybackStateCompat.STATE_PLAYING:
-            case PlaybackStateCompat.STATE_CONNECTING:
-            case PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS:
-            case PlaybackStateCompat.STATE_SKIPPING_TO_NEXT:
-                switchTo = PlaybackStateCompat.STATE_PAUSED;
+            case PlaybackState.STATE_PLAYING:
+            case PlaybackState.STATE_CONNECTING:
+            case PlaybackState.STATE_SKIPPING_TO_PREVIOUS:
+            case PlaybackState.STATE_SKIPPING_TO_NEXT:
+                switchTo = PlaybackState.STATE_PAUSED;
                 break;
-            case PlaybackStateCompat.STATE_NONE:
-            case PlaybackStateCompat.STATE_PAUSED:
-            case PlaybackStateCompat.STATE_STOPPED:
-            case PlaybackStateCompat.STATE_ERROR:
-                switchTo = PlaybackStateCompat.STATE_PLAYING;
+            case PlaybackState.STATE_NONE:
+            case PlaybackState.STATE_PAUSED:
+            case PlaybackState.STATE_STOPPED:
+            case PlaybackState.STATE_ERROR:
+                switchTo = PlaybackState.STATE_PLAYING;
                 break;
             default:
                 Log.e(TAG, "Unsupported PlaybackState: " + mPlaybackState);
@@ -105,18 +105,18 @@ public class PlayPauseButton extends ImageView {
         final int[] drawableState = super.onCreateDrawableState(extraSpace + 1);
 
         switch(mPlaybackState) {
-            case PlaybackStateCompat.STATE_PLAYING:
+            case PlaybackState.STATE_PLAYING:
                 mergeDrawableStates(drawableState, STATE_PLAYING);
                 break;
-            case PlaybackStateCompat.STATE_STOPPED:
-            case PlaybackStateCompat.STATE_PAUSED:
-            case PlaybackStateCompat.STATE_CONNECTING:
-            case PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS:
-            case PlaybackStateCompat.STATE_SKIPPING_TO_NEXT:
+            case PlaybackState.STATE_STOPPED:
+            case PlaybackState.STATE_PAUSED:
+            case PlaybackState.STATE_CONNECTING:
+            case PlaybackState.STATE_SKIPPING_TO_PREVIOUS:
+            case PlaybackState.STATE_SKIPPING_TO_NEXT:
                 mergeDrawableStates(drawableState, STATE_PAUSED);
                 break;
-            case PlaybackStateCompat.STATE_NONE:
-            case PlaybackStateCompat.STATE_ERROR:
+            case PlaybackState.STATE_NONE:
+            case PlaybackState.STATE_ERROR:
                 mergeDrawableStates(drawableState, STATE_DISABLED);
                 break;
             default:
