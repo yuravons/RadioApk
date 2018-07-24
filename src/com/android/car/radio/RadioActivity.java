@@ -53,6 +53,11 @@ public class RadioActivity extends FragmentActivity {
     private RadioController mRadioController;
     private BandToggleButton mBandToggleButton;
 
+    private Object mLock = new Object();
+    private TabLayout mTabLayout;
+    private RadioPagerAdapter mRadioPagerAdapter;
+    private int mCurrentTab;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,53 +72,54 @@ public class RadioActivity extends FragmentActivity {
         mRadioController.getCurrentProgram().observe(this, info ->
                 mBandToggleButton.setType(ProgramType.fromSelector(info.getSelector())));
 
-        RadioPagerAdapter adapter =
+        mRadioPagerAdapter =
                 new RadioPagerAdapter(this, getSupportFragmentManager(), mRadioController);
         ViewPager viewPager = findViewById(R.id.viewpager);
-        viewPager.setAdapter(adapter);
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.radio_tabs);
-        tabLayout.setupWithViewPager(viewPager);
+        viewPager.setAdapter(mRadioPagerAdapter);
+        mTabLayout = (TabLayout) findViewById(R.id.radio_tabs);
+        mTabLayout.setupWithViewPager(viewPager);
 
-        for (int i = 0; i < adapter.getCount(); i++) {
-            LinearLayout tab = (LinearLayout) getLayoutInflater().inflate(R.layout.tab_item, null);
-            TextView tabLabel = tab.findViewById(R.id.tab_label);
-            ImageView tabIcon = tab.findViewById(R.id.tab_icon);
-
-            tabLabel.setText(adapter.getPageTitle(i));
-            tabLabel.setTextColor(getColor(R.color.car_radio_control_button_disabled));
-            tabIcon.setImageResource(adapter.getImageResource(i));
-            tabIcon.setColorFilter(getColor(R.color.car_radio_control_button_disabled));
-            if (i == 0) {
-                tabLabel.setTextColor(getColor(R.color.car_radio_control_button));
-                tabIcon.setColorFilter(getColor(R.color.car_radio_control_button));
-            }
-            tabLayout.getTabAt(i).setCustomView(tab);
-        }
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+        mTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
             }
 
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                View tabView = tab.getCustomView();
-                TextView tabLabel = tabView.findViewById(R.id.tab_label);
-                ImageView tabIcon = tabView.findViewById(R.id.tab_icon);
+                synchronized (mLock) {
+                    mCurrentTab = tab.getPosition();
+                    View tabView = tab.getCustomView();
 
-                tabLabel.setTextColor(getColor(R.color.car_radio_control_button));
-                tabIcon.setColorFilter(getColor(R.color.car_radio_control_button));
+                    // When the number of tabs is changed in mRadioPagerAdapter, the tab's custom
+                    // views are reset, and we immediately get this callback with null custom view
+                    if (tabView == null) return;
+
+                    TextView tabLabel = tabView.findViewById(R.id.tab_label);
+                    ImageView tabIcon = tabView.findViewById(R.id.tab_icon);
+
+                    tabLabel.setTextColor(getColor(R.color.car_radio_control_button));
+                    tabIcon.setColorFilter(getColor(R.color.car_radio_control_button));
+                }
             }
 
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
-                View tabView = tab.getCustomView();
-                TextView tabLabel = tabView.findViewById(R.id.tab_label);
-                ImageView tabIcon = tabView.findViewById(R.id.tab_icon);
-                tabLabel.setTextColor(getColor(R.color.car_radio_control_button_disabled));
-                tabIcon.setColorFilter(getColor(R.color.car_radio_control_button_disabled));
+                synchronized (mLock) {
+                    View tabView = tab.getCustomView();
+                    if (tabView == null) return;
+
+                    TextView tabLabel = tabView.findViewById(R.id.tab_label);
+                    ImageView tabIcon = tabView.findViewById(R.id.tab_icon);
+                    tabLabel.setTextColor(
+                            getColor(R.color.car_radio_control_button_disabled));
+                    tabIcon.setColorFilter(
+                            getColor(R.color.car_radio_control_button_disabled));
+                }
             }
         });
-        tabLayout.getTabAt(0).select();
+
+        mTabLayout.getTabAt(0).select();
+        refreshCustomTabViews();
     }
 
     @Override
@@ -144,4 +150,42 @@ public class RadioActivity extends FragmentActivity {
 
         Log.d(TAG, "Radio app main activity destroyed");
     }
+
+    /**
+     * Set whether background scanning is supported, to know whether to show the browse tab or not
+     */
+    public void setProgramListSupported(boolean supported) {
+        if (supported && mRadioPagerAdapter.addBrowseTab()) {
+            synchronized (mLock) {
+                // Need to apply custom view to new tabs
+                refreshCustomTabViews();
+            }
+        }
+    }
+
+    private View buildCustomTab(CharSequence text, int image, boolean isSelected) {
+        LinearLayout tab = (LinearLayout) getLayoutInflater().inflate(R.layout.tab_item, null);
+        TextView tabLabel = tab.findViewById(R.id.tab_label);
+        ImageView tabIcon = tab.findViewById(R.id.tab_icon);
+
+        tabLabel.setText(text);
+        tabLabel.setTextColor(getColor(R.color.car_radio_control_button_disabled));
+        tabIcon.setImageResource(image);
+        tabIcon.setColorFilter(getColor(R.color.car_radio_control_button_disabled));
+        if (isSelected) {
+            tabLabel.setTextColor(getColor(R.color.car_radio_control_button));
+            tabIcon.setColorFilter(getColor(R.color.car_radio_control_button));
+        }
+
+        return tab;
+    }
+
+    private void refreshCustomTabViews() {
+        for (int i = 0; i < mRadioPagerAdapter.getCount(); i++) {
+            mTabLayout.getTabAt(i)
+                    .setCustomView(buildCustomTab(mRadioPagerAdapter.getPageTitle(i),
+                            mRadioPagerAdapter.getImageResource(i), i == mCurrentTab));
+        }
+    }
+
 }

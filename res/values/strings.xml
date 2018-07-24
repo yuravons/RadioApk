@@ -64,7 +64,7 @@ limitations under the License.
     <string name="manual_tuner_period">.</string>
 
     <!-- Tab header text. -->
-    <string name="home_tab">Home</string>
+    <string name="browse_tab">Browse</string>
     <string name="favorites_tab">Favorites</string>
     <string name="tune_tab">Tune</string>
 
