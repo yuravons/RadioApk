@@ -27,37 +27,41 @@ import androidx.fragment.app.FragmentPagerAdapter;
  */
 public class RadioPagerAdapter extends FragmentPagerAdapter {
 
-    private static final int PAGE_COUNT = 3;
+    private static final int DEFAULT_PAGE_COUNT = 2;
     private static final int[] TAB_LABELS =
-            new int[] {R.string.home_tab, R.string.favorites_tab, R.string.tune_tab};
-    private static final int[] TAB_ICONS = new int[] {R.drawable.ic_home, R.drawable.ic_star_filled,
-            R.drawable.ic_input_antenna};
+            new int[] {R.string.favorites_tab, R.string.tune_tab, R.string.browse_tab};
+    private static final int[] TAB_ICONS = new int[] {R.drawable.ic_star_filled,
+            R.drawable.ic_input_antenna, R.drawable.ic_list};
+
     private RadioController mRadioController;
     private Context mContext;
+    private int mPageCount;
+    private Fragment mBrowseFragment;
 
     public RadioPagerAdapter(Context context, FragmentManager fragmentManager,
             RadioController controller) {
         super(fragmentManager);
         mRadioController = controller;
         mContext = context;
+        mPageCount = DEFAULT_PAGE_COUNT;
     }
 
     @Override
     public Fragment getItem(int i) {
         switch(i) {
             case 0:
-                return BrowseFragment.newInstance(mRadioController);
-            case 1:
                 return FavoritesFragment.newInstance(mRadioController);
-            case 2:
+            case 1:
                 return ManualTunerFragment.newInstance(mRadioController);
+            case 2:
+                return mBrowseFragment;
         }
         return null;
     }
 
     @Override
     public int getCount() {
-        return PAGE_COUNT;
+        return mPageCount;
     }
 
     @Override
@@ -70,5 +74,18 @@ public class RadioPagerAdapter extends FragmentPagerAdapter {
      */
     public int getImageResource(int position) {
         return TAB_ICONS[position];
+    }
+
+    /**
+     * @return true if browse tab is added to this adapter, false if tab already exists
+     */
+    public boolean addBrowseTab() {
+        if (mBrowseFragment == null) {
+            mPageCount++;
+            mBrowseFragment = BrowseFragment.newInstance(mRadioController);
+            notifyDataSetChanged();
+            return true;
+        }
+        return false;
     }
 }

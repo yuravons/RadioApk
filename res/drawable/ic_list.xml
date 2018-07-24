@@ -18,6 +18,7 @@ limitations under the License.
     android:height="@dimen/car_primary_icon_size"
     android:viewportWidth="24.0"
     android:viewportHeight="24.0">
-    <path android:pathData="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"
+    <path
+        android:pathData="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"
         android:fillColor="@color/car_radio_control_button"/>
 </vector>
