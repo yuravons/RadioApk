@@ -22,9 +22,9 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
+import android.media.session.PlaybackState;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -94,7 +94,7 @@ public class RadioAppServiceWrapper {
 
     {
         mConnectionState.postValue(STATE_CONNECTING);
-        mPlaybackState.postValue(PlaybackStateCompat.STATE_NONE);
+        mPlaybackState.postValue(PlaybackState.STATE_NONE);
     }
 
     private static class TuneCallbackAdapter extends ITuneCallback.Stub {
