@@ -16,7 +16,6 @@
 
 package com.android.car.radio;
 
-import android.content.Context;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.hardware.radio.RadioMetadata;
@@ -25,7 +24,6 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.LiveData;
 
 import com.android.car.broadcastradio.support.Program;
@@ -48,7 +46,7 @@ public class RadioController {
     private static final String TAG = "BcRadioApp.controller";
 
     private final Object mLock = new Object();
-    private final Context mContext;
+    private final RadioActivity mActivity;
 
     private final RadioAppServiceWrapper mAppService = new RadioAppServiceWrapper();
     private final DisplayController mDisplayController;
@@ -56,8 +54,8 @@ public class RadioController {
 
     @Nullable private ProgramInfo mCurrentProgram;
 
-    public RadioController(@NonNull FragmentActivity activity) {
-        mContext = Objects.requireNonNull(activity);
+    public RadioController(@NonNull RadioActivity activity) {
+        mActivity = Objects.requireNonNull(activity);
 
         mDisplayController = new DisplayController(activity, this);
 
@@ -75,10 +73,8 @@ public class RadioController {
 
     private void onConnectionStateChanged(@ConnectionState int state) {
         mDisplayController.setState(state);
-        if (state == RadioAppServiceWrapper.STATE_CONNECTED
-                && !mAppService.isProgramListSupported()) {
-            // TODO(b/111354105): handle case where program list is not supported
-            Log.i(TAG, "Program list is not supported with the current hardware");
+        if (state == RadioAppServiceWrapper.STATE_CONNECTED) {
+            mActivity.setProgramListSupported(mAppService.isProgramListSupported());
         }
     }
 
@@ -86,7 +82,7 @@ public class RadioController {
      * Starts the controller and establishes connection with {@link RadioAppService}.
      */
     public void start() {
-        mAppService.bind(mContext);
+        mAppService.bind(mActivity);
     }
 
     /**
