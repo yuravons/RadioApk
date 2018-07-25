@@ -24,11 +24,7 @@ limitations under the License.
         android:background="@android:color/transparent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:dayNightStyle="always_light"
         app:showPagedListViewDivider="true"
-        app:listDividerColor="@color/car_list_divider_light"
         app:alignDividerEndTo="@id/preset_card"
-        app:alignDividerStartTo="@id/preset_card"
-        app:upButtonIcon="@drawable/ic_keyboard_arrow_up"
-        app:downButtonIcon="@drawable/ic_keyboard_arrow_down" />
+        app:alignDividerStartTo="@id/preset_card" />
 </LinearLayout>
