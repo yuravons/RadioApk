@@ -132,4 +132,10 @@ limitations under the License.
         <item name="android:focusable">true</item>
         <item name="android:textColor">@color/manual_tuner_button_text</item>
     </style>
+
+    <!-- A style for all scrollbars that overrides the default up and down buttons. -->
+    <style name="RadioScrollBar" parent="Widget.Car.Scrollbar.Light">
+        <item name="upButtonIcon">@drawable/ic_keyboard_arrow_up</item>
+        <item name="downButtonIcon">@drawable/ic_keyboard_arrow_down</item>
+    </style>
 </resources>

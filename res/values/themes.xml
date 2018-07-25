@@ -21,5 +21,7 @@ limitations under the License.
         <item name="android:colorPrimaryDark">@color/car_radio_bg_color</item>
         <item name="android:statusBarColor">@color/car_radio_bg_color</item>
         <item name="colorAccent">@color/car_radio_accent_color</item>
+        <item name="pagedListViewStyle">@style/Widget.Car.List.Light</item>
+        <item name="pagedScrollBarViewStyle">@style/RadioScrollBar</item>
     </style>
 </resources>
