@@ -76,7 +76,7 @@ public class RadioActivity extends FragmentActivity {
                 new RadioPagerAdapter(this, getSupportFragmentManager(), mRadioController);
         ViewPager viewPager = findViewById(R.id.viewpager);
         viewPager.setAdapter(mRadioPagerAdapter);
-        mTabLayout = (TabLayout) findViewById(R.id.radio_tabs);
+        mTabLayout = (TabLayout) findViewById(R.id.tabs);
         mTabLayout.setupWithViewPager(viewPager);
 
         mTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {

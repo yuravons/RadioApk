@@ -25,6 +25,6 @@ limitations under the License.
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:showPagedListViewDivider="true"
-        app:alignDividerEndTo="@id/preset_card"
-        app:alignDividerStartTo="@id/preset_card" />
+        app:alignDividerEndTo="@id/favorite_card"
+        app:alignDividerStartTo="@id/favorite_card" />
 </LinearLayout>
