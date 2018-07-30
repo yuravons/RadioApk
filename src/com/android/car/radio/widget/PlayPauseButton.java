@@ -70,6 +70,7 @@ public class PlayPauseButton extends ImageView {
      * @param playState Current playback state
      */
     public void setPlayState(@PlaybackState.State int playState) {
+        Log.v(TAG, "New playback state: " + playState);
         mPlaybackState = playState;
     }
 
@@ -96,6 +97,7 @@ public class PlayPauseButton extends ImageView {
                 return;
         }
 
+        Log.v(TAG, "Requesting switch to playback state: " + switchTo);
         callback.onSwitchTo(switchTo);
     }
 
