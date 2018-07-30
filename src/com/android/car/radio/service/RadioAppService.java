@@ -214,7 +214,7 @@ public class RadioAppService extends MediaBrowserService implements LifecycleOwn
             ProgramSelector sel = mRadioStorage.getRecentlySelected(pt);
             if (sel != null) {
                 Log.i(TAG, "Restoring recently selected program: " + sel);
-                mRadioTuner.tune(sel);
+                mRadioTuner.tune(sel, tuneCb);
                 return;
             }
 

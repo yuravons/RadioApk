@@ -164,13 +164,6 @@ public class RadioTunerExt {
     /**
      * See {@link RadioTuner#scan}.
      */
-    public void seek(boolean forward) {
-        seek(forward, null);
-    }
-
-    /**
-     * See {@link RadioTuner#scan}.
-     */
     public void seek(boolean forward, @Nullable TuneCallback resultCb) {
         synchronized (mTuneLock) {
             synchronized (mLock) {
@@ -185,13 +178,6 @@ public class RadioTunerExt {
                 throw new RuntimeException("Seek failed with result of " + res);
             }
         }
-    }
-
-    /**
-     * See {@link RadioTuner#tune}.
-     */
-    public void tune(@NonNull ProgramSelector selector) {
-        tune(selector, null);
     }
 
     /**
