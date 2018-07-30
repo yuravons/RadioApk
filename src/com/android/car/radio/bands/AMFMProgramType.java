@@ -79,7 +79,7 @@ abstract class AMFMProgramType extends ProgramType {
 
         for (BandDescriptor band : getBands(config)) {
             if (band.getLowerLimit() <= frequencyKhz && frequencyKhz <= band.getUpperLimit()
-                    && frequencyKhz % band.getSpacing() == 0) {
+                    && (frequencyKhz - band.getLowerLimit()) % band.getSpacing() == 0) {
                 return true;
             }
         }
@@ -174,9 +174,10 @@ abstract class AMFMProgramType extends ProgramType {
                 // filter out channels with leading zeros (087.9, if we expect 1xx.x)
                 scanStartKHz = Math.max(scanStartKHz, nextPosFactor * displayFactor);
                 // align to the first valid channel
-                scanStartKHz = divCeil(scanStartKHz, spacingKHz) * spacingKHz;
-                // check the bounds
-                scanStartKHz = Math.max(scanStartKHz, lowerLimitKHz);
+                int scanStartShiftKHz = Math.max(0, scanStartKHz - lowerLimitKHz);
+                scanStartShiftKHz = divCeil(scanStartShiftKHz, spacingKHz) * spacingKHz;
+                scanStartKHz = lowerLimitKHz + scanStartShiftKHz;
+                // check the bounds (start was already checked in scanStartShiftKhz definition)
                 scanEndKHz = Math.min(scanEndKHz, upperLimitKHz);
 
                 for (int channelKHz = scanStartKHz; channelKHz <= scanEndKHz;
