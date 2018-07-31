@@ -13,10 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<resources>
-    <dimen name="car_radio_container_top_padding">32dp</dimen>
-    <dimen name="manual_tuner_top_padding">48dp</dimen>
-    <dimen name="manual_tuner_container_height">432dp</dimen>
-    <dimen name="manual_tuner_dialpad_vertical_spacing">@dimen/radio_default_spacing</dimen>
-    <dimen name="manual_tuner_channel_text_size">108sp</dimen>
-</resources>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+       android:shape="rectangle" >
+    <solid android:color="@color/car_radio_bg_color"/>
+    <corners android:radius="@dimen/favorite_number_bg_radius" />
+</shape>
