@@ -86,17 +86,17 @@ public class DisplayController {
             @NonNull RadioController radioController) {
         mContext = Objects.requireNonNull(activity);
 
-        mTabs = activity.findViewById(R.id.radio_tabs);
+        mTabs = activity.findViewById(R.id.tabs);
         mViewpager = activity.findViewById(R.id.viewpager);
         mStatusMessage = activity.findViewById(R.id.status_message);
-        mChannel = activity.findViewById(R.id.radio_station_channel);
-        mDetails = activity.findViewById(R.id.radio_station_details);
-        mStationName = activity.findViewById(R.id.radio_station_name);
-        mBackwardSeekButton = activity.findViewById(R.id.radio_back_button);
-        mForwardSeekButton = activity.findViewById(R.id.radio_forward_button);
-        mPlayButton = activity.findViewById(R.id.radio_play_button);
+        mChannel = activity.findViewById(R.id.station_channel);
+        mDetails = activity.findViewById(R.id.station_details);
+        mStationName = activity.findViewById(R.id.station_name);
+        mBackwardSeekButton = activity.findViewById(R.id.back_button);
+        mForwardSeekButton = activity.findViewById(R.id.forward_button);
+        mPlayButton = activity.findViewById(R.id.play_button);
         mBandButton = activity.findViewById(R.id.band_toggle_button);
-        mFavoriteButton = activity.findViewById(R.id.radio_add_presets_button);
+        mFavoriteButton = activity.findViewById(R.id.add_presets_button);
 
         radioController.getPlaybackState().observe(activity, this::onPlaybackStateChanged);
 

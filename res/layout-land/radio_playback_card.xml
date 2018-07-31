@@ -26,10 +26,10 @@ limitations under the License.
     android:background="@drawable/playback_background">
 
     <TextView
-        android:id="@+id/radio_station_channel"
+        android:id="@+id/station_channel"
         android:layout_marginLeft="@dimen/car_padding_2"
-        android:layout_width="@dimen/radio_art_size"
-        android:layout_height="@dimen/radio_art_size"
+        android:layout_width="@dimen/art_size"
+        android:layout_height="@dimen/art_size"
         android:background="@color/car_card_dark"
         android:gravity="center"
         app:layout_constraintTop_toTopOf="parent"
@@ -38,7 +38,7 @@ limitations under the License.
         style="@style/TextAppearance.Car.Body2.Light" />
 
     <TextView
-        android:id="@+id/radio_station_name"
+        android:id="@+id/station_name"
         android:ellipsize="end"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -46,14 +46,14 @@ limitations under the License.
         android:maxLines="1"
         app:layout_constraintVertical_chainStyle="packed"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/radio_station_details"
-        app:layout_constraintStart_toEndOf="@+id/radio_station_channel"
+        app:layout_constraintBottom_toTopOf="@+id/station_details"
+        app:layout_constraintStart_toEndOf="@+id/station_channel"
         app:layout_constraintEnd_toStartOf="@+id/controls"
         android:visibility="gone"
         style="@style/TextAppearance.Car.Body1.Light" />
 
     <TextView
-        android:id="@+id/radio_station_details"
+        android:id="@+id/station_details"
         android:ellipsize="end"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -62,9 +62,9 @@ limitations under the License.
         android:paddingTop="@dimen/car_padding_0"
         android:maxLines="1"
         android:fontFamily="sans-serif-medium"
-        app:layout_constraintTop_toBottomOf="@+id/radio_station_name"
+        app:layout_constraintTop_toBottomOf="@+id/station_name"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/radio_station_channel"
+        app:layout_constraintStart_toEndOf="@+id/station_channel"
         app:layout_constraintEnd_toStartOf="@+id/controls"
         android:visibility="gone"
         style="@style/TextAppearance.Car.Body2" />
@@ -74,7 +74,7 @@ limitations under the License.
         android:id="@+id/controls"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toEndOf="@+id/radio_station_details"
+        app:layout_constraintStart_toEndOf="@+id/station_details"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />

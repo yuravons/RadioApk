@@ -16,5 +16,5 @@ limitations under the License.
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
        android:shape="rectangle" >
     <solid android:color="@color/car_radio_bg_color"/>
-    <corners android:radius="@dimen/car_preset_number_bg_radius" />
+    <corners android:radius="@dimen/favorite_number_bg_radius" />
 </shape>

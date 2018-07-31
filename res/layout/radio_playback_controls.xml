@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/radio_buttons_container"
+    android:id="@+id/buttons_container"
     android:layout_width="match_parent"
     android:layout_height="@dimen/car_action_bar_height"
     android:orientation="horizontal">
@@ -25,10 +25,10 @@ limitations under the License.
         android:layout_weight="1" >
     </Space>
     <ImageButton
-        android:id="@+id/radio_back_button"
+        android:id="@+id/back_button"
         android:layout_gravity="center_vertical"
-        android:layout_width="@dimen/radio_control_button_size"
-        android:layout_height="@dimen/radio_control_button_size"
+        android:layout_width="@dimen/control_button_size"
+        android:layout_height="@dimen/control_button_size"
         android:src="@drawable/ic_skip_previous"
         android:background="@drawable/playback_button_background"
         style="@style/RadioButton" />
@@ -38,10 +38,10 @@ limitations under the License.
         android:layout_weight="1" >
     </Space>
     <com.android.car.radio.widget.PlayPauseButton
-        android:id="@+id/radio_play_button"
+        android:id="@+id/play_button"
         android:layout_gravity="center_vertical"
-        android:layout_width="@dimen/radio_control_button_size"
-        android:layout_height="@dimen/radio_control_button_size"
+        android:layout_width="@dimen/control_button_size"
+        android:layout_height="@dimen/control_button_size"
         android:stateListAnimator="@anim/car_fab_state_list_animator"
         android:src="@drawable/ic_play_pause_stop"
         android:scaleType="center"
@@ -53,10 +53,10 @@ limitations under the License.
         android:layout_weight="1" >
     </Space>
     <ImageButton
-        android:id="@+id/radio_forward_button"
+        android:id="@+id/forward_button"
         android:layout_gravity="center_vertical"
-        android:layout_width="@dimen/radio_control_button_size"
-        android:layout_height="@dimen/radio_control_button_size"
+        android:layout_width="@dimen/control_button_size"
+        android:layout_height="@dimen/control_button_size"
         android:src="@drawable/ic_skip_next"
         android:background="@drawable/playback_button_background"
         style="@style/RadioButton" />
@@ -66,10 +66,10 @@ limitations under the License.
         android:layout_weight="1" >
     </Space>
     <ImageButton
-        android:id="@+id/radio_add_presets_button"
+        android:id="@+id/add_presets_button"
         android:layout_gravity="center_vertical"
-        android:layout_width="@dimen/radio_control_button_size"
-        android:layout_height="@dimen/radio_control_button_size"
+        android:layout_width="@dimen/control_button_size"
+        android:layout_height="@dimen/control_button_size"
         android:src="@drawable/ic_star_empty"
         android:background="@drawable/playback_button_background"
         style="@style/RadioButton" />

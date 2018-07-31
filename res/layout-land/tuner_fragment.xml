@@ -45,8 +45,8 @@ limitations under the License.
 
     <Button
         android:id="@+id/manual_tuner_done_button"
-        android:layout_width="@dimen/radio_tune_button_width"
-        android:layout_height="@dimen/radio_tune_button_height"
+        android:layout_width="@dimen/tune_button_width"
+        android:layout_height="@dimen/tune_button_height"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/dialpad_layout"
