@@ -15,36 +15,19 @@ limitations under the License.
 -->
 <resources>
     <!-- The main accent color of the radio app. -->
-    <color name="car_radio_accent_color">#e91e63</color>  <!-- Pink 500 -->
+    <color name="accent_color">#ff356fe5</color>
 
     <!-- The default background color of the radio. -->
-    <color name="car_radio_bg_color">#283593</color>    <!-- Indigo 800 -->
+    <color name="default_background_color">#283593</color>
 
     <!-- The color of the radio control buttons. -->
-    <color name="car_radio_control_button">@color/car_grey_100</color>
-    <!-- The color of the radio control buttons. -->
-    <color name="car_radio_equalizer">@android:color/white</color>
+    <color name="control_button">@color/car_grey_100</color>
 
     <!-- The color of the radio control buttons when they are disabled. -->
-    <color name="car_radio_control_button_disabled">@color/car_grey_650</color>
-
-    <!-- The color of the FAB when it is diabled. -->
-    <color name="car_radio_control_fab_button_disabled">@color/car_grey_400</color>
-
-    <!-- The color of the scrim that overlays the background of the radio. -->
-    <color name="car_radio_display_scrim">@android:color/transparent</color>
-
-    <!-- The color of the metadata text for each preset item. -->
-    <color name="radio_preset_item_text">@color/car_body1_dark</color>
-
-    <!-- The color of the text that displays the current radio station in the preset list. -->
-    <color name="radio_current_station_text">@color/car_radio_control_button</color>
+    <color name="control_button_disabled">@color/car_grey_650</color>
 
     <!-- The text color of the buttons in the manual tuner. -->
     <color name="manual_tuner_button_text">@color/car_title2_light</color>
-
-    <!-- The text color displaying the currently entered channel in the manual tuner. -->
-    <color name="manual_tuner_channel_text">@color/car_grey_800</color>
 
     <!-- The color of the icon within the manaul tuner's done button when it is disabled. -->
     <color name="manual_tuner_done_disabled">@color/car_grey_700</color>
@@ -54,8 +37,4 @@ limitations under the License.
 
     <!-- The default background color of radio cards -->
     <color name="radio_card_color">#ff131315</color>
-
-    <!-- The highlight color used for BigDog. -->
-    <color name="bigdog_accent_color">#ff356fe5</color>
-
 </resources>

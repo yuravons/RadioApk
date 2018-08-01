@@ -97,8 +97,8 @@ public class RadioActivity extends FragmentActivity {
                     TextView tabLabel = tabView.findViewById(R.id.tab_label);
                     ImageView tabIcon = tabView.findViewById(R.id.tab_icon);
 
-                    tabLabel.setTextColor(getColor(R.color.car_radio_control_button));
-                    tabIcon.setColorFilter(getColor(R.color.car_radio_control_button));
+                    tabLabel.setTextColor(getColor(R.color.control_button));
+                    tabIcon.setColorFilter(getColor(R.color.control_button));
                 }
             }
 
@@ -111,9 +111,9 @@ public class RadioActivity extends FragmentActivity {
                     TextView tabLabel = tabView.findViewById(R.id.tab_label);
                     ImageView tabIcon = tabView.findViewById(R.id.tab_icon);
                     tabLabel.setTextColor(
-                            getColor(R.color.car_radio_control_button_disabled));
+                            getColor(R.color.control_button_disabled));
                     tabIcon.setColorFilter(
-                            getColor(R.color.car_radio_control_button_disabled));
+                            getColor(R.color.control_button_disabled));
                 }
             }
         });
@@ -169,12 +169,12 @@ public class RadioActivity extends FragmentActivity {
         ImageView tabIcon = tab.findViewById(R.id.tab_icon);
 
         tabLabel.setText(text);
-        tabLabel.setTextColor(getColor(R.color.car_radio_control_button_disabled));
+        tabLabel.setTextColor(getColor(R.color.control_button_disabled));
         tabIcon.setImageResource(image);
-        tabIcon.setColorFilter(getColor(R.color.car_radio_control_button_disabled));
+        tabIcon.setColorFilter(getColor(R.color.control_button_disabled));
         if (isSelected) {
-            tabLabel.setTextColor(getColor(R.color.car_radio_control_button));
-            tabIcon.setColorFilter(getColor(R.color.car_radio_control_button));
+            tabLabel.setTextColor(getColor(R.color.control_button));
+            tabIcon.setColorFilter(getColor(R.color.control_button));
         }
 
         return tab;

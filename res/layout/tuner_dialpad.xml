@@ -23,20 +23,17 @@ limitations under the License.
         android:id="@+id/manual_tuner_1"
         android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_1"
-        android:textColor="@color/manual_tune_digit_color"
         android:tag="1"
         style="@style/DialpadKeyButtonStyle" />
     <Button
         android:id="@+id/manual_tuner_2"
         android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_2"
-        android:textColor="@color/manual_tune_digit_color"
         android:tag="2"
         style="@style/DialpadKeyButtonStyle" />
     <Button
         android:id="@+id/manual_tuner_3"
         android:text="@string/manual_tuner_3"
-        android:textColor="@color/manual_tune_digit_color"
         android:tag="3"
         style="@style/DialpadKeyButtonStyle" />
 
@@ -45,20 +42,17 @@ limitations under the License.
         android:id="@+id/manual_tuner_4"
         android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_4"
-        android:textColor="@color/manual_tune_digit_color"
         android:tag="4"
         style="@style/DialpadKeyButtonStyle" />
     <Button
         android:id="@+id/manual_tuner_5"
         android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_5"
-        android:textColor="@color/manual_tune_digit_color"
         android:tag="5"
         style="@style/DialpadKeyButtonStyle" />
     <Button
         android:id="@+id/manual_tuner_6"
         android:text="@string/manual_tuner_6"
-        android:textColor="@color/manual_tune_digit_color"
         android:tag="6"
         style="@style/DialpadKeyButtonStyle" />
 
@@ -67,20 +61,17 @@ limitations under the License.
         android:id="@+id/manual_tuner_7"
         android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_7"
-        android:textColor="@color/manual_tune_digit_color"
         android:tag="7"
         style="@style/DialpadKeyButtonStyle" />
     <Button
         android:id="@+id/manual_tuner_8"
         android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_8"
-        android:textColor="@color/manual_tune_digit_color"
         android:tag="8"
         style="@style/DialpadKeyButtonStyle" />
     <Button
         android:id="@+id/manual_tuner_9"
         android:text="@string/manual_tuner_9"
-        android:textColor="@color/manual_tune_digit_color"
         android:tag="9"
         style="@style/DialpadKeyButtonStyle" />
 
@@ -95,7 +86,6 @@ limitations under the License.
         android:id="@+id/manual_tuner_0"
         android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_0"
-        android:textColor="@color/manual_tune_digit_color"
         android:tag="0"
         style="@style/DialpadKeyButtonStyle" />
     <com.android.car.radio.widget.BandToggleButton

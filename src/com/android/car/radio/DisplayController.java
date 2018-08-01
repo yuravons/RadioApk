@@ -125,8 +125,8 @@ public class DisplayController {
 
         // Color the buttons so that they are grey in appearance if they are disabled.
         int tint = enabled
-                ? mContext.getColor(R.color.car_radio_control_button)
-                : mContext.getColor(R.color.car_radio_control_button_disabled);
+                ? mContext.getColor(R.color.control_button)
+                : mContext.getColor(R.color.control_button_disabled);
 
         if (mPlayButton != null) {
             // No need to tint the play button because its drawable already contains a disabled
