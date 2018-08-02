@@ -14,29 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:columnCount="5"
+    android:columnCount="3"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
 
     <!-- Row 1 -->
     <Button
         android:id="@+id/manual_tuner_1"
+        android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_1"
         android:textColor="@color/manual_tune_digit_color"
         android:tag="1"
         style="@style/DialpadKeyButtonStyle" />
-    <Space
-        android:layout_width="@dimen/car_padding_6"
-        android:layout_height="0dp"/>
     <Button
         android:id="@+id/manual_tuner_2"
+        android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_2"
         android:textColor="@color/manual_tune_digit_color"
         android:tag="2"
         style="@style/DialpadKeyButtonStyle" />
-    <Space
-        android:layout_width="@dimen/car_padding_6"
-        android:layout_height="0dp"/>
     <Button
         android:id="@+id/manual_tuner_3"
         android:text="@string/manual_tuner_3"
@@ -44,31 +40,21 @@ limitations under the License.
         android:tag="3"
         style="@style/DialpadKeyButtonStyle" />
 
-    <!-- Vertical spacing between rows. -->
-    <Space
-        android:layout_height="@dimen/car_padding_5"
-        android:layout_width="0dp"
-        android:layout_columnSpan="5" />
-
     <!-- Row 2 -->
     <Button
         android:id="@+id/manual_tuner_4"
+        android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_4"
         android:textColor="@color/manual_tune_digit_color"
         android:tag="4"
         style="@style/DialpadKeyButtonStyle" />
-    <Space
-        android:layout_width="@dimen/car_padding_6"
-        android:layout_height="0dp"/>
     <Button
         android:id="@+id/manual_tuner_5"
+        android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_5"
         android:textColor="@color/manual_tune_digit_color"
         android:tag="5"
         style="@style/DialpadKeyButtonStyle" />
-    <Space
-        android:layout_width="@dimen/car_padding_6"
-        android:layout_height="0dp"/>
     <Button
         android:id="@+id/manual_tuner_6"
         android:text="@string/manual_tuner_6"
@@ -76,31 +62,21 @@ limitations under the License.
         android:tag="6"
         style="@style/DialpadKeyButtonStyle" />
 
-    <!-- Vertical spacing between rows. -->
-    <Space
-        android:layout_height="@dimen/car_padding_5"
-        android:layout_width="0dp"
-        android:layout_columnSpan="5" />
-
     <!-- Row 3 -->
     <Button
         android:id="@+id/manual_tuner_7"
+        android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_7"
         android:textColor="@color/manual_tune_digit_color"
         android:tag="7"
         style="@style/DialpadKeyButtonStyle" />
-    <Space
-        android:layout_width="@dimen/car_padding_6"
-        android:layout_height="0dp"/>
     <Button
         android:id="@+id/manual_tuner_8"
+        android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_8"
         android:textColor="@color/manual_tune_digit_color"
         android:tag="8"
         style="@style/DialpadKeyButtonStyle" />
-    <Space
-        android:layout_width="@dimen/car_padding_6"
-        android:layout_height="0dp"/>
     <Button
         android:id="@+id/manual_tuner_9"
         android:text="@string/manual_tuner_9"
@@ -108,30 +84,20 @@ limitations under the License.
         android:tag="9"
         style="@style/DialpadKeyButtonStyle" />
 
-    <!-- Vertical spacing between rows. -->
-    <Space
-        android:layout_height="@dimen/car_padding_5"
-        android:layout_width="0dp"
-        android:layout_columnSpan="5" />
-
     <!-- Row 4 -->
     <ImageView
         android:id="@+id/manual_tuner_backspace"
+        android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:scaleType="center"
         android:src="@drawable/ic_backspace"
         style="@style/DialpadKeyButtonStyle" />
-    <Space
-        android:layout_width="@dimen/car_padding_6"
-        android:layout_height="0dp"/>
     <Button
         android:id="@+id/manual_tuner_0"
+        android:layout_marginRight="@dimen/dialpad_space_horizontal"
         android:text="@string/manual_tuner_0"
         android:textColor="@color/manual_tune_digit_color"
         android:tag="0"
         style="@style/DialpadKeyButtonStyle" />
-    <Space
-        android:layout_width="@dimen/car_padding_6"
-        android:layout_height="0dp"/>
     <com.android.car.radio.widget.BandToggleButton
         android:id="@+id/manual_tuner_band_toggle"
         style="@style/DialpadKeyButtonStyle" />
