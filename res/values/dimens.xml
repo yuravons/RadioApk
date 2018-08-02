@@ -64,6 +64,8 @@ limitations under the License.
     <!-- Tuner Buttons -->
     <dimen name="tune_button_width">254dp</dimen>
     <dimen name="tune_button_height">76dp</dimen>
+    <dimen name="dialpad_space_horizontal">@dimen/car_padding_6</dimen>
+    <dimen name="dialpad_space_vertical">@dimen/car_padding_5</dimen>
     <dimen name="dialpad_button_size">96dp</dimen>
 
     <!-- Tab dimensions -->

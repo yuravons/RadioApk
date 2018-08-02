@@ -17,5 +17,6 @@ limitations under the License.
     <dimen name="dialpad_button_size">64dp</dimen>
     <dimen name="favorite_number_bg_width">160dp</dimen>
     <dimen name="favorite_number_bg_height">76dp</dimen>
+    <dimen name="dialpad_space_vertical">0dp</dimen>
     <dimen name="playback_card_bottom_margin">@dimen/car_padding_1</dimen>
 </resources>

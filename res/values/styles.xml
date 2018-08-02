@@ -25,6 +25,7 @@ limitations under the License.
         <item name="android:clickable">true</item>
         <item name="android:layout_width">@dimen/dialpad_button_size</item>
         <item name="android:layout_height">@dimen/dialpad_button_size</item>
+        <item name="android:layout_marginBottom">@dimen/dialpad_space_vertical</item>
         <item name="android:gravity">center</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:minWidth">@dimen/car_touch_target_size</item>
