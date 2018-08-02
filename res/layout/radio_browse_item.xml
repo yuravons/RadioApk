@@ -29,7 +29,7 @@ limitations under the License.
         android:layout_gravity="center_vertical"
         android:layout_width="@dimen/favorite_number_bg_width"
         android:layout_height="@dimen/favorite_number_bg_height"
-        android:background="@drawable/favorite_channel_bg" >
+        android:background="@drawable/favorite_channel_bg">
         <TextView
             android:id="@+id/favorite_station_channel"
             android:layout_gravity="center"

@@ -118,7 +118,7 @@ public class ProgramViewHolder extends RecyclerView.ViewHolder implements View.O
                 sel, ProgramSelectorExt.NAME_NO_MODULATION));
 
         mPresetItemChannelBg.setColor(mContext.getResources().getColor(isActiveStation
-                ? R.color.bigdog_accent_color
+                ? R.color.accent_color
                 : R.color.car_card_dark, null));
         mPresetItemChannel.setCompoundDrawablesRelativeWithIntrinsicBounds(isActiveStation
                 ? R.drawable.ic_equalizer
@@ -150,7 +150,7 @@ public class ProgramViewHolder extends RecyclerView.ViewHolder implements View.O
                 ? R.drawable.ic_star_filled
                 : R.drawable.ic_star_empty);
         mPresetButton.setColorFilter(mContext.getColor(favoriteToggleOn
-                ? R.color.bigdog_accent_color
-                : R.color.car_radio_control_button));
+                ? R.color.accent_color
+                : R.color.control_button));
     }
 }
