@@ -44,13 +44,12 @@ limitations under the License.
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
+        android:textAppearance="@style/TextAppearance.Car.Body1.Medium.Light"
+        android:textColor="@color/manual_tuner_button_text"
         app:layout_constraintBottom_toTopOf="@+id/manual_tuner_done_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/dialpad_layout"
-        app:layout_constraintTop_toBottomOf="@+id/manual_tuner_band_selector"
-        android:textSize="@dimen/car_title2_size"
-        android:textColor="@color/manual_tuner_button_text"
-        style="TextAppearance.Car.Title2" />
+        app:layout_constraintTop_toBottomOf="@+id/manual_tuner_band_selector" />
 
     <Button
         android:id="@+id/manual_tuner_done_button"
