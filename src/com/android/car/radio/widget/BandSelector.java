@@ -18,22 +18,27 @@ package com.android.car.radio.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.View;
-import android.widget.ImageButton;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.android.car.radio.R;
 import com.android.car.radio.bands.ProgramType;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 /**
- * A widget to toggle band (AM/FM/DAB etc).
+ * A base class for widgets switching program types/bands (AM/FM/DAB etc).
  */
-public class BandToggleButton extends ImageButton {
+public abstract class BandSelector extends LinearLayout {
+    private final Object mLock = new Object();
+
     @Nullable private Callback mCallback;
 
-    @Nullable ProgramType mCurrentBand;
+    @NonNull private List<ProgramType> mSupportedBands = new ArrayList<>();
+    @Nullable private ProgramType mCurrentBand;
 
     /**
      * Widget's onClick event translated to band callback.
@@ -42,38 +47,44 @@ public class BandToggleButton extends ImageButton {
         /**
          * Called when user uses this button to switch the band.
          *
-         * @param band Band to switch to
+         * @param pt ProgramType to switch to
          */
         void onSwitchTo(@NonNull ProgramType pt);
     }
 
-    public BandToggleButton(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        setOnClickListener(this::onClick);
+    public BandSelector(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
     }
 
+    /**
+     * Sets band selection callback.
+     */
     public void setCallback(@Nullable Callback callback) {
-        mCallback = callback;
+        synchronized (mLock) {
+            mCallback = callback;
+        }
     }
 
-    private void onClick(View v) {
-        Callback callback = mCallback;
-        if (callback == null) return;
-
-        ProgramType switchTo;
-        switch (mCurrentBand.id) {
-            case ProgramType.ID_FM:
-                switchTo = ProgramType.AM;
-                break;
-            case ProgramType.ID_AM:
-                switchTo = ProgramType.FM;
-                break;
-            default:
-                switchTo = ProgramType.FM;
-                break;
+    /**
+     * Sets supported program types.
+     */
+    public void setSupportedProgramTypes(@NonNull List<ProgramType> supported) {
+        synchronized (mLock) {
+            mSupportedBands = Objects.requireNonNull(supported);
         }
+    }
 
-        callback.onSwitchTo(switchTo);
+    protected void switchToNext() {
+        synchronized (mLock) {
+            switchTo(mSupportedBands.get(
+                    (mSupportedBands.indexOf(mCurrentBand) + 1) % mSupportedBands.size()));
+        }
+    }
+
+    protected void switchTo(@NonNull ProgramType ptype) {
+        synchronized (mLock) {
+            if (mCallback != null) mCallback.onSwitchTo(ptype);
+        }
     }
 
     /**
@@ -84,17 +95,8 @@ public class BandToggleButton extends ImageButton {
      * @param ptype Program type to set.
      */
     public void setType(@NonNull ProgramType ptype) {
-        mCurrentBand = ptype;
-
-        switch (ptype.id) {
-            case ProgramType.ID_FM:
-                setImageResource(R.drawable.ic_radio_fm);
-                break;
-            case ProgramType.ID_AM:
-                setImageResource(R.drawable.ic_radio_am);
-                break;
-            default:
-                setImageDrawable(null);
+        synchronized (mLock) {
+            mCurrentBand = ptype;
         }
     }
 }

@@ -20,7 +20,9 @@ import android.hardware.radio.ProgramSelector;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 
+import com.android.car.radio.R;
 import com.android.car.radio.platform.RadioTunerExt;
 import com.android.car.radio.platform.RadioTunerExt.TuneCallback;
 import com.android.car.radio.util.Log;
@@ -36,6 +38,12 @@ class DABProgramType extends ProgramType {
     @NonNull
     public String getEnglishName() {
         return "DAB";
+    }
+
+    @Override
+    @StringRes
+    public int getLocalizedName() {
+        return R.string.programtype_dab_text;
     }
 
     @Override

@@ -75,6 +75,7 @@ public class RadioController {
         mDisplayController.setState(state);
         if (state == RadioAppServiceWrapper.STATE_CONNECTED) {
             mActivity.setProgramListSupported(mAppService.isProgramListSupported());
+            mActivity.setSupportedProgramTypes(getRegionConfig().getSupportedProgramTypes());
         }
     }
 

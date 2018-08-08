@@ -24,7 +24,7 @@ import androidx.annotation.NonNull;
 
 import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.bands.RegionConfig;
-import com.android.car.radio.widget.BandToggleButton;
+import com.android.car.radio.widget.BandSelector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ public class ManualTunerController {
     private final List<View> mDigitButtons = new ArrayList<>();
     private final View mEnterButton;
     private final TextView mChannelDisplay;
-    private BandToggleButton mBandToggleButton;
+    private BandSelector mBandSelector;
 
     private ProgramType mProgramType;
     private final RegionConfig mRegionConfig;
@@ -60,10 +60,11 @@ public class ManualTunerController {
 
         mChannelDisplay = Objects.requireNonNull(container.findViewById(R.id.manual_tuner_channel));
         mEnterButton = container.findViewById(R.id.manual_tuner_done_button);
-        mBandToggleButton = container.findViewById(R.id.manual_tuner_band_toggle);
+        mBandSelector = container.findViewById(R.id.manual_tuner_band_selector);
 
         mEnterButton.setOnClickListener(this::onDoneClick);
-        mBandToggleButton.setCallback(this::switchProgramType);
+        mBandSelector.setCallback(this::switchProgramType);
+        mBandSelector.setSupportedProgramTypes(regionConfig.getSupportedProgramTypes());
 
         View dialpad = container.findViewById(R.id.dialpad_layout);
         View.OnClickListener digitClickListener = this::onDigitClick;
@@ -122,7 +123,7 @@ public class ManualTunerController {
             if (mProgramType == pt) return;
             mProgramType = pt;
             mEnteredDigits = 0;
-            mBandToggleButton.setType(pt);
+            mBandSelector.setType(pt);
         }
         updateDisplay();
     }

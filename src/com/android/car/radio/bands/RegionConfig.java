@@ -39,13 +39,17 @@ import java.util.Objects;
 public final class RegionConfig implements Parcelable {
     private static final String TAG = "BcRadioApp.region";
 
+    private final List<ProgramType> mSupported;
     private final List<BandDescriptor> mAmConfig;
     private final List<BandDescriptor> mFmConfig;
 
     public RegionConfig(@Nullable List<BandDescriptor> amFmConfig) {
         mAmConfig = new ArrayList<>();
         mFmConfig = new ArrayList<>();
-        if (amFmConfig == null) return;
+        if (amFmConfig == null) {
+            mSupported = new ArrayList<>();
+            return;
+        }
 
         for (BandDescriptor band : amFmConfig) {
             if (band instanceof AmBandDescriptor) {
@@ -61,11 +65,26 @@ public final class RegionConfig implements Parcelable {
                 a.getLowerLimit() - b.getLowerLimit();
         Collections.sort(mAmConfig, cmp);
         Collections.sort(mFmConfig, cmp);
+        mSupported = createSupportedProgramTypes();
     }
 
     private RegionConfig(@NonNull Parcel in) {
         mAmConfig = in.createTypedArrayList(BandDescriptor.CREATOR);
         mFmConfig = in.createTypedArrayList(BandDescriptor.CREATOR);
+        mSupported = createSupportedProgramTypes();
+    }
+
+    @NonNull
+    private List<ProgramType> createSupportedProgramTypes() {
+        List<ProgramType> supported = new ArrayList<>();
+        if (!mAmConfig.isEmpty()) supported.add(ProgramType.AM);
+        if (!mFmConfig.isEmpty()) supported.add(ProgramType.FM);
+        return supported;
+    }
+
+    @NonNull
+    public List<ProgramType> getSupportedProgramTypes() {
+        return mSupported;
     }
 
     @NonNull

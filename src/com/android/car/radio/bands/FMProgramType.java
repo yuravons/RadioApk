@@ -17,6 +17,9 @@
 package com.android.car.radio.bands;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
+
+import com.android.car.radio.R;
 
 class FMProgramType extends AMFMProgramType {
     FMProgramType(@TypeId int id) {
@@ -27,6 +30,12 @@ class FMProgramType extends AMFMProgramType {
     @NonNull
     public String getEnglishName() {
         return "FM";
+    }
+
+    @Override
+    @StringRes
+    public int getLocalizedName() {
+        return R.string.programtype_fm_text;
     }
 
     @Override
