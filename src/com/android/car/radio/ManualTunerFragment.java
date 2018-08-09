@@ -22,7 +22,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.android.car.radio.bands.ProgramType;
@@ -42,14 +41,17 @@ public class ManualTunerFragment extends Fragment {
         mController = new ManualTunerController(getContext(), view,
                 mRadioController.getRegionConfig(), mRadioController::tune);
 
-        mRadioController.getCurrentProgram().observe(this, this::onCurrentProgramChanged);
-
         return view;
     }
 
-    private void onCurrentProgramChanged(@NonNull ProgramInfo info) {
-        ProgramType pt = ProgramType.fromSelector(info.getSelector());
-        mController.switchProgramType(pt);
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+
+        if (!isVisibleToUser) return;
+        ProgramInfo current = mRadioController.getCurrentProgram().getValue();
+        if (current == null) return;
+        mController.switchProgramType(ProgramType.fromSelector(current.getSelector()));
     }
 
     static ManualTunerFragment newInstance(RadioController radioController) {
