@@ -23,6 +23,7 @@ import android.os.Parcelable;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 
 import com.android.car.broadcastradio.support.platform.ProgramSelectorExt;
 import com.android.car.radio.platform.RadioTunerExt;
@@ -87,6 +88,12 @@ public abstract class ProgramType implements Parcelable {
      */
     @NonNull
     public abstract String getEnglishName();
+
+    /**
+     * Retrieves localized name of this program type.
+     */
+    @StringRes
+    public abstract int getLocalizedName();
 
     /**
      * Tunes to a default channel from this band.

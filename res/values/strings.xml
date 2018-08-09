@@ -17,11 +17,14 @@ limitations under the License.
     <!-- The main application name for the radio. -->
     <string name="app_name">Radio</string>
 
-    <!-- Text to denote the AM radio band. -->
-    <string name="radio_am_text">AM</string>
+    <!-- Text to denote the AM band. -->
+    <string name="programtype_am_text">AM</string>
 
-    <!-- Text to denote the FM radio band. -->
-    <string name="radio_fm_text">FM</string>
+    <!-- Text to denote the FM band. -->
+    <string name="programtype_fm_text">FM</string>
+
+    <!-- Text to denote the DAB program type (band). -->
+    <string name="programtype_dab_text">DAB</string>
 
     <!-- Text indicating the radio hardware is not supported on this device. -->
     <string name="radio_not_supported_text">Radio not supported</string>

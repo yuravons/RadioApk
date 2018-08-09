@@ -23,14 +23,17 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager.widget.ViewPager;
 
 import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.util.Log;
-import com.android.car.radio.widget.BandToggleButton;
+import com.android.car.radio.widget.BandSelector;
 
 import com.google.android.material.tabs.TabLayout;
+
+import java.util.List;
 
 /**
  * The main activity for the radio app.
@@ -51,7 +54,7 @@ public class RadioActivity extends FragmentActivity {
             "android.intent.action.RADIO_APP_STATE";
 
     private RadioController mRadioController;
-    private BandToggleButton mBandToggleButton;
+    private BandSelector mBandSelector;
 
     private Object mLock = new Object();
     private TabLayout mTabLayout;
@@ -65,12 +68,12 @@ public class RadioActivity extends FragmentActivity {
         Log.d(TAG, "Radio app main activity created");
 
         setContentView(R.layout.radio_activity);
-        mBandToggleButton = findViewById(R.id.band_toggle_button);
+        mBandSelector = findViewById(R.id.band_toggle_button);
 
         mRadioController = new RadioController(this);
-        mBandToggleButton.setCallback(mRadioController::switchBand);
+        mBandSelector.setCallback(mRadioController::switchBand);
         mRadioController.getCurrentProgram().observe(this, info ->
-                mBandToggleButton.setType(ProgramType.fromSelector(info.getSelector())));
+                mBandSelector.setType(ProgramType.fromSelector(info.getSelector())));
 
         mRadioPagerAdapter =
                 new RadioPagerAdapter(this, getSupportFragmentManager(), mRadioController);
@@ -161,6 +164,13 @@ public class RadioActivity extends FragmentActivity {
                 refreshCustomTabViews();
             }
         }
+    }
+
+    /**
+     * Sets supported program types.
+     */
+    public void setSupportedProgramTypes(@NonNull List<ProgramType> supported) {
+        mBandSelector.setSupportedProgramTypes(supported);
     }
 
     private View buildCustomTab(CharSequence text, int image, boolean isSelected) {

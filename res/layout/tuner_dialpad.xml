@@ -88,7 +88,4 @@ limitations under the License.
         android:text="@string/manual_tuner_0"
         android:tag="0"
         style="@style/DialpadKeyButtonStyle" />
-    <com.android.car.radio.widget.BandToggleButton
-        android:id="@+id/manual_tuner_band_toggle"
-        style="@style/DialpadKeyButtonStyle" />
 </GridLayout>

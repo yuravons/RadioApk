@@ -47,18 +47,15 @@ limitations under the License.
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.android.car.radio.widget.BandToggleButton
+    <com.android.car.radio.widget.BandSelectorToggle
         android:id="@+id/band_toggle_button"
         android:layout_width="@dimen/band_toggle_button_size"
         android:layout_height="@dimen/band_toggle_button_size"
         android:layout_marginTop="@dimen/car_padding_1"
         android:layout_marginRight="@dimen/car_padding_1"
-        android:clickable="true"
         android:scaleType="fitXY"
-        android:background="@drawable/playback_button_background"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        style="@style/RadioButton" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/viewpager"
