@@ -149,6 +149,21 @@ public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
     }
 
     /**
+     * Remove formerly favorite stations from the list of stations, e.g. a station that started as a
+     * favorite, but is no longer a favorite
+     */
+    public void removeFormerFavorites() {
+        synchronized (mLock) {
+            // Remove all programs that are no longer a favorite,
+            // except those that were never favorites (i.e. currently tuned)
+            mPrograms = mPrograms.stream()
+                    .filter(e -> e.isFavorite || !e.wasFavorite)
+                    .collect(Collectors.toList());
+        }
+        notifyDataSetChanged();
+    }
+
+    /**
      * Updates the stations that are favorites, while keeping unfavorited stations in the list
      */
     private void onFavoritesChanged(List<Program> favorites) {
