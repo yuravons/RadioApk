@@ -65,6 +65,14 @@ public class FavoritesFragment extends Fragment {
                 .getDimensionPixelSize(R.dimen.car_padding_4));
     }
 
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (!isVisibleToUser && mBrowseAdapter != null) {
+            mBrowseAdapter.removeFormerFavorites();
+        }
+    }
+
     private void handlePresetItemFavoriteChanged(Program program, boolean saveAsFavorite) {
         if (saveAsFavorite) {
             mRadioStorage.addFavorite(program);
