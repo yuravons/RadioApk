@@ -27,7 +27,7 @@ limitations under the License.
     <color name="control_button_disabled">@color/car_grey_650</color>
 
     <!-- The text color of the buttons in the manual tuner. -->
-    <color name="manual_tuner_button_text">@color/car_title2_light</color>
+    <color name="manual_tuner_button_text">@color/car_grey_100</color>
 
     <!-- The color of the icon within the manaul tuner's done button when it is disabled. -->
     <color name="manual_tuner_done_disabled">@color/car_grey_700</color>
