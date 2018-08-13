@@ -18,13 +18,13 @@ package com.android.car.radio;
 
 import android.annotation.Nullable;
 import android.hardware.radio.ProgramSelector;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.car.widget.PagedListView;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.broadcastradio.support.Program;
 

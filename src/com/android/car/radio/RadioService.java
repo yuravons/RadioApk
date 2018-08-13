@@ -28,9 +28,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
-import android.support.v4.media.MediaBrowserServiceCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
+
+import androidx.media.MediaBrowserServiceCompat;
 
 import com.android.car.broadcastradio.support.Program;
 import com.android.car.broadcastradio.support.media.BrowseTree;
@@ -43,6 +43,7 @@ import com.android.car.radio.platform.RadioManagerExt;
 import com.android.car.radio.service.IRadioCallback;
 import com.android.car.radio.service.IRadioManager;
 import com.android.car.radio.storage.RadioStorage;
+import com.android.car.radio.utils.LocalInterface;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -57,7 +58,7 @@ import java.util.Optional;
  *
  * <p>Utilize the {@link RadioBinder} to perform radio operations.
  */
-public class RadioService extends MediaBrowserServiceCompat implements IPlaybackStateListener {
+public class RadioService extends MediaBrowserServiceCompat implements LocalInterface {
 
     private static String TAG = "BcRadioApp.uisrv";
 
@@ -137,8 +138,6 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
         mRadioStorage.addPresetsChangeListener(mPresetsListener);
         onPresetsChanged();
 
-        mAudioStreamController.addPlaybackStateListener(this);
-
         openRadioBandInternal(mRadioStorage.getStoredRadioBand());
 
         mRadioSuccessfullyInitialized = true;
@@ -212,23 +211,6 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
             mRadioTuner.tune(ProgramSelectorExt.createAmFmSelector(lastChannel));
 
             mRadioTuner.scan(RadioTuner.DIRECTION_UP, true);
-        }
-    }
-
-    /* TODO(b/73950974): remove onRadioMuteChanged from IRadioCallback,
-     * use IPlaybackStateListener directly.
-     */
-    @Override
-    public void onPlaybackStateChanged(@PlaybackStateCompat.State int state) {
-        boolean muted = state != PlaybackStateCompat.STATE_PLAYING;
-        synchronized (mLock) {
-            for (IRadioCallback callback : mRadioTunerCallbacks) {
-                try {
-                    callback.onRadioMuteChanged(muted);
-                } catch (RemoteException e) {
-                    Log.e(TAG, "Mute state change callback failed", e);
-                }
-            }
         }
     }
 
@@ -378,6 +360,16 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
             return mCurrentProgram;
         }
 
+        @Override
+        public void addPlaybackStateListener(IPlaybackStateListener callback) {
+            mAudioStreamController.addPlaybackStateListener(callback);
+        }
+
+        @Override
+        public void removePlaybackStateListener(IPlaybackStateListener callback) {
+            mAudioStreamController.removePlaybackStateListener(callback);
+        }
+
         /**
          * Returns {@code true} if the radio was able to successfully initialize. A value of
          * {@code false} here could mean that the {@code RadioService} was not able to connect to
@@ -441,14 +433,6 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
 
                 mReOpenRadioTunerCount++;
             }
-
-            try {
-                for (IRadioCallback callback : mRadioTunerCallbacks) {
-                    callback.onError(status);
-                }
-            } catch (RemoteException e) {
-                Log.e(TAG, "onError(); Failed to notify IRadioCallbacks: " + e.getMessage());
-            }
         }
 
         @Override
@@ -492,10 +476,5 @@ public class RadioService extends MediaBrowserServiceCompat implements IPlayback
         }
 
         return super.onStartCommand(intent, flags, startId);
-    }
-
-    @Override
-    public IBinder asBinder() {
-        throw new UnsupportedOperationException("Not a binder");
     }
 }
