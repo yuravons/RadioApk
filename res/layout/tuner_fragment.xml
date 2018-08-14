@@ -59,6 +59,7 @@ limitations under the License.
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/dialpad_layout"
+        android:textColor="@color/manual_tuner_digit_color"
         android:textAllCaps="false"
         android:text="@string/enter_text"
         android:background="@drawable/manual_tuner_button_background" />
