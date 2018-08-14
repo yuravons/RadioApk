@@ -125,6 +125,13 @@ public class RadioController {
     }
 
     /**
+     * Steps the radio tuner in the given direction, see {@link RadioAppServiceWrapper#step}.
+     */
+    public void step(boolean forward) {
+        mAppService.step(forward);
+    }
+
+    /**
      * Switch radio band. Currently, this only supports FM and AM bands.
      *
      * @param pt {@link ProgramType} to switch to.

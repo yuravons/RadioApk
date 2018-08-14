@@ -52,6 +52,11 @@ interface IRadioAppService {
     void seek(boolean forward, in ITuneCallback callback);
 
     /**
+     * Steps forward or backwards.
+     */
+    void step(boolean forward, in ITuneCallback callback);
+
+    /**
      * Mutes or resumes audio.
      *
      * @param muted {@code true} to mute, {@code false} to resume audio.
