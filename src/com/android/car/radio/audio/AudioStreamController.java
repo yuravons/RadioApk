@@ -49,6 +49,12 @@ public class AudioStreamController {
     /** Seek backwards operation. */
     public static final int OPERATION_SEEK_BKW = 3;
 
+    /** Step forwards operation. */
+    public static final int OPERATION_STEP_FWD = 4;
+
+    /** Step backwards operation. */
+    public static final int OPERATION_STEP_BKW = 5;
+
     /**
      * Operation types for {@link #preparePlayback}.
      */
@@ -56,6 +62,8 @@ public class AudioStreamController {
         OPERATION_TUNE,
         OPERATION_SEEK_FWD,
         OPERATION_SEEK_BKW,
+        OPERATION_STEP_FWD,
+        OPERATION_STEP_BKW,
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface PlaybackOperation {}
@@ -191,9 +199,11 @@ public class AudioStreamController {
                     state = PlaybackState.STATE_CONNECTING;
                     break;
                 case OPERATION_SEEK_FWD:
+                case OPERATION_STEP_FWD:
                     state = PlaybackState.STATE_SKIPPING_TO_NEXT;
                     break;
                 case OPERATION_SEEK_BKW:
+                case OPERATION_STEP_BKW:
                     state = PlaybackState.STATE_SKIPPING_TO_PREVIOUS;
                     break;
                 default:

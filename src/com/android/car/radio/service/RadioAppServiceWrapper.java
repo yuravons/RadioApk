@@ -325,6 +325,20 @@ public class RadioAppServiceWrapper {
     }
 
     /**
+     * Steps forward/backwards
+     */
+    public void step(boolean forward) {
+        step(forward, null);
+    }
+
+    /**
+     * Steps forward/backwards with a callback.
+     */
+    public void step(boolean forward, @Nullable TuneCallback result) {
+        callService(service -> service.step(forward, new TuneCallbackAdapter(result)));
+    }
+
+    /**
      * Mutes or resumes audio.
      *
      * @param muted {@code true} to mute, {@code false} to resume audio.

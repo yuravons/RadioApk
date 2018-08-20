@@ -181,6 +181,22 @@ public class RadioTunerExt {
     }
 
     /**
+     * See {@link RadioTuner#step}.
+     */
+    public void step(boolean forward, @Nullable TuneCallback resultCb) {
+        synchronized (mTuneLock) {
+            markOperationFinishedLocked(false);
+            mOperationResultCb = resultCb;
+        }
+        mTuner.cancel();
+        int res =
+                mTuner.step(forward ? RadioTuner.DIRECTION_UP : RadioTuner.DIRECTION_DOWN, false);
+        if (res != RadioManager.STATUS_OK) {
+            throw new RuntimeException("Step failed with result of " + res);
+        }
+    }
+
+    /**
      * See {@link RadioTuner#tune}.
      */
     public void tune(@NonNull ProgramSelector selector, @Nullable TuneCallback resultCb) {

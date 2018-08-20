@@ -18,6 +18,7 @@ package com.android.car.radio;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -152,6 +153,20 @@ public class RadioActivity extends FragmentActivity {
         mRadioController.shutdown();
 
         Log.d(TAG, "Radio app main activity destroyed");
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_MEDIA_STEP_FORWARD:
+                mRadioController.step(true);
+                return true;
+            case KeyEvent.KEYCODE_MEDIA_STEP_BACKWARD:
+                mRadioController.step(false);
+                return true;
+            default:
+                return super.onKeyDown(keyCode, event);
+        }
     }
 
     /**

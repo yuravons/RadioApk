@@ -310,6 +310,20 @@ public class RadioAppService extends MediaBrowserService implements LifecycleOwn
         }
 
         @Override
+        public void step(boolean forward, ITuneCallback callback) {
+            Objects.requireNonNull(callback);
+            synchronized (mLock) {
+                if (mRadioTuner == null) throw new IllegalStateException("Tuner session is closed");
+                TuneCallback tuneCb = mAudioStreamController.preparePlayback(forward
+                        ? AudioStreamController.OPERATION_STEP_FWD
+                        : AudioStreamController.OPERATION_STEP_BKW);
+                if (tuneCb == null) return;
+                mRadioTuner.step(forward, tuneCb.alsoCall(
+                        succ -> tryExec(() -> callback.onFinished(succ))));
+            }
+        }
+
+        @Override
         public void setMuted(boolean muted) {
             if (mAudioStreamController == null) return;
             if (muted) mRadioTuner.cancel();
