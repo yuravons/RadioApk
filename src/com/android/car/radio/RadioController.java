@@ -32,7 +32,6 @@ import android.hardware.radio.RadioManager;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.hardware.radio.RadioMetadata;
 import android.hardware.radio.RadioTuner;
-import android.media.AudioManager;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
@@ -98,20 +97,13 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
     private final RadioDisplayController mRadioDisplayController;
 
-    /**
-     * Keeps track of if the user has manually muted the radio. This value is used to determine
-     * whether or not to un-mute the radio after an {@link AudioManager#AUDIOFOCUS_LOSS_TRANSIENT}
-     * event has been received.
-     */
-    private boolean mUserHasMuted;
-
     private final RadioStorage mRadioStorage;
 
     private final String mAmBandString;
     private final String mFmBandString;
 
-    private List<ProgramInfoChangeListener> mProgramInfoChangeListeners = new ArrayList<>();
-    private List<RadioServiceConnectionListener> mRadioServiceConnectionListeners =
+    private final List<ProgramInfoChangeListener> mProgramInfoChangeListeners = new ArrayList<>();
+    private final List<RadioServiceConnectionListener> mRadioServiceConnectionListeners =
             new ArrayList<>();
 
     /**
@@ -254,9 +246,6 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
 
         try {
             mRadioDisplayController.setSingleChannelDisplay(mRadioBackground);
-
-            // Ensure the play button properly reflects the current mute state.
-            mRadioDisplayController.setPlayPauseButtonState(mRadioManager.isMuted());
 
             // TODO(b/73950974): use callback only
             ProgramInfo current = mRadioManager.getCurrentProgramInfo();
@@ -442,18 +431,6 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
     }
 
     /**
-     * Closes any active {@link RadioTuner}s and releases audio focus.
-     */
-    private void close() {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "close()");
-        }
-
-        // Lost focus, so display that the radio is not playing anymore.
-        mRadioDisplayController.setPlayPauseButtonState(true);
-    }
-
-    /**
      * Closes all active connections in the {@link RadioController}.
      */
     public void shutdown() {
@@ -471,8 +448,6 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
                 Log.e(TAG, "tuneToRadioChannel(); remote exception: " + e.getMessage());
             }
         }
-
-        close();
     }
 
     @Override
@@ -515,22 +490,9 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
             mRadioDisplayController.setChannelIsPreset(mRadioStorage.isPreset(sel));
 
             // Notify that the current radio station has changed.
-            if (mProgramInfoChangeListeners != null) {
-                for (ProgramInfoChangeListener listener : mProgramInfoChangeListeners) {
-                    listener.onProgramInfoChanged(info);
-                }
+            for (ProgramInfoChangeListener listener : mProgramInfoChangeListeners) {
+                listener.onProgramInfoChanged(info);
             }
-        }
-
-        @Override
-        public void onRadioMuteChanged(boolean isMuted) {
-            mRadioDisplayController.setPlayPauseButtonState(isMuted);
-        }
-
-        @Override
-        public void onError(int status) {
-            Log.e(TAG, "Radio callback error with status: " + status);
-            close();
         }
     };
 
@@ -587,11 +549,6 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
                 } else {
                     mRadioManager.mute();
                 }
-
-                boolean isMuted = mRadioManager.isMuted();
-
-                mUserHasMuted = isMuted;
-                mRadioDisplayController.setPlayPauseButtonState(isMuted);
             } catch (RemoteException e) {
                 Log.e(TAG, "playPauseClickListener(); remote exception: " + e.getMessage());
             }
@@ -638,6 +595,7 @@ public class RadioController implements RadioStorage.PresetsChangeListener {
                 }
 
                 mRadioDisplayController.setEnabled(true);
+                mRadioManager.addPlaybackStateListener(mRadioDisplayController);
 
                 if (mRadioErrorDisplay != null) {
                     mRadioErrorDisplay.setVisibility(View.GONE);
