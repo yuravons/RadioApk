@@ -21,23 +21,28 @@ limitations under the License.
         <item name="android:scaleType">center</item>
     </style>
 
-    <style name="DialpadKeyButtonStyle" parent="@style/TextAppearance.Car.Body1">
+    <style name="DialpadKeyButtonStyle">
         <item name="android:clickable">true</item>
         <item name="android:layout_width">@dimen/dialpad_button_size</item>
         <item name="android:layout_height">@dimen/dialpad_button_size</item>
         <item name="android:layout_marginBottom">@dimen/dialpad_space_vertical</item>
         <item name="android:gravity">center</item>
         <item name="android:layout_gravity">center</item>
-        <item name="android:minWidth">@dimen/car_touch_target_size</item>
-        <item name="android:minHeight">@dimen/car_touch_target_size</item>
         <item name="android:background">?android:attr/selectableItemBackground</item>
         <item name="android:focusable">true</item>
         <item name="android:textColor">@color/manual_tuner_digit_color</item>
+        <item name="android:textAppearance">?android:attr/textAppearanceLarge</item>
     </style>
 
     <!-- A style for all scrollbars that overrides the default up and down buttons. -->
-    <style name="RadioScrollBar" parent="Widget.Car.Scrollbar.Light">
+    <style name="RadioScrollBar">
         <item name="upButtonIcon">@drawable/ic_keyboard_arrow_up</item>
         <item name="downButtonIcon">@drawable/ic_keyboard_arrow_down</item>
+    </style>
+
+    <style name="BandSelectorFlatButtonStyle">
+        <item name="android:textColor">@color/manual_tuner_button_text_color</item>
+        <item name="android:background">@drawable/radio_control_background</item>
+        <item name="android:textAppearance">?android:attr/textAppearanceLarge</item>
     </style>
 </resources>

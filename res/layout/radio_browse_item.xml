@@ -15,47 +15,47 @@ limitations under the License.
 -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/favorite_card"
+    android:id="@+id/browse_card"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/favorite_item_height"
+    android:layout_height="@dimen/browse_item_height"
     android:orientation="horizontal"
     android:clickable="true"
     android:background="?android:attr/selectableItemBackground">
 
     <FrameLayout
-        android:id="@+id/favorite_station_background"
-        android:layout_marginStart="@dimen/car_keyline_1"
-        android:layout_marginEnd="@dimen/car_keyline_1"
+        android:id="@+id/browse_station_background"
+        android:layout_marginStart="@dimen/browse_item_spacing"
+        android:layout_marginEnd="@dimen/browse_item_spacing"
         android:layout_gravity="center_vertical"
-        android:layout_width="@dimen/favorite_number_bg_width"
-        android:layout_height="@dimen/favorite_number_bg_height"
-        android:background="@drawable/favorite_channel_bg">
+        android:layout_width="@dimen/browse_number_bg_width"
+        android:layout_height="@dimen/browse_number_bg_height"
+        android:background="@drawable/browse_channel_bg">
         <TextView
-            android:id="@+id/favorite_station_channel"
+            android:id="@+id/browse_station_channel"
             android:layout_gravity="center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:drawablePadding="@dimen/favorite_equalizer_padding"
+            android:drawablePadding="@dimen/browse_equalizer_padding"
             android:maxLines="1"
-            style="@style/TextAppearance.Car.Body2.Light" />
+            android:textAppearance="?android:attr/textAppearanceLarge" />
     </FrameLayout>
 
     <TextView
-        android:id="@+id/favorite_item_metadata"
+        android:id="@+id/browse_item_metadata"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:layout_gravity="center_vertical"
-        android:layout_marginEnd="@dimen/radio_default_spacing"
-        style="@style/TextAppearance.Car.Body1.Light" />
+        android:layout_marginEnd="@dimen/browse_item_spacing"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <ImageButton
-        android:id="@+id/favorite_button"
-        android:layout_marginEnd="@dimen/car_keyline_1"
+        android:id="@+id/browse_button"
+        android:layout_marginEnd="@dimen/browse_item_spacing"
         android:layout_gravity="center_vertical|right"
-        android:layout_width="@dimen/favorite_button_size"
-        android:layout_height="@dimen/favorite_button_size"
+        android:layout_width="@dimen/control_button_size"
+        android:layout_height="@dimen/control_button_size"
         android:gravity="right"
         android:src="@drawable/ic_star_filled"
         style="@style/RadioButton" />

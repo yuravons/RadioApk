@@ -20,5 +20,5 @@ limitations under the License.
         android:viewportHeight="24.0">
     <path
         android:pathData="M11.909,19C11.449,19 11.02,18.726 10.761,18.267L4.201,6.852C3.892,6.308 3.996,5.851 4.138,5.6C4.451,5.044 5.053,5 5.309,5L18.439,5C18.743,5 19.308,5.044 19.615,5.585C19.754,5.831 19.855,6.258 19.554,6.795L12.987,18.322C12.752,18.739 12.348,19 11.909,19L11.909,19ZM6.471,7.098L11.89,16.528L17.268,7.098L6.471,7.098Z"
-        android:fillColor="@color/control_button" />
+        android:fillColor="@color/control_button_color" />
 </vector>

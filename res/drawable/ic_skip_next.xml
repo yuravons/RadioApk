@@ -20,7 +20,7 @@ limitations under the License.
     android:viewportHeight="48">
 
     <path
-        android:fillColor="@color/control_button"
+        android:fillColor="@color/control_button_color"
         android:pathData="M12 36l17-12-17-12v24zm20-24v24h4V12h-4z" />
     <path
         android:pathData="M0 0h48v48H0z" />

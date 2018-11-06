@@ -14,17 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <resources>
-    <style name="DialpadKeyButtonStyle" parent="@style/TextAppearance.Car.Body1">
+    <style name="DialpadKeyButtonStyle">
         <item name="android:clickable">true</item>
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">@dimen/dialpad_button_size</item>
+        <item name="android:layout_height">@dimen/dialpad_button_size</item>
         <item name="android:layout_marginBottom">@dimen/dialpad_space_vertical</item>
         <item name="android:gravity">center</item>
         <item name="android:layout_gravity">center</item>
-        <item name="android:minWidth">@dimen/car_touch_target_size</item>
-        <item name="android:minHeight">@dimen/car_touch_target_size</item>
         <item name="android:background">?android:attr/selectableItemBackground</item>
         <item name="android:focusable">true</item>
         <item name="android:textColor">@color/manual_tuner_digit_color</item>
+        <item name="android:textAppearance">?android:attr/textAppearanceLarge</item>
     </style>
 </resources>
