@@ -24,7 +24,8 @@ limitations under the License.
         android:background="@android:color/transparent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:theme="@style/PagedListTheme"
         app:showPagedListViewDivider="true"
-        app:alignDividerEndTo="@id/favorite_card"
-        app:alignDividerStartTo="@id/favorite_card" />
+        app:alignDividerEndTo="@id/browse_card"
+        app:alignDividerStartTo="@id/browse_card" />
 </LinearLayout>

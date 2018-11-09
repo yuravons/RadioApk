@@ -19,18 +19,16 @@ limitations under the License.
     android:id="@+id/main_radio_display"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginLeft="@dimen/car_margin"
-    android:layout_marginRight="@dimen/car_margin"
-    android:layout_marginBottom="@dimen/playback_card_bottom_margin"
-    android:paddingTop="@dimen/car_padding_4"
-    android:paddingLeft="@dimen/car_keyline_1"
-    android:paddingRight="@dimen/car_keyline_1"
+    android:layout_marginLeft="@dimen/playback_card_margin_horizontal"
+    android:layout_marginRight="@dimen/playback_card_margin_horizontal"
+    android:layout_marginBottom="@dimen/playback_card_margin_bottom"
+    android:paddingTop="@dimen/playback_card_interior_padding"
     android:background="@drawable/playback_background">
 
     <ImageView
         android:id="@+id/station_art"
-        android:layout_width="@dimen/art_size"
-        android:layout_height="0dp"
+        android:layout_width="@dimen/playback_card_art_size"
+        android:layout_height="@dimen/playback_card_art_size"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/station_name"
         app:layout_constraintTop_toTopOf="parent"
@@ -43,16 +41,16 @@ limitations under the License.
         android:layout_gravity="center"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/car_padding_4"
-        android:layout_marginRight="@dimen/car_padding_5"
+        android:layout_marginLeft="@dimen/playback_card_interior_padding"
+        android:layout_marginRight="@dimen/playback_card_interior_padding"
         android:maxLines="1"
+        android:textAppearance="?android:attr/textAppearanceLarge"
         app:layout_constraintVertical_chainStyle="packed"
         app:layout_constraintStart_toEndOf="@+id/station_art"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/station_details"
         app:layout_constraintEnd_toStartOf="@+id/station_channel"
-        android:visibility="invisible"
-        style="@style/TextAppearance.Car.Body1.Light" />
+        android:visibility="invisible" />
 
     <TextView
         android:id="@+id/station_details"
@@ -60,30 +58,30 @@ limitations under the License.
         android:layout_gravity="center"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/car_padding_1"
-        android:layout_marginLeft="@dimen/car_padding_4"
-        android:layout_marginRight="@dimen/car_padding_5"
+        android:paddingTop="@dimen/playback_card_text_spacing"
+        android:layout_marginLeft="@dimen/playback_card_interior_padding"
+        android:layout_marginRight="@dimen/playback_card_interior_padding"
         android:maxLines="1"
+        android:textAppearance="?android:attr/textAppearanceMedium"
         app:layout_constraintTop_toBottomOf="@+id/station_name"
         app:layout_constraintBottom_toTopOf="@+id/playback_controls"
         app:layout_constraintStart_toEndOf="@+id/station_art"
         app:layout_constraintEnd_toStartOf="@+id/station_channel"
-        android:visibility="invisible"
-        style="@style/TextAppearance.Car.Body2" />
+        android:visibility="invisible" />
 
     <TextView
         android:id="@+id/station_channel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/station_top_margin"
+        android:textAppearance="?android:attr/textAppearanceMedium"
         app:layout_constraintBaseline_toBaselineOf="@+id/station_details"
-        app:layout_constraintEnd_toEndOf="parent"
-        style="@style/TextAppearance.Car.Body2.Light" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <include
         layout="@layout/radio_playback_controls"
         android:layout_width="0dp"
-        android:layout_height="@dimen/car_action_bar_height"
+        android:layout_height="@dimen/playback_card_controls_height"
         android:id="@+id/playback_controls"
         app:layout_constraintTop_toBottomOf="@+id/station_details"
         app:layout_constraintBottom_toBottomOf="parent"

@@ -82,18 +82,18 @@ public class ProgramViewHolder extends RecyclerView.ViewHolder implements View.O
 
         mContext = presetsView.getContext();
 
-        mPresetsCard = presetsView.findViewById(R.id.favorite_card);
+        mPresetsCard = presetsView.findViewById(R.id.browse_card);
         mPresetsCard.setOnClickListener(this);
 
         mPresetClickListener = Objects.requireNonNull(listener);
         mPresetFavoriteListener = Objects.requireNonNull(favoriteListener);
 
-        mPresetItemChannel = presetsView.findViewById(R.id.favorite_station_channel);
-        mPresetItemMetadata = presetsView.findViewById(R.id.favorite_item_metadata);
-        mPresetButton = presetsView.findViewById(R.id.favorite_button);
+        mPresetItemChannel = presetsView.findViewById(R.id.browse_station_channel);
+        mPresetItemMetadata = presetsView.findViewById(R.id.browse_item_metadata);
+        mPresetButton = presetsView.findViewById(R.id.browse_button);
 
         mPresetItemChannelBg = (GradientDrawable)
-                presetsView.findViewById(R.id.favorite_station_background).getBackground();
+                presetsView.findViewById(R.id.browse_station_background).getBackground();
     }
 
     @Override
@@ -151,6 +151,6 @@ public class ProgramViewHolder extends RecyclerView.ViewHolder implements View.O
                 : R.drawable.ic_star_empty);
         mPresetButton.setColorFilter(mContext.getColor(favoriteToggleOn
                 ? R.color.accent_color
-                : R.color.control_button));
+                : R.color.control_button_color));
     }
 }
