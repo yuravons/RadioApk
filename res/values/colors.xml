@@ -21,19 +21,19 @@ limitations under the License.
     <color name="default_background_color">#283593</color>
 
     <!-- The color of the radio control buttons. -->
-    <color name="control_button">@color/car_grey_100</color>
+    <color name="control_button_color">@*android:color/car_grey_100</color>
 
     <!-- The color of the radio control buttons when they are disabled. -->
-    <color name="control_button_disabled">@color/car_grey_650</color>
+    <color name="control_button_disabled_color">@*android:color/car_grey_600</color>
 
     <!-- The text color of the buttons in the manual tuner. -->
-    <color name="manual_tuner_button_text">@color/car_grey_100</color>
+    <color name="manual_tuner_button_text_color">@*android:color/car_grey_100</color>
 
     <!-- The color of the icon within the manaul tuner's done button when it is disabled. -->
-    <color name="manual_tuner_done_disabled">@color/car_grey_700</color>
+    <color name="manual_tuner_done_disabled_color">@*android:color/car_grey_700</color>
 
     <!-- The background ripple color for buttons in the manual tuner -->
-    <color name="manual_tuner_button_ripple_background">#66ffffff</color>
+    <color name="manual_tuner_button_ripple_background_color">#66ffffff</color>
 
     <!-- The default background color of radio cards -->
     <color name="radio_card_color">#ff131315</color>

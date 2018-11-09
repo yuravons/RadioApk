@@ -29,7 +29,7 @@
 
     <application android:label="@string/app_name"
         android:icon="@drawable/logo_fm_radio"
-        android:theme="@style/RadioAppTheme">
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
 
         <activity
             android:name=".RadioActivity"
