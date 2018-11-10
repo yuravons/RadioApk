@@ -17,14 +17,23 @@ limitations under the License.
     <!-- The main accent color of the radio app. -->
     <color name="accent_color">#ff356fe5</color>
 
-    <!-- The default background color of the radio. -->
-    <color name="default_background_color">#283593</color>
+    <!-- The background color of the playback card. -->
+    <color name="playback_card_background_color">@android:color/black</color>
 
     <!-- The color of the radio control buttons. -->
     <color name="control_button_color">@*android:color/car_grey_100</color>
 
+    <!-- The background ripple color of the radio control buttons. -->
+    <color name="control_button_ripple_color">@*android:color/car_card_ripple_background</color>
+
     <!-- The color of the radio control buttons when they are disabled. -->
     <color name="control_button_disabled_color">@*android:color/car_grey_600</color>
+
+    <!-- The text color of the band selector buttons in the manual tuner. -->
+    <color name="band_selector_flat_text_color">@*android:color/car_grey_100</color>
+
+    <!-- The text color of the band selector buttons in the manual tuner, when active. -->
+    <color name="band_selector_flat_text_color_selected">@*android:color/car_grey_50</color>
 
     <!-- The text color of the buttons in the manual tuner. -->
     <color name="manual_tuner_button_text_color">@*android:color/car_grey_100</color>
@@ -36,5 +45,5 @@ limitations under the License.
     <color name="manual_tuner_button_ripple_background_color">#66ffffff</color>
 
     <!-- The default background color of radio cards -->
-    <color name="radio_card_color">#ff131315</color>
+    <color name="radio_card_color">@*android:color/car_card_dark</color>
 </resources>

@@ -16,7 +16,7 @@ limitations under the License.
 <resources>
     <!-- The default style for a radio button. -->
     <style name="RadioButton">
-        <item name="android:background">@drawable/radio_control_background</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
         <item name="android:padding">@dimen/radio_controls_button_padding</item>
         <item name="android:scaleType">center</item>
     </style>

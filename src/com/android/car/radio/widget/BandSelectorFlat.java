@@ -74,7 +74,8 @@ public class BandSelectorFlat extends BandSelector {
             for (Button btn : mButtons) {
                 boolean active = btn.getTag() == ptype;
                 btn.setTextColor(ctx.getColor(active
-                        ? R.color.car_grey_50 : R.color.manual_tuner_button_text_color));
+                        ? R.color.band_selector_flat_text_color_selected
+                        : R.color.band_selector_flat_text_color));
                 btn.setBackground(ctx.getDrawable(active
                         ? R.drawable.manual_tuner_button_background
                         : R.drawable.radio_control_background));
