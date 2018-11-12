@@ -46,4 +46,7 @@ limitations under the License.
 
     <!-- The default background color of radio cards -->
     <color name="radio_card_color">@*android:color/car_card_dark</color>
+
+    <!-- The color of the browse list item text -->
+    <color name="browse_item_text_color">@*android:color/car_body1_light</color>
 </resources>
