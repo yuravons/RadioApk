@@ -119,7 +119,7 @@ public class ProgramViewHolder extends RecyclerView.ViewHolder implements View.O
 
         mPresetItemChannelBg.setColor(mContext.getResources().getColor(isActiveStation
                 ? R.color.accent_color
-                : R.color.car_card_dark, null));
+                : R.color.radio_card_color, null));
         mPresetItemChannel.setCompoundDrawablesRelativeWithIntrinsicBounds(isActiveStation
                 ? R.drawable.ic_equalizer
                 : 0, 0, 0, 0);
