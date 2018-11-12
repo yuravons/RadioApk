@@ -38,6 +38,7 @@ limitations under the License.
             android:gravity="center"
             android:drawablePadding="@dimen/browse_equalizer_padding"
             android:maxLines="1"
+            android:textColor="@color/browse_item_text_color"
             android:textAppearance="?android:attr/textAppearanceLarge" />
     </FrameLayout>
 
@@ -48,6 +49,7 @@ limitations under the License.
         android:layout_weight="1"
         android:layout_gravity="center_vertical"
         android:layout_marginEnd="@dimen/browse_item_spacing"
+        android:textColor="@color/browse_item_text_color"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <ImageButton
