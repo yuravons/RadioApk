@@ -17,7 +17,7 @@ limitations under the License.
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/buttons_container"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/car_action_bar_height"
+    android:layout_height="@dimen/control_bar_height"
     android:orientation="horizontal">
 
     <ImageButton
@@ -36,7 +36,7 @@ limitations under the License.
         android:layout_width="@dimen/control_button_size"
         android:layout_height="@dimen/control_button_size"
         android:layout_weight="1"
-        android:stateListAnimator="@anim/car_fab_state_list_animator"
+        android:stateListAnimator="@anim/fab_state_list_animator"
         android:src="@drawable/ic_play_pause_stop"
         android:scaleType="center"
         android:background="@drawable/playback_button_background"
