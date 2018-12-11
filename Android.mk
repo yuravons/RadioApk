@@ -43,6 +43,7 @@ LOCAL_STATIC_ANDROID_LIBRARIES += \
     androidx-constraintlayout_constraintlayout \
     androidx.car_car \
     car-apps-common \
+    car-media-common \
     car-broadcastradio-support \
     car-theme-lib
 

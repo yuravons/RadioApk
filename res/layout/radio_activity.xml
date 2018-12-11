@@ -19,6 +19,13 @@ limitations under the License.
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/app_bar_bottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="@dimen/appbar_height" />
+
     <View
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -53,8 +60,20 @@ limitations under the License.
         android:layout_marginTop="@dimen/control_button_margin"
         android:layout_marginRight="@dimen/control_button_margin"
         android:scaleType="center"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/app_switch_container"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <com.android.car.media.common.MediaAppSelectorWidget
+        android:id="@+id/app_switch_container"
+        android:layout_width="@dimen/app_switch_widget_width"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/app_bar_bottom"
+        app:layout_constraintRight_toRightOf="parent"
+        android:padding="@dimen/app_switch_widget_icon_padding"
+        android:orientation="horizontal"
+        android:background="@drawable/app_item_background"
+        android:gravity="center" />
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/viewpager"

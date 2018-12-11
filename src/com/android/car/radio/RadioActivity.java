@@ -16,6 +16,7 @@
 
 package com.android.car.radio;
 
+import android.car.Car;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -28,6 +29,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager.widget.ViewPager;
 
+import com.android.car.media.common.source.MediaSourceViewModel;
 import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.util.Log;
 import com.android.car.radio.widget.BandSelector;
@@ -124,6 +126,15 @@ public class RadioActivity extends FragmentActivity {
 
         mTabLayout.getTabAt(0).select();
         refreshCustomTabViews();
+
+        MediaSourceViewModel model = MediaSourceViewModel.get(this);
+        model.getPrimaryMediaSource().observe(this, source -> {
+            if (source != null) {
+                // Always go through the trampoline activity to keep all the dispatching logic
+                // there.
+                startActivity(new Intent(Car.CAR_INTENT_ACTION_MEDIA_TEMPLATE));
+            }
+        });
     }
 
     @Override
