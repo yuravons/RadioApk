@@ -40,7 +40,7 @@ limitations under the License.
     <dimen name="browse_equalizer_padding">@*android:dimen/car_padding_1</dimen>
 
     <!-- Playback card -->
-    <dimen name="playback_card_height">@*android:dimen/car_card_action_bar_height</dimen>
+    <dimen name="playback_card_height">96dp</dimen>
     <dimen name="playback_card_controls_height">@dimen/playback_card_height</dimen>
     <dimen name="playback_card_art_size">@dimen/playback_card_height</dimen>
     <dimen name="playback_card_channel_size">@dimen/playback_card_height</dimen>
@@ -55,6 +55,7 @@ limitations under the License.
     <dimen name="dialpad_space_horizontal">@*android:dimen/car_padding_5</dimen>
     <dimen name="dialpad_space_vertical">@*android:dimen/car_padding_5</dimen>
     <dimen name="dialpad_button_size">@dimen/control_button_size</dimen>
+    <dimen name="dialpad_button_padding">0dp</dimen>
 
     <!-- Tab/App bar dimensions -->
     <dimen name="tab_height">@*android:dimen/car_app_bar_height</dimen>
