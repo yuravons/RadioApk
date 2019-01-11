@@ -26,6 +26,8 @@ import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.car.radio.util.Log;
+
 import java.util.Map;
 import java.util.Objects;
 
@@ -39,6 +41,7 @@ import java.util.Objects;
  * They might eventually get pushed to the framework.
  */
 class TunerCallbackAdapterExt extends RadioTuner.Callback {
+    private static final String TAG = "BcRadioApp.tunerext";
     private static final int INIT_TIMEOUT_MS = 10000;  // 10s
 
     private final Object mInitLock = new Object();
@@ -109,7 +112,13 @@ class TunerCallbackAdapterExt extends RadioTuner.Callback {
     }
 
     public void onProgramInfoChanged(RadioManager.ProgramInfo info) {
-        mProgramInfoCallback.onProgramInfoChanged(info);
+        ProgramInfoCallback cb = mProgramInfoCallback;
+        if (cb == null) {
+            // TODO: this is just a workaround, we need to debug root cause
+            Log.e(TAG, "ProgramInfo callback is not set yet");
+        } else {
+            mProgramInfoCallback.onProgramInfoChanged(info);
+        }
         mHandler.post(() -> mCallback.onProgramInfoChanged(info));
     }
 
