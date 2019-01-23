@@ -131,7 +131,7 @@ public class RadioActivity extends FragmentActivity {
         mTabLayout.getTabAt(0).select();
         refreshCustomTabViews();
 
-        MediaSourceViewModel model = MediaSourceViewModel.get(this);
+        MediaSourceViewModel model = MediaSourceViewModel.get(getApplication());
         model.getPrimaryMediaSource().observe(this, source -> {
             if (source != null) {
                 // Always go through the trampoline activity to keep all the dispatching logic
