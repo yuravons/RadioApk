@@ -26,6 +26,7 @@
     <uses-permission android:name="android.car.permission.CAR_CONTROL_AUDIO_VOLUME" />
     <uses-permission android:name="android.car.permission.CAR_RADIO" />
     <uses-permission android:name="android.permission.ACCESS_BROADCAST_RADIO" />
+    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL"/>
     <!-- Media Center permission to fetch and update the currently selected media source -->
     <uses-permission android:name="com.android.car.media.provider.READ_WRITE"/>
 
