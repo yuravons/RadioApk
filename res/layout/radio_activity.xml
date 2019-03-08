@@ -24,7 +24,7 @@ limitations under the License.
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="@dimen/appbar_height" />
+        app:layout_constraintGuide_begin="@dimen/appbar_first_row_height" />
 
     <View
         android:layout_width="0dp"
