@@ -35,10 +35,11 @@ limitations under the License.
         <item name="android:textAppearance">?android:attr/textAppearanceLarge</item>
     </style>
 
-    <!-- A style for all scrollbars that overrides the default up and down buttons. -->
-    <style name="RadioScrollBar">
-        <item name="upButtonIcon">@drawable/ic_keyboard_arrow_up</item>
-        <item name="downButtonIcon">@drawable/ic_keyboard_arrow_down</item>
+    <style name="RadioStatusMessage">
+        <item name="android:gravity">center</item>
+        <item name="android:layout_width">@dimen/radio_activity_status_size</item>
+        <item name="android:layout_height">@dimen/radio_activity_status_size</item>
+        <item name="android:textAppearance">?android:attr/textAppearanceLarge</item>
     </style>
 
     <style name="BandSelectorFlatButtonStyle">

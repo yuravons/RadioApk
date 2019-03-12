@@ -14,18 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <androidx.car.widget.PagedListView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/browse_list"
-        android:background="@android:color/transparent"
+        android:background="@color/browse_fragment_list_color"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:theme="@style/PagedListTheme"
-        app:showPagedListViewDivider="true"
-        app:alignDividerEndTo="@id/browse_card"
-        app:alignDividerStartTo="@id/browse_card" />
+        android:layout_marginLeft="@dimen/radio_margin"
+        android:layout_marginRight="@dimen/radio_margin"
+        android:theme="@style/RecyclerViewTheme"/>
 </LinearLayout>
