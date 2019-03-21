@@ -17,6 +17,7 @@
 package com.android.car.radio;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -29,8 +30,8 @@ public class RadioPagerAdapter extends FragmentPagerAdapter {
 
     private static final int DEFAULT_PAGE_COUNT = 2;
     private static final int[] TAB_LABELS =
-            new int[] {R.string.favorites_tab, R.string.tune_tab, R.string.browse_tab};
-    private static final int[] TAB_ICONS = new int[] {R.drawable.ic_star_filled,
+            new int[]{R.string.favorites_tab, R.string.tune_tab, R.string.browse_tab};
+    private static final int[] TAB_ICONS = new int[]{R.drawable.ic_star_filled,
             R.drawable.ic_input_antenna, R.drawable.ic_list};
 
     private RadioController mRadioController;
@@ -48,7 +49,7 @@ public class RadioPagerAdapter extends FragmentPagerAdapter {
 
     @Override
     public Fragment getItem(int i) {
-        switch(i) {
+        switch (i) {
             case 0:
                 return FavoritesFragment.newInstance(mRadioController);
             case 1:
@@ -70,10 +71,10 @@ public class RadioPagerAdapter extends FragmentPagerAdapter {
     }
 
     /**
-     * Returns resource id of the icon to use for the tab at position
+     * Returns drawable of the icon to use for the tab at position
      */
-    public int getImageResource(int position) {
-        return TAB_ICONS[position];
+    public Drawable getPageIcon(int position) {
+        return mContext.getDrawable(TAB_ICONS[position]);
     }
 
     /**

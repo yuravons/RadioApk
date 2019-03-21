@@ -20,22 +20,17 @@ import android.car.Car;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.KeyEvent;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager.widget.ViewPager;
 
+import com.android.car.apps.common.widget.CarTabLayout;
 import com.android.car.media.common.MediaAppSelectorWidget;
 import com.android.car.media.common.source.MediaSourceViewModel;
 import com.android.car.radio.bands.ProgramType;
 import com.android.car.radio.util.Log;
 import com.android.car.radio.widget.BandSelector;
-
-import com.google.android.material.tabs.TabLayout;
 
 import java.util.List;
 
@@ -60,10 +55,8 @@ public class RadioActivity extends FragmentActivity {
     private RadioController mRadioController;
     private BandSelector mBandSelector;
 
-    private Object mLock = new Object();
-    private TabLayout mTabLayout;
+    private CarTabLayout mCarTabLayout;
     private RadioPagerAdapter mRadioPagerAdapter;
-    private int mCurrentTab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,50 +79,8 @@ public class RadioActivity extends FragmentActivity {
                 new RadioPagerAdapter(this, getSupportFragmentManager(), mRadioController);
         ViewPager viewPager = findViewById(R.id.viewpager);
         viewPager.setAdapter(mRadioPagerAdapter);
-        mTabLayout = (TabLayout) findViewById(R.id.tabs);
-        mTabLayout.setupWithViewPager(viewPager);
-
-        mTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                synchronized (mLock) {
-                    mCurrentTab = tab.getPosition();
-                    View tabView = tab.getCustomView();
-
-                    // When the number of tabs is changed in mRadioPagerAdapter, the tab's custom
-                    // views are reset, and we immediately get this callback with null custom view
-                    if (tabView == null) return;
-
-                    TextView tabLabel = tabView.findViewById(R.id.tab_label);
-                    ImageView tabIcon = tabView.findViewById(R.id.tab_icon);
-
-                    tabLabel.setTextColor(getColor(R.color.control_button_color));
-                    tabIcon.setColorFilter(getColor(R.color.control_button_color));
-                }
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-                synchronized (mLock) {
-                    View tabView = tab.getCustomView();
-                    if (tabView == null) return;
-
-                    TextView tabLabel = tabView.findViewById(R.id.tab_label);
-                    ImageView tabIcon = tabView.findViewById(R.id.tab_icon);
-                    tabLabel.setTextColor(
-                            getColor(R.color.control_button_disabled_color));
-                    tabIcon.setColorFilter(
-                            getColor(R.color.control_button_disabled_color));
-                }
-            }
-        });
-
-        mTabLayout.getTabAt(0).select();
-        refreshCustomTabViews();
+        mCarTabLayout = findViewById(R.id.tabs);
+        setupTabsWithViewPager(mCarTabLayout, viewPager);
 
         MediaSourceViewModel model = MediaSourceViewModel.get(getApplication());
         model.getPrimaryMediaSource().observe(this, source -> {
@@ -189,10 +140,7 @@ public class RadioActivity extends FragmentActivity {
      */
     public void setProgramListSupported(boolean supported) {
         if (supported && mRadioPagerAdapter.addBrowseTab()) {
-            synchronized (mLock) {
-                // Need to apply custom view to new tabs
-                refreshCustomTabViews();
-            }
+            buildTabs();
         }
     }
 
@@ -203,28 +151,28 @@ public class RadioActivity extends FragmentActivity {
         mBandSelector.setSupportedProgramTypes(supported);
     }
 
-    private View buildCustomTab(CharSequence text, int image, boolean isSelected) {
-        LinearLayout tab = (LinearLayout) getLayoutInflater().inflate(R.layout.tab_item, null);
-        TextView tabLabel = tab.findViewById(R.id.tab_label);
-        ImageView tabIcon = tab.findViewById(R.id.tab_icon);
-
-        tabLabel.setText(text);
-        tabLabel.setTextColor(getColor(R.color.control_button_disabled_color));
-        tabIcon.setImageResource(image);
-        tabIcon.setColorFilter(getColor(R.color.control_button_disabled_color));
-        if (isSelected) {
-            tabLabel.setTextColor(getColor(R.color.control_button_color));
-            tabIcon.setColorFilter(getColor(R.color.control_button_color));
-        }
-
-        return tab;
+    private void setupTabsWithViewPager(CarTabLayout carTabLayout, ViewPager viewPager) {
+        carTabLayout.addOnCarTabSelectedListener(new CarTabLayout.SimpleOnCarTabSelectedListener() {
+            @Override
+            public void onCarTabSelected(CarTabLayout.CarTab carTab) {
+                viewPager.setCurrentItem(carTabLayout.getCarTabPosition(carTab));
+            }
+        });
+        viewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                carTabLayout.selectCarTab(position);
+            }
+        });
+        buildTabs();
     }
 
-    private void refreshCustomTabViews() {
+    private void buildTabs() {
+        mCarTabLayout.clearAllCarTabs();
         for (int i = 0; i < mRadioPagerAdapter.getCount(); i++) {
-            mTabLayout.getTabAt(i)
-                    .setCustomView(buildCustomTab(mRadioPagerAdapter.getPageTitle(i),
-                            mRadioPagerAdapter.getImageResource(i), i == mCurrentTab));
+            CarTabLayout.CarTab carTab = new CarTabLayout.CarTab(mRadioPagerAdapter.getPageIcon(i),
+                    mRadioPagerAdapter.getPageTitle(i));
+            mCarTabLayout.addCarTab(carTab);
         }
     }
 

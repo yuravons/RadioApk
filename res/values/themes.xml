@@ -17,9 +17,4 @@ limitations under the License.
     <!--These Themes contain attributes required for components from support lib -->
     <style name="PagedListTheme" parent="Theme.CarSupportWrapper.NoActionBar">
     </style>
-
-    <style name="TabTheme" parent="Theme.CarSupportWrapper.NoActionBar">
-        <item name="android:elevation">@dimen/tab_elevation</item>
-        <item name="android:background">@android:color/transparent</item>
-    </style>
 </resources>
