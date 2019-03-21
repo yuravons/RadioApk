@@ -24,7 +24,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.car.widget.PagedListView;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.RecyclerView;
@@ -41,8 +40,7 @@ import java.util.stream.Collectors;
 /**
  * Adapter that will display a list of radio stations that represent the user's presets.
  */
-public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
-        implements PagedListView.ItemCap {
+public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder> {
     // Only one type of view in this adapter.
     private static final int PRESETS_VIEW_TYPE = 0;
 
@@ -235,12 +233,6 @@ public class BrowseAdapter extends RecyclerView.Adapter<ProgramViewHolder>
             if (cnt == 0 && mCurrentProgram != null) return 1;
             return cnt;
         }
-    }
-
-    @Override
-    public void setMaxItems(int max) {
-        // No-op. A PagedListView needs the ItemCap interface to be implemented. However, the
-        // list of presets should not be limited.
     }
 
     private void handlePresetClicked(int position) {

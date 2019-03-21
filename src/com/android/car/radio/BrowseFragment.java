@@ -22,8 +22,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.car.widget.PagedListView;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.broadcastradio.support.Program;
@@ -38,7 +38,7 @@ public class BrowseFragment extends Fragment {
     private BrowseAdapter mBrowseAdapter;
     private RadioStorage mRadioStorage;
     private View mRootView;
-    private PagedListView mBrowseList;
+    private RecyclerView mBrowseList;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -59,11 +59,11 @@ public class BrowseFragment extends Fragment {
         mBrowseAdapter.setOnItemFavoriteListener(this::handlePresetItemFavoriteChanged);
 
         mBrowseList = view.findViewById(R.id.browse_list);
+        mBrowseList.setLayoutManager(new LinearLayoutManager(context));
         mBrowseList.setAdapter(mBrowseAdapter);
-        RecyclerView recyclerView = mBrowseList.getRecyclerView();
-        recyclerView.setVerticalFadingEdgeEnabled(true);
-        recyclerView.setFadingEdgeLength(getResources()
-                .getDimensionPixelSize(R.dimen.car_padding_4));
+        mBrowseList.setVerticalFadingEdgeEnabled(true);
+        mBrowseList.setFadingEdgeLength(getResources()
+                .getDimensionPixelSize(R.dimen.browse_list_fading_edge_length));
 
         mRadioController.getProgramList().observe(this, mBrowseAdapter::setProgramList);
     }

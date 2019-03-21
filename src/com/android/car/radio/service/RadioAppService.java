@@ -368,7 +368,6 @@ public class RadioAppService extends MediaBrowserService implements LifecycleOwn
                  * current API. For now, let's make it simple and make it react to all program
                  * selector changes. */
                 mRadioStorage.setRecentlySelected(info.getSelector());
-
                 for (IRadioAppCallback callback : mRadioAppCallbacks) {
                     tryExec(() -> callback.onCurrentProgramChanged(info));
                 }

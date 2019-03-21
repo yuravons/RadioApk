@@ -16,16 +16,16 @@ limitations under the License.
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_enabled="false">
         <shape>
-            <solid android:color="@android:color/black" />
-            <corners android:radius="6dp" />
+            <solid android:color="@color/manual_tuner_button_background_color" />
+            <corners android:radius="@dimen/ic_manual_tuner_button_radius" />
         </shape>
     </item>
     <item>
         <ripple android:color="@color/manual_tuner_button_ripple_background_color">
             <item>
                 <shape>
-                    <solid android:color="@color/accent_color" />
-                    <corners android:radius="6dp" />
+                    <solid android:color="@color/manual_tuner_button_ripple_fill_color" />
+                    <corners android:radius="@dimen/ic_manual_tuner_button_radius" />
                 </shape>
             </item>
         </ripple>
