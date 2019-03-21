@@ -28,7 +28,7 @@ limitations under the License.
         android:id="@+id/station_channel"
         android:layout_width="@dimen/playback_card_channel_size"
         android:layout_height="@dimen/playback_card_channel_size"
-        android:background="@color/car_card_dark"
+        android:background="@*android:color/car_card_dark"
         android:gravity="center"
         android:textAppearance="?android:attr/textAppearanceLarge"
         app:layout_constraintTop_toTopOf="parent"

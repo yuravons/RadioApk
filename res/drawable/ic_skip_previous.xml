@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="@dimen/car_primary_icon_size"
-    android:height="@dimen/car_primary_icon_size"
+    android:width="@dimen/ic_skip_previous_width"
+    android:height="@dimen/ic_skip_previous_height"
     android:viewportWidth="48"
     android:viewportHeight="48">
 

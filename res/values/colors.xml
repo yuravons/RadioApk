@@ -44,9 +44,42 @@ limitations under the License.
     <!-- The background ripple color for buttons in the manual tuner -->
     <color name="manual_tuner_button_ripple_background_color">#66ffffff</color>
 
+    <!-- The background ripple fill color for buttons in the manual tuner -->
+    <color name="manual_tuner_button_ripple_fill_color">@color/accent_color</color>
+
+    <!-- The background color for buttons in the manual tuner -->
+    <color name="manual_tuner_button_background_color">@android:color/black</color>
+
     <!-- The default background color of radio cards -->
     <color name="radio_card_color">@*android:color/car_card_dark</color>
 
+    <!-- The color of the browse fragment list -->
+    <color name="browse_fragment_list_color">@*android:color/transparent</color>
+
     <!-- The color of the browse list item text -->
     <color name="browse_item_text_color">@*android:color/car_body1_light</color>
+
+    <!-- The fill color of the pause button. -->
+    <color name="pause_button_fill_color">@android:color/black</color>
+
+    <!-- The fill color of the play arrow. -->
+    <color name="play_arrow_fill_color">@android:color/black</color>
+
+    <!-- The fill color of the play off arrow. -->
+    <color name="play_arrow_off_fill_color">@android:color/black</color>
+
+    <!-- The color of the play/pause button -->
+    <color name="playback_controls_play_button_color">@*android:color/car_grey_50</color>
+
+    <!-- The background ripple color for the playback button -->
+    <color name="playback_button_ripple_background_color">@*android:color/car_card_ripple_background_light</color>
+
+    <!-- The background ripple fill color for the playback button -->
+    <color name="playback_button_ripple_fill_color">?android:colorAccent</color>
+
+    <!-- The fill color of the radio am button. -->
+    <color name="radio_am_fill_color">#fafafa</color>
+
+    <!-- The fill color of the radio fm button. -->
+    <color name="radio_fm_fill_color">#fafafa</color>
 </resources>
