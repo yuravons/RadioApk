@@ -27,9 +27,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.car.radio.util.Log;
+import com.android.internal.annotations.GuardedBy;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Proposed extensions to android.hardware.radio.TunerCallbackAdapter.
@@ -50,8 +52,12 @@ class TunerCallbackAdapterExt extends RadioTuner.Callback {
     private final RadioTuner.Callback mCallback;
     private final Handler mHandler;
 
-    private TuneFailedCallback mTuneFailedCallback;
+    private final AtomicReference<TuneFailedCallback> mTuneFailedCallback = new AtomicReference<>();
+    private final Object mProgramInfoLock = new Object();
+    @GuardedBy("mProgramInfoLock")
     private ProgramInfoCallback mProgramInfoCallback;
+    @GuardedBy("mProgramInfoLock")
+    private RadioManager.ProgramInfo mCachedProgramInfo;
 
     interface TuneFailedCallback {
         void onTuneFailed(int result, @Nullable ProgramSelector selector);
@@ -83,11 +89,18 @@ class TunerCallbackAdapterExt extends RadioTuner.Callback {
     }
 
     void setTuneFailedCallback(TuneFailedCallback cb) {
-        mTuneFailedCallback = cb;
+        mTuneFailedCallback.set(cb);
     }
 
     void setProgramInfoCallback(ProgramInfoCallback cb) {
-        mProgramInfoCallback = cb;
+        synchronized (mProgramInfoLock) {
+            mProgramInfoCallback = cb;
+            if (mProgramInfoCallback != null && mCachedProgramInfo != null) {
+                Log.d(TAG, "Invoking callback with cached ProgramInfo");
+                mProgramInfoCallback.onProgramInfoChanged(mCachedProgramInfo);
+                mCachedProgramInfo = null;
+            }
+        }
     }
 
     @Override
@@ -97,7 +110,10 @@ class TunerCallbackAdapterExt extends RadioTuner.Callback {
 
     @Override
     public void onTuneFailed(int result, @Nullable ProgramSelector selector) {
-        mTuneFailedCallback.onTuneFailed(result, selector);
+        TuneFailedCallback cb = mTuneFailedCallback.get();
+        if (cb != null) {
+            cb.onTuneFailed(result, selector);
+        }
         mHandler.post(() -> mCallback.onTuneFailed(result, selector));
     }
 
@@ -112,12 +128,17 @@ class TunerCallbackAdapterExt extends RadioTuner.Callback {
     }
 
     public void onProgramInfoChanged(RadioManager.ProgramInfo info) {
-        ProgramInfoCallback cb = mProgramInfoCallback;
-        if (cb == null) {
-            // TODO: this is just a workaround, we need to debug root cause
-            Log.e(TAG, "ProgramInfo callback is not set yet");
-        } else {
-            mProgramInfoCallback.onProgramInfoChanged(info);
+        synchronized (mProgramInfoLock) {
+            if (mProgramInfoCallback == null) {
+                // Cache the ProgramInfo until the callback is set. This workaround is needed
+                // because a TunerCallbackAdapterExt needed to call RadioManager.openTuner(), but
+                // the return of that function is needed to create a RadioManagerExt, which calls
+                // sets the callback through setProgramInfoCallback().
+                Log.d(TAG, "ProgramInfo callback is not set yet; caching ProgramInfo");
+                mCachedProgramInfo = info;
+            } else {
+                mProgramInfoCallback.onProgramInfoChanged(info);
+            }
         }
         mHandler.post(() -> mCallback.onProgramInfoChanged(info));
     }
