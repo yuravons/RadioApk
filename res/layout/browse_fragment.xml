@@ -25,5 +25,5 @@ limitations under the License.
         android:layout_height="match_parent"
         android:layout_marginLeft="@dimen/radio_margin"
         android:layout_marginRight="@dimen/radio_margin"
-        android:theme="@style/RecyclerViewTheme"/>
+    />
 </LinearLayout>
