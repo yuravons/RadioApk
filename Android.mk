@@ -27,7 +27,10 @@ LOCAL_AIDL_INCLUDES := \
     $(CAR_BROADCASTRADIO_SUPPORTLIB_PATH)/src
 
 LOCAL_PACKAGE_NAME := CarRadioApp
+
 LOCAL_PRIVATE_PLATFORM_APIS := true
+
+LOCAL_REQUIRED_MODULES := privapp_whitelist_com.android.car.radio
 
 LOCAL_CERTIFICATE := platform
 
