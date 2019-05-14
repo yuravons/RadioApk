@@ -18,12 +18,11 @@ limitations under the License.
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <androidx.recyclerview.widget.RecyclerView
+    <com.android.car.apps.common.widget.PagedRecyclerView
         android:id="@+id/browse_list"
         android:background="@color/browse_fragment_list_color"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginLeft="@dimen/radio_margin"
-        android:layout_marginRight="@dimen/radio_margin"
+        android:layout_marginLeft="@dimen/tab_margin_left"
     />
 </LinearLayout>
