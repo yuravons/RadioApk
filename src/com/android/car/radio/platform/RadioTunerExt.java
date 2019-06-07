@@ -79,15 +79,25 @@ public class RadioTunerExt {
         mTuner = Objects.requireNonNull(tuner);
         cbExt.setTuneFailedCallback(this::onTuneFailed);
         cbExt.setProgramInfoCallback(this::onProgramInfoChanged);
-        mHwAudioSource = new HwAudioSource.Builder()
-                .setAudioDeviceInfo(findTunerDevice(context, null))
+
+        final AudioDeviceInfo tunerDevice = findTunerDevice(context, null);
+        if (tunerDevice == null) {
+            Log.e(TAG, "No TUNER_DEVICE found on board");
+        } else {
+            mHwAudioSource = new HwAudioSource.Builder()
+                .setAudioDeviceInfo(tunerDevice)
                 .setAudioAttributes(new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .build())
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .build())
                 .build();
+        }
     }
 
     public boolean setMuted(boolean muted) {
+        if (mHwAudioSource == null) {
+            Log.e(TAG, "No TUNER_DEVICE found on board");
+            return false;
+        }
         synchronized (mLock) {
             if (muted) {
                 mHwAudioSource.stop();
