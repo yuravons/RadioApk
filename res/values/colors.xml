@@ -82,4 +82,7 @@ limitations under the License.
 
     <!-- The fill color of the radio fm button. -->
     <color name="radio_fm_fill_color">#fafafa</color>
+
+    <!-- The fill color of the OpenSynergy logo. -->
+    <color name="opsy_logo_color">#F77A27</color>
 </resources>

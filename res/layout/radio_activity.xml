@@ -37,6 +37,15 @@ limitations under the License.
         app:layout_constraintEnd_toStartOf="@+id/band_toggle_button"
         app:layout_constraintTop_toTopOf="parent"/>
 
+    <ImageView
+        android:id="@+id/opsy_logo"
+        android:layout_width="@dimen/opsy_logo_size"
+        android:layout_height="@dimen/opsy_logo_size"
+        android:layout_marginTop="@dimen/opsy_logo_margin"
+        android:src="@drawable/ic_opsy_logo"
+        app:layout_constraintLeft_toRightOf="@+id/tabs"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <com.android.car.radio.widget.BandSelectorToggle
         android:id="@+id/band_toggle_button"
         android:layout_width="@dimen/band_selector_size"

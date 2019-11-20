@@ -107,4 +107,7 @@ limitations under the License.
     <dimen name="tab_margin_right">@dimen/radio_margin</dimen>
     <dimen name="band_selector_size">@dimen/tab_height</dimen>
 
+    <!-- OpenSynergy logo dimensions -->
+    <dimen name="opsy_logo_margin">@*android:dimen/car_padding_2</dimen>
+    <dimen name="opsy_logo_size">@*android:dimen/car_padding_5</dimen>
 </resources>
