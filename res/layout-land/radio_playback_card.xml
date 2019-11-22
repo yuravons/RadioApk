@@ -21,8 +21,7 @@ limitations under the License.
     android:layout_height="wrap_content"
     android:layout_marginLeft="@dimen/playback_card_margin_horizontal"
     android:layout_marginRight="@dimen/playback_card_margin_horizontal"
-    android:layout_marginBottom="@dimen/playback_card_margin_bottom"
-    android:background="@drawable/playback_background">
+    android:layout_marginBottom="@dimen/playback_card_margin_bottom">
 
     <TextView
         android:id="@+id/station_channel"
@@ -67,6 +66,14 @@ limitations under the License.
         app:layout_constraintStart_toEndOf="@+id/station_channel"
         app:layout_constraintEnd_toStartOf="@+id/controls"
         android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/rds_image"
+        android:layout_width="@dimen/opsy_logo_size"
+        android:layout_height="@dimen/opsy_logo_size"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/station_details"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <include
         layout="@layout/radio_playback_controls"

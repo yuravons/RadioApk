@@ -37,7 +37,10 @@ import com.android.car.radio.util.Log;
 import com.android.car.radio.widget.PlayPauseButton;
 
 import java.util.Objects;
-
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import java.io.*;
+import android.util.Base64;
 /**
  * Controller that controls the appearance state of various UI elements in the radio.
  */
@@ -61,6 +64,8 @@ public class DisplayController {
     private final ImageView mForwardSeekButton;
     private final PlayPauseButton mPlayButton;
     private final View mBandButton;
+
+    private ImageView mRDSImage;
 
     private boolean mIsFavorite = false;
     private final ImageView mFavoriteButton;
@@ -91,6 +96,7 @@ public class DisplayController {
         mStatusMessage = activity.findViewById(R.id.status_message);
         mChannel = activity.findViewById(R.id.station_channel);
         mDetails = activity.findViewById(R.id.station_details);
+        mRDSImage = activity.findViewById(R.id.rds_image);
         mStationName = activity.findViewById(R.id.station_name);
         mBackwardSeekButton = activity.findViewById(R.id.back_button);
         mForwardSeekButton = activity.findViewById(R.id.forward_button);
@@ -251,9 +257,20 @@ public class DisplayController {
     public void setDetails(@Nullable String details) {
         if (mDetails == null) return;
         mDetails.setText(details);
+        
         mDetails.setVisibility(TextUtils.isEmpty(details) ? View.INVISIBLE : View.VISIBLE);
     }
 
+    public void setRDSImage(Bitmap bitmap_image) {
+       // if (bitmap_image == null) return;
+        //mRDSImage.setImageBitmap(bitmap_image);
+        //if(bitmap_image != null)
+        //    mDetails.setText("Yes");
+        //else 
+         //   mDetails.setText("No");
+        //mDetails.setText(details);
+       //mDetails.setVisibility(TextUtils.isEmpty(details) ? View.INVISIBLE : View.VISIBLE);
+    }
     /**
      * Sets program details (title/artist of currently playing song).
      *

@@ -15,7 +15,7 @@
  */
 
 package com.android.car.radio;
-
+import android.graphics.Color;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager.ProgramInfo;
 import android.hardware.radio.RadioMetadata;
@@ -35,7 +35,8 @@ import com.android.car.radio.service.RadioAppServiceWrapper;
 import com.android.car.radio.service.RadioAppServiceWrapper.ConnectionState;
 import com.android.car.radio.storage.RadioStorage;
 import com.android.car.radio.util.Log;
-
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import java.util.List;
 import java.util.Objects;
 
@@ -158,7 +159,15 @@ public class RadioController {
             mCurrentProgram = Objects.requireNonNull(info);
             ProgramSelector sel = info.getSelector();
             RadioMetadata meta = ProgramInfoExt.getMetadata(info);
+            //Bitmap bitmap = meta.getBitmap(RadioMetadata.METADATA_KEY_ICON);
+            //String tmp = "";
 
+            //if (bitmap == null) tmp +="1 ";
+            
+            //bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888); 
+            //bitmap.eraseColor(Color.WHITE);
+           // mDisplayController.setDetails(tmp);
+            //mDisplayController.setRDSImage(bitmap);
             mDisplayController.setChannel(sel);
 
             mDisplayController.setStationName(
@@ -172,7 +181,9 @@ public class RadioController {
             } else {
                 mDisplayController.setDetails(meta.getString(RadioMetadata.METADATA_KEY_RDS_RT));
             }
-
+            Log.e(TAG, "BcRadioDef:");
+            Log.e(TAG, sel.toString());
+            Log.e(TAG, meta.toString());
             mDisplayController.setCurrentIsFavorite(mRadioStorage.isFavorite(sel));
         }
     }
