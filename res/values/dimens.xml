@@ -74,16 +74,19 @@ limitations under the License.
 
     <!-- Playback card -->
     <dimen name="playback_card_height">96dp</dimen>
+    <dimen name="background_playback_card_height">160dp</dimen>
     <dimen name="playback_card_controls_width">0dp</dimen>
     <dimen name="playback_card_controls_height">@dimen/playback_card_height</dimen>
     <dimen name="playback_card_art_size">@dimen/playback_card_height</dimen>
-    <dimen name="playback_card_channel_size">@dimen/playback_card_height</dimen>
+    <dimen name="playback_card_rds_image_size">@dimen/playback_card_height</dimen>
     <dimen name="playback_card_interior_padding">@*android:dimen/car_padding_4</dimen>
     <dimen name="playback_card_text_spacing">@*android:dimen/car_padding_1</dimen>
     <dimen name="playback_card_margin_horizontal">@*android:dimen/car_margin</dimen>
     <dimen name="playback_card_margin_bottom">@*android:dimen/car_padding_5</dimen>
     <dimen name="playback_card_station_name_width">0dp</dimen>
     <dimen name="playback_card_station_details_width">0dp</dimen>
+    <dimen name="playback_card_left_margin">149dp</dimen>
+    <dimen name="playback_card_right_margin">130dp</dimen>
 
     <!-- Radio Activity -->
     <dimen name="radio_activity_pager_size">0dp</dimen>

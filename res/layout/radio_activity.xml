@@ -91,10 +91,8 @@ limitations under the License.
     <include layout="@layout/radio_playback_card"
          android:id="@+id/main_radio_display"
          android:layout_width="@dimen/radio_activity_playback_width"
-         android:layout_height="@dimen/playback_card_height"
-         android:layout_marginBottom="@dimen/playback_card_margin_bottom"
-         android:layout_marginLeft="@dimen/playback_card_margin_horizontal"
-         android:layout_marginRight="@dimen/playback_card_margin_horizontal"
+         android:layout_height="@dimen/background_playback_card_height"
+         android:gravity="top"
          app:layout_constraintBottom_toBottomOf="parent"
          app:layout_constraintEnd_toEndOf="parent"
          app:layout_constraintStart_toStartOf="parent" />

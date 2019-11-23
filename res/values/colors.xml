@@ -18,7 +18,7 @@ limitations under the License.
     <color name="accent_color">#ff356fe5</color>
 
     <!-- The background color of the playback card. -->
-    <color name="playback_card_background_color">@android:color/black</color>
+    <color name="playback_card_background_color">#1F1F1F</color>
 
     <!-- The color of the radio control buttons. -->
     <color name="control_button_color">@*android:color/car_grey_100</color>
